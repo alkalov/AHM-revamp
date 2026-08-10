@@ -141,22 +141,24 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 /* ── Table tab: flat split-screen, no nested scroll chains ── */
 .dv-half{height:50%;display:flex;flex-direction:column;border-bottom:1px solid #252d3d;overflow:hidden;}
 .dv-half:last-child{border-bottom:none;}
-.dv-toggle{display:flex;gap:6px;padding:8px 12px 4px;flex-shrink:0;}
-.dv-tbtn{flex:1;height:26px;background:#131720;border:1px solid #252d3d;border-radius:4px;color:#4d5a6e;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;}
-.dv-tbtn.on{color:#34d399;border-color:#34d399;background:rgba(52,211,153,.06);}
-.dv-picker-hd{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid #252d3d;flex-shrink:0;background:#131720;}
-.dv-wheel{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(56px + env(safe-area-inset-bottom,0px));}
-.dv-row{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #1a2030;touch-action:manipulation;}
-.dv-row.sel{background:rgba(52,211,153,.08);border-left:2px solid #34d399;}
-.dv-row.rl{background:rgba(248,113,113,.04);}.dv-row.rb_{background:rgba(96,165,250,.03);}
-.dv-row.rms-w{background:rgba(52,211,153,.06);}.dv-row.rms-l{background:rgba(248,113,113,.06);}
-.dv-row-l{display:flex;flex-direction:column;gap:2px;}
-.dv-row-day{font-size:11px;font-weight:600;color:#e2e6ed;}
-.dv-row-sub{font-size:8px;color:#4d5a6e;}
-.dv-row-r{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
-.dv-row-pnl{font-size:11px;font-weight:600;}
-.dv-row-meta{font-size:8px;color:#4d5a6e;}
 .dv-empty{padding:32px;text-align:center;font-size:10px;color:#4d5a6e;}
+/* Original wide table, restored — now contained in the bottom .dv-half
+   instead of the whole screen. tbl-scroll is the ONE scroll context in
+   this half; thead sticks to its top correctly since overflow-y lives
+   directly on this same element, not on an ancestor several levels up. */
+.tbl-scroll{flex:1;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(56px + env(safe-area-inset-bottom,0px));}
+table{width:100%;border-collapse:collapse;min-width:580px;}
+thead{background:#1a2030;position:sticky;top:0;z-index:5;}
+th{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.04em;padding:6px 7px;text-align:right;border-bottom:1px solid #252d3d;white-space:nowrap;}
+th:nth-child(1),th:nth-child(2){text-align:center;}th:nth-child(4){text-align:left;}
+tbody tr{border-bottom:1px solid #1a2030;}
+tr.rl{background:rgba(248,113,113,.05);}tr.rb_{background:rgba(96,165,250,.04);}
+tr.rms-w{background:rgba(52,211,153,.07);}tr.rms-w td{color:#34d399 !important;}
+tr.rms-l{background:rgba(248,113,113,.07);}tr.rms-l td{color:#f87171 !important;}
+tr.sel-day{background:rgba(251,191,36,.1) !important;}tr.sel-day td{color:#fbbf24 !important;}
+td{padding:5px 7px;text-align:right;font-size:10px;white-space:nowrap;color:#e2e6ed;}
+td:nth-child(1),td:nth-child(2){text-align:center;color:#4d5a6e;font-size:9px;}
+td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 .global-capital{background:#131720;border-bottom:2px solid #34d399;padding-top:2px;}
 .gc-hd{display:flex;align-items:center;gap:6px;padding:9px 12px 6px;}
 .gc-hd span{font-family:'Cabinet Grotesk',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#e2e6ed;}
@@ -287,7 +289,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 <div class="topbar">
   <div class="brand">
     <span class="brand-name">Anti-Hope Machine</span>
-    <span class="brand-ver">v29</span>
+    <span class="brand-ver">v30</span>
   </div>
   <div class="top-r">
     <button class="guide-btn" onclick="openGuide()">Guide</button>
@@ -324,22 +326,24 @@ canvas.spark{width:100%;height:34px;display:block;}
       <button class="sbtn sc-c" id="tsb2" onclick="switchTblStrat(2)">C</button>
     </div>
     <div class="dv-half">
-      <div class="dv-toggle">
-        <button class="dv-tbtn on" id="dv-single-btn" onclick="dvSetMode('single')">This Strategy</button>
-        <button class="dv-tbtn" id="dv-combo-btn" onclick="dvSetMode('combo')">All Strategies</button>
-      </div>
+      <div class="chart-hd" style="padding:8px 12px 4px;"><span class="chart-lbl">Race to Goal · Shares vs Time</span><span class="chart-tt" id="dv-tt"></span></div>
       <div class="chart-wrap" style="height:100%;"><canvas class="eqcv" id="dv-cv"></canvas></div>
-      <div id="dv-combo-legend" style="display:none;gap:12px;padding:6px 12px;flex-wrap:wrap;"></div>
+      <div id="dv-combo-legend" style="display:flex;gap:12px;padding:6px 12px;flex-wrap:wrap;"></div>
     </div>
     <div class="dv-half">
-      <div class="dv-picker-hd">
-        <span class="tc-lbl">Day</span>
-        <div class="tc-stp" id="intv-wrap-0" style="max-width:110px;"></div>
-        <div class="tc-stp" id="intv-wrap-1" style="max-width:110px;display:none;"></div>
-        <div class="tc-stp" id="intv-wrap-2" style="max-width:110px;display:none;"></div>
-        <span class="tc-lbl">step</span>
+      <div class="tbl-controls">
+        <span class="tc-lbl">Every</span>
+        <div class="tc-stp" id="intv-wrap-0"></div>
+        <div class="tc-stp" id="intv-wrap-1" style="display:none;"></div>
+        <div class="tc-stp" id="intv-wrap-2" style="display:none;"></div>
+        <span class="tc-lbl">days</span>
       </div>
-      <div class="dv-wheel" id="dv-wheel"></div>
+      <div class="tbl-scroll" id="tbl-scroll">
+        <table>
+          <thead><tr><th>Day</th><th>Cal</th><th>Mo P&L</th><th>Label</th><th>Sh</th><th>WR%</th><th>Tr</th><th>Ticks</th><th>Day%</th><th>P&L</th><th>Ret%</th><th>Fees</th><th>Surplus</th><th>+Sh</th><th>Cumul</th></tr></thead>
+          <tbody id="main-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -658,7 +662,7 @@ function switchStrat(n){
   });
   updateDist(n);
 }
-function switchTblStrat(n){activeTblStrat=n;dvSelIdx=0;[0,1,2].forEach(i=>{$('tsb'+i).classList.toggle('on',i===n);const iw=$('intv-wrap-'+i);if(iw)iw.style.display=i===n?'flex':'none';});renderTable(n);}
+function switchTblStrat(n){activeTblStrat=n;[0,1,2].forEach(i=>{$('tsb'+i).classList.toggle('on',i===n);const iw=$('intv-wrap-'+i);if(iw)iw.style.display=i===n?'flex':'none';});renderTable(n);}
 
 function openGuide(){$('gmodal').classList.add('open');}
 function closeGuide(){$('gmodal').classList.remove('open');}
@@ -738,6 +742,13 @@ function cfg(tab){
   const avgP=(c.minP+c.maxP)/2;
   let avgL=(c.minL+c.maxL)/2;if(c.rr>0)avgL=avgP/c.rr;
   const avgT=(c.minT+c.maxT)/2,avgPr=(c.minPr+c.maxPr)/2;
+  // Starting Shares toggle: when OFF, derive shares from global Capital ÷ this
+  // strategy's own price midpoint, rather than a manually fixed count.
+  const shOn=on('tog-sh');
+  if(!shOn){
+    const gCap=sv('gcStartCap',0,0);
+    c.sh=gCap>0&&avgPr>0?Math.max(1,Math.round(gCap/avgPr)):c.sh;
+  }
   const acct0=c.startCap>0?c.startCap:c.sh*avgPr;
   const exFee=0.0067;
   const exCost=c.feesOn?(c.sh*exFee):0;
@@ -783,7 +794,16 @@ function updateDist(tab){
   se('ev-tag',e=>{e.textContent='EV '+(ev>=0?'+$':'−$')+fmt(Math.abs(ev))+'/day';e.style.color=ev>0?'#34d399':ev<0?'#f87171':'#fbbf24';});
   const lr=$('lr-disp'+s);if(lr)lr.textContent=(c.loss*100).toFixed(1)+'%';
 }
-function onSlider(tab){updateDist(tab);updateFrictionBreakdown(tab);updateVolWindowSummary(tab);save();}
+function onSlider(tab){updateDist(tab);updateFrictionBreakdown(tab);updateVolWindowSummary(tab);updateDerivedShares(tab);save();}
+
+function updateDerivedShares(tab){
+  const s=tab===0?'':'_'+tab;
+  const note=$('sh-derived-note'+s);if(!note)return;
+  const on=id=>isOn(id+s);
+  if(on('tog-sh')){note.textContent='';return;}
+  const c=cfg(tab);
+  note.textContent=`Derived: $${fmt(sv('gcStartCap',0,0),0)} capital ÷ $${c.avgPr.toFixed(0)} avg price ≈ ${c.sh.toLocaleString()} shares`;
+}
 
 function updateVolWindowSummary(tab){
   const s=tab===0?'':'_'+tab;
@@ -1161,138 +1181,177 @@ function buildDiag(c,cumPnl,days,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,
    TABLE TAB — flat, linked equity curve + scroll-wheel day picker.
    Deliberately avoids nested overflow:auto chains. Only two scroll
    contexts exist here, siblings not nested: the equity chart never
-   scrolls at all, and .dv-wheel is the ONE scrollable element.
+   scrolls at all, and .tbl-scroll is the ONE scrollable element.
    ══════════════════════════════════════════════════════════════ */
-let dvMode='single'; // 'single' | 'combo'
-let dvSelIdx=0; // index into the currently shown rows array
-let dvRowsCache=[]; // rows currently rendered in the wheel, for scroll->highlight mapping
+let dvSelDay=null; // the currently highlighted day (shared across table + chart)
 
-function dvSetMode(mode){
-  dvMode=mode;
-  $('dv-single-btn').classList.toggle('on',mode==='single');
-  $('dv-combo-btn').classList.toggle('on',mode==='combo');
-  $('dv-combo-legend').style.display=mode==='combo'?'flex':'none';
-  renderTable(activeTblStrat);
-}
-
+/* Original wide table, restored — now rendered inside the bottom .dv-half
+   instead of full-screen. Row click sets the shared highlighted day, which
+   the shares-vs-time chart above reads to draw its crosshair. */
 function renderTable(tab,rowsIn,acct0In,cIn,mspIn,cappedIn){
   const res=simResults[tab];
   const rows=rowsIn||res?.rows,acct0=acct0In||res?.acct0,c=cIn||res?.c,msp=mspIn||res?.msp,capped=cappedIn||false;
-  const wheel=$('dv-wheel');
+  const tbody=$('main-tbody');
   if(!rows||!rows.length){
-    if(wheel)wheel.innerHTML='<div class="dv-empty">No sim data. Run a simulation first.</div>';
-    const cv=$('dv-cv');if(cv&&cv.getContext){const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);}
-    dvRowsCache=[];
+    if(tbody)tbody.innerHTML=`<tr><td colspan="15" class="dv-empty">No sim data. Run a simulation first.</td></tr>`;
+    dvRedrawChart();
     return;
   }
-  const intv=sv('intv',tab,5)||5;
+  const intv=sv('intv',tab,5)||5;tbody.innerHTML='';
   const show=new Set([0,rows.length-1]);
   rows.forEach((r,i)=>{if(r.isMilestone||r.day%intv===0)show.add(i);});
   const sorted=[...show].sort((a,b)=>a-b);
-  dvRowsCache=sorted.map(i=>rows[i]);
-  if(dvSelIdx>=dvRowsCache.length)dvSelIdx=dvRowsCache.length-1;
-  if(dvSelIdx<0)dvSelIdx=0;
-
-  if(wheel){
-    wheel.innerHTML='';
-    sorted.forEach((idx,pos)=>{
-      const r=rows[idx];
-      const row=document.createElement('div');
-      row.className='dv-row';
-      if(r.isMilestone)row.classList.add(r.outcome==='WIN'?'rms-w':'rms-l');
-      else if(r.outcome==='LOSS')row.classList.add('rl');else if(r.outcome==='BE')row.classList.add('rb_');
-      if(pos===dvSelIdx)row.classList.add('sel');
-      const moPnl=r.cumPnl-((msp||{})[r.mIdx]||0);
-      let label='Day '+r.day;
-      if(r.isMilestone)label='★ '+r.msVal.toLocaleString()+' sh';
-      else if(r.day===1)label='Start';
-      else if(idx===rows.length-1)label=capped?'Capped':'Goal ✓';
-      const totTr=r.dayWinCt+r.dayLoseCt+r.dayBECt;
-      const wrPct=totTr>0?((r.dayWinCt/totTr)*100).toFixed(0)+'%':'—';
-      const pC=r.dayPnl>0?'#34d399':r.dayPnl<0?'#f87171':'#fbbf24';
-      row.innerHTML=`
-        <div class="dv-row-l">
-          <span class="dv-row-day">${label}</span>
-          <span class="dv-row-sub">${cal(r.calMo)} · ${r.shares.toLocaleString()} sh · WR ${wrPct}</span>
-        </div>
-        <div class="dv-row-r">
-          <span class="dv-row-pnl" style="color:${pC};">${sgn(r.dayPnl)}</span>
-          <span class="dv-row-meta">${(r.cumPnl>=0?'$':'−$')+fmt(Math.abs(r.cumPnl))} total</span>
-        </div>`;
-      row.addEventListener('click',()=>{dvSelIdx=pos;dvRenderWheelSelection();dvDrawChart(tab);});
-      wheel.appendChild(row);
-    });
+  const maxA=Math.max(...sorted.map(i=>Math.abs(rows[i].dayPnl)),1);
+  for(const idx of sorted){
+    const r=rows[idx];const tr=document.createElement('tr');
+    if(r.isMilestone)tr.className=r.outcome==='WIN'?'rms-w':'rms-l';
+    else if(r.outcome==='LOSS')tr.className='rl';else if(r.outcome==='BE')tr.className='rb_';
+    if(dvSelDay===r.day)tr.classList.add('sel-day');
+    const pC=r.dayPnl>0?'#34d399':r.dayPnl<0?'#f87171':'#fbbf24';
+    const moPnl=r.cumPnl-((msp||{})[r.mIdx]||0);
+    const dpS=r.dayPct!=null?(r.dayPct>=0?'+':'')+r.dayPct.toFixed(2)+'%':'—';
+    const dpC=r.dayPct!=null?(r.dayPct>=0?'#34d399':'#f87171'):'#4d5a6e';
+    let label='—';
+    if(r.isMilestone)label='★ '+r.msVal.toLocaleString();
+    else if(r.day===1)label='Start';
+    else if(idx===rows.length-1)label=capped?'Cap':'Goal ✓';
+    const totTr=r.dayWinCt+r.dayLoseCt+r.dayBECt;
+    const wrPct=totTr>0?((r.dayWinCt/totTr)*100).toFixed(0)+'%':'—';
+    tr.innerHTML=`<td>${r.day}</td><td>${cal(r.calMo)}</td><td style="color:#e2e6ed">${(moPnl>=0?'+$':'−$')+fmt(Math.abs(moPnl))}</td><td>${label}</td><td style="color:#fbbf24;font-weight:600">${r.shares.toLocaleString()}</td><td style="color:#4d5a6e;font-size:9px">${wrPct}</td><td style="font-size:9px;color:#8892a4">${r.numTr||'—'}</td><td style="color:${r.dayTicks>0?'#34d399':r.dayTicks<0?'#f87171':'#4d5a6e'}">${r.dayTicks!==0?(r.dayTicks>0?'+':'')+r.dayTicks+'t':'—'}</td><td style="color:${dpC};font-size:9px">${dpS}</td><td style="color:${pC};font-weight:600">${sgn(r.dayPnl)}</td><td style="color:${(r.cumPnl/acct0*100)>=0?'#34d399':'#f87171'};font-size:9px">${pct(r.cumPnl/acct0*100,1)}</td><td style="color:#4d5a6e;font-size:9px">${r.dayFees>0?'−$'+fmt(r.dayFees):'—'}</td><td style="color:#4d5a6e;font-size:9px">${(r.surplus>=0?'$':'−$')+fmt(Math.abs(r.surplus))}</td><td style="color:#fbbf24;font-size:9px">${r.newSh>0?'+'+r.newSh:'—'}</td><td style="color:#e2e6ed;font-weight:600">${(r.cumPnl>=0?'$':'−$')+fmt(Math.abs(r.cumPnl))}</td>`;
+    tr.addEventListener('click',()=>{dvSelDay=r.day;renderTable(tab);});
+    tbody.appendChild(tr);
   }
-  dvDrawChart(tab);
+  if(capped){const w=document.createElement('tr');w.innerHTML=`<td colspan="15" style="text-align:center;color:#f87171;padding:8px;font-size:9px;">CAPPED AT 10,000 DAYS</td>`;tbody.appendChild(w);}
+  dvRedrawChart();
 }
 
-function dvRenderWheelSelection(){
-  const wheel=$('dv-wheel');if(!wheel)return;
-  [...wheel.children].forEach((el,i)=>el.classList.toggle('sel',i===dvSelIdx));
-  const sel=wheel.children[dvSelIdx];
-  if(sel)sel.scrollIntoView({block:'nearest',behavior:'smooth'});
-}
-
-function dvDrawChart(tab){
-  const cv=$('dv-cv');if(!cv)return;
-  if(dvMode==='combo'){
-    drawCombinedChart(cv,$('dv-combo-legend'));
+/* ══════════════════════════════════════════════════════════════
+   RACE-TO-GOAL CHART — shares (Y) vs time (X), one line per active
+   strategy, endpoint labeled with capital value at that point. This
+   is the ONE place in the app that charts shares instead of P&L —
+   deliberately, since "who reaches their goal fastest" reads far
+   more clearly on a shares axis than an equity axis, where two
+   different lines stopping at different heights doesn't obviously
+   mean "reached the finish line," just "stopped."
+   ══════════════════════════════════════════════════════════════ */
+function dvDrawRaceChart(cv,legendEl,hoverDay){
+  if(!cv||!cv.getContext)return;
+  const active=[0,1,2].filter(i=>simResults[i]&&simResults[i].rows&&simResults[i].rows.length>1);
+  const dpr=window.devicePixelRatio||1;
+  const W=cv.offsetWidth,H=cv.offsetHeight;if(!W||!H)return;
+  cv.width=W*dpr;cv.height=H*dpr;
+  const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+  ctx.fillStyle='#131720';ctx.fillRect(0,0,W,H);
+  if(!active.length){
+    ctx.fillStyle='#4d5a6e';ctx.font='11px IBM Plex Mono';ctx.textAlign='center';
+    ctx.fillText('Run a simulation to see the race to goal',W/2,H/2);
+    if(legendEl)legendEl.innerHTML='';
+    cv._race=null;
     return;
   }
-  const res=simResults[tab];
-  if(!res||!res.equity||res.equity.length<2){
-    if(cv.getContext){const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);}
-    return;
-  }
-  _drawChart(cv,res.equity,res.acct0);
-  // Overlay a marker for the currently selected day, linking wheel <-> chart
-  const sel=dvRowsCache[dvSelIdx];
-  if(sel&&cv._cs){
-    const st=cv._cs;
-    const eqIdx=sel.day-1; // equity array is 1 point per simulated day, in order
-    if(eqIdx>=0&&eqIdx<st.pnls.length){
-      const ctx=cv.getContext('2d');
-      const cx=st.xS(eqIdx),cy=st.yS(st.pnls[eqIdx]);
-      ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1;ctx.setLineDash([2,3]);
-      ctx.beginPath();ctx.moveTo(cx,st.pd.t);ctx.lineTo(cx,st.pd.t+st.ph);ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);
-      ctx.fillStyle='#fbbf24';ctx.fill();
-      ctx.strokeStyle='#131720';ctx.lineWidth=2;ctx.stroke();
+  const pd={t:10,b:10,l:8,r:56}; // extra right padding reserves room for endpoint $ labels
+  const pw=W-pd.l-pd.r,ph=H-pd.t-pd.b;
+  const series=active.map(i=>{
+    const rows=simResults[i].rows;
+    const shPts=rows.map(r=>({day:r.day,sh:r.shares,cum:r.cumPnl}));
+    return{idx:i,pts:shPts,color:STRAT_COLORS[i],label:STRAT_LABELS[i],acct0:simResults[i].acct0};
+  });
+  const maxDay=Math.max(...series.map(s=>s.pts[s.pts.length-1].day));
+  const maxSh=Math.max(...series.map(s=>s.pts[s.pts.length-1].sh),1);
+  const minSh=Math.min(...series.map(s=>s.pts[0].sh),0);
+  const shRng=(maxSh-minSh)||1;
+  const xS=day=>pd.l+(Math.min(day,maxDay)/Math.max(maxDay,1))*pw;
+  const yS=sh=>pd.t+ph-((sh-minSh)/shRng)*ph;
+  for(const s of series){
+    ctx.beginPath();ctx.moveTo(xS(s.pts[0].day),yS(s.pts[0].sh));
+    for(let i=1;i<s.pts.length;i++){
+      const cpx=(xS(s.pts[i-1].day)+xS(s.pts[i].day))/2;
+      ctx.bezierCurveTo(cpx,yS(s.pts[i-1].sh),cpx,yS(s.pts[i].sh),xS(s.pts[i].day),yS(s.pts[i].sh));
     }
+    ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.stroke();
+    const last=s.pts[s.pts.length-1];
+    const ex=xS(last.day),ey=yS(last.sh);
+    ctx.beginPath();ctx.arc(ex,ey,3.5,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();
+    ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
+    // Endpoint capital-value label — this is the visual "finish line" cue
+    const capVal=s.acct0+last.cum;
+    ctx.font='9px IBM Plex Mono';ctx.textAlign='left';ctx.fillStyle=s.color;
+    ctx.fillText('$'+fmt(capVal,0),ex+7,ey+3);
+  }
+  cv._race={series,pd,pw,ph,xS,yS,maxDay};
+  if(legendEl){
+    legendEl.innerHTML=series.map(s=>{
+      const last=s.pts[s.pts.length-1];
+      return`<div style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0;"></span><span style="font-size:9px;color:#8892a4;">${s.label}</span><span style="font-size:9px;font-weight:600;color:${s.color};">${last.sh.toLocaleString()}sh</span><span style="font-size:8px;color:#4d5a6e;">· ${last.day}d</span></div>`;
+    }).join('');
+  }
+  // Crosshair for the currently highlighted/hovered day — drawn on EVERY
+  // active strategy's line simultaneously, not just the one on screen.
+  if(hoverDay!=null){
+    const st=cv._race;
+    const cx=st.xS(hoverDay);
+    ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1;ctx.setLineDash([2,3]);
+    ctx.beginPath();ctx.moveTo(cx,st.pd.t);ctx.lineTo(cx,st.pd.t+st.ph);ctx.stroke();
+    ctx.setLineDash([]);
+    const tt=$('dv-tt');const parts=[];
+    for(const s of st.series){
+      let pt=null;
+      for(const p of s.pts){if(p.day<=hoverDay)pt=p;else break;}
+      if(pt){
+        const cy=st.yS(pt.sh);
+        ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();
+        ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
+        parts.push(`${s.label} ${pt.sh.toLocaleString()}sh`);
+      }
+    }
+    if(tt)tt.textContent=`Day ${hoverDay} · `+parts.join(' · ');
+  }else{
+    const tt=$('dv-tt');if(tt)tt.textContent='';
   }
 }
 
-// Scroll-driven selection: as the wheel scrolls, whichever row sits nearest
-// the vertical centre becomes the selected/highlighted day.
-function dvWireWheelScroll(){
-  const wheel=$('dv-wheel');if(!wheel)return;
-  let scrollTimer=null;
-  wheel.addEventListener('scroll',()=>{
-    clearTimeout(scrollTimer);
-    scrollTimer=setTimeout(()=>{
-      const wRect=wheel.getBoundingClientRect();
-      const centerY=wRect.top+wRect.height/2;
-      let closest=0,closestDist=Infinity;
-      [...wheel.children].forEach((el,i)=>{
+function dvRedrawChart(){
+  const cv=$('dv-cv');if(!cv)return;
+  dvDrawRaceChart(cv,$('dv-combo-legend'),dvSelDay);
+}
+
+// Live crosshair while scrolling the table — throttled to animation-frame
+// rate so it tracks continuously without hammering the CPU on every pixel.
+function dvWireTableScroll(){
+  const scroller=$('tbl-scroll');if(!scroller)return;
+  let ticking=false;
+  scroller.addEventListener('scroll',()=>{
+    if(ticking)return;
+    ticking=true;
+    requestAnimationFrame(()=>{
+      const sRect=scroller.getBoundingClientRect();
+      const rows=[...$('main-tbody').children].filter(el=>el.children.length>1);
+      const centerY=sRect.top+80; // bias toward the rows just below the sticky header
+      let closest=null,closestDist=Infinity;
+      for(const el of rows){
         const r=el.getBoundingClientRect();
         const dist=Math.abs((r.top+r.height/2)-centerY);
-        if(dist<closestDist){closestDist=dist;closest=i;}
-      });
-      if(closest!==dvSelIdx){
-        dvSelIdx=closest;
-        [...wheel.children].forEach((el,i)=>el.classList.toggle('sel',i===dvSelIdx));
-        dvDrawChart(activeTblStrat);
+        if(dist<closestDist){closestDist=dist;closest=el;}
       }
-    },80);
+      if(closest){
+        const dayText=closest.children[0]?.textContent;
+        const day=parseInt(dayText,10);
+        if(!isNaN(day)&&day!==dvSelDay){
+          dvSelDay=day;
+          [...$('main-tbody').children].forEach(el=>el.classList.remove('sel-day'));
+          closest.classList.add('sel-day');
+          dvRedrawChart();
+        }
+      }
+      ticking=false;
+    });
   },{passive:true});
 }
-
 
 function exportData(tab){
   const res=simResults[tab];if(!res||!res.rows.length){alert('Run a simulation first.');return;}
   const {rows,acct0,c,msp}=res;const names=['Strat-A','Strat-B','Strat-C'];
-  const L=['AHM v29 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
+  const L=['AHM v30 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
   const show=new Set([0,rows.length-1]);rows.forEach((r,i)=>{if(r.isMilestone||r.day%c.intv===0)show.add(i);});
   for(const idx of [...show].sort((a,b)=>a-b)){const r=rows[idx];const mo=r.cumPnl-((msp||{})[r.mIdx]||0);const dp=r.dayPct!=null?r.dayPct.toFixed(2)+'%':'—';let lbl='';if(r.isMilestone)lbl='Milestone '+r.msVal;else if(r.day===1)lbl='Start';else if(idx===rows.length-1)lbl='Goal';const tt=r.dayWinCt+r.dayLoseCt+r.dayBECt;const wrp=tt>0?((r.dayWinCt/tt)*100).toFixed(0)+'%':'—';L.push([r.day,cal(r.calMo),mo.toFixed(2),lbl,r.shares,r.outcome,wrp,r.numTr||0,r.dayTicks,dp,r.dayPnl.toFixed(2),(r.cumPnl/acct0*100).toFixed(2)+'%',(r.dayFees||0).toFixed(2),r.surplus.toFixed(2),r.newSh,r.cumPnl.toFixed(2)].join(','));}
   const blob=new Blob([L.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);
@@ -1940,7 +1999,7 @@ function buildPanes(){
     const core=fc('wr','Win Rate %','#34d399','wr',dph('minWR','maxWR'))+fc('be','Breakeven %','#60a5fa','be',dph('minBE','maxBE'))+roLoss+distCard;
     const risk=fc('p','Profit Target','#fbbf24','profit',dph('minP','maxP'))+fc('l','Stop Loss','#f87171','loss',dph('minL','maxL'))+fc('t','Trades / Day','#fb923c','trades',dph('minT','maxT'))+fc('cap','Daily Loss Cap','#f87171','cap',ph('cap'));
 
-    const shGoalCard=`<div class="fc" id="fc-sh${s}" style="border-left-color:#fbbf24"><div class="fc-top"><span class="fc-lbl">Starting Shares <button class="ib" onclick="openInfo('sh')">?</button></span></div>${ph('sh')}</div><div class="fc" id="fc-goal${s}" style="border-left-color:#34d399"><div class="fc-top"><span class="fc-lbl">Share Goal <button class="ib" onclick="openInfo('goal')">?</button></span></div>${ph('goal')}</div>`;
+    const shGoalCard=`<div class="fc" id="fc-sh${s}" style="border-left-color:#fbbf24"><div class="fc-top"><span class="fc-lbl">Starting Shares <button class="ib" onclick="openInfo('sh')">?</button></span>${tog('sh',true)}</div>${ph('sh')}<div class="fc-note" id="sh-derived-note${s}"></div></div><div class="fc" id="fc-goal${s}" style="border-left-color:#34d399"><div class="fc-top"><span class="fc-lbl">Share Goal <button class="ib" onclick="openInfo('goal')">?</button></span></div>${ph('goal')}</div>`;
 
     const frictionCard=`<div class="fc" id="fc-comm${s}" style="border-left-color:#fbbf24;"><div class="fc-top"><span class="fc-lbl">Commission (Tiered) <button class="ib" onclick="openInfo('comm')">?</button></span></div><div class="fc-note">Auto-calculated: $0.35 flat round trip under 100 shares, or $0.0035/share × 2 legs at 100+ shares. Scales with your Starting Shares.</div></div><div class="fc" id="fc-fees${s}" style="border-left-color:#34d399;"><div class="fc-top"><span class="fc-lbl">Exchange + Clearing + Reg <button class="ib" onclick="openInfo('fees')">?</button></span>${tog('fees',true)}</div><div class="friction-breakdown" id="fb${s}"><div class="fb-row"><span class="fb-lbl">Commission</span><span class="fb-val" id="fb-comm${s}">—</span></div><div class="fb-row"><span class="fb-lbl">Exchange + Clearing + Reg (0.0067/sh)</span><span class="fb-val" id="fb-ex${s}">—</span></div><div class="fb-row"><span class="fb-lbl">Slippage (×2 legs)</span><span class="fb-val" id="fb-slip${s}">—</span></div><div class="fb-row"><span class="fb-lbl">Spread cost</span><span class="fb-val" id="fb-spr${s}">—</span></div><div class="fb-total"><span class="fb-lbl">Est. round trip</span><span class="fb-val" id="fb-rt${s}">—</span></div></div><div class="fb-tier" id="fb-tier${s}">—</div></div>`;
 
@@ -2034,14 +2093,14 @@ function wirePanes(){
     if(inp){inp.addEventListener('change',()=>renderTable(activeTblStrat));inp.addEventListener('blur',()=>renderTable(activeTblStrat));}
     el.querySelectorAll('.stp-btn').forEach(b=>b.addEventListener('pointerup',()=>setTimeout(()=>renderTable(activeTblStrat),60)));
   });
-  dvWireWheelScroll();
+  dvWireTableScroll();
   const gcEl=$('gc-stepper');
   if(gcEl){
     const el=mkStp('gcStartCap',0,'$');gcEl.appendChild(el);
     const inp=el.querySelector('.stp-val');
     inp.value=0;
     // Global capital affects every strategy's cfg() — refresh all three, not just tab 0.
-    const refreshAll=()=>{[0,1,2].forEach(t=>{updateDist(t);updateFrictionBreakdown(t);});save();};
+    const refreshAll=()=>{[0,1,2].forEach(t=>{updateDist(t);updateFrictionBreakdown(t);updateDerivedShares(t);});save();};
     inp.removeEventListener?.('change',null);
     // mkStp already wired change/blur/click to call onSlider(0); override with a
     // handler that also updates B and C, since this field is shared.
@@ -2053,9 +2112,9 @@ function wirePanes(){
   populateHourSelect('j-timeslept');populateHourSelect('j-timewoke');
 }
 
-const SK='ahm-v29';
+const SK='ahm-v30';
 function getStpIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;SDEFS.forEach(([id])=>ids.push(id+s));});return ids;}
-const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-volceil','tog-vw'];
+const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-volceil','tog-vw','tog-sh'];
 function getTogIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;TOG_BASE.forEach(id=>ids.push(id+s));});return ids;}
 const SEL_BASE=['curve','mode'];
 const REAL_IDS=['rCapS','rCapC','rTrades','rDays','rWR','rBE','rTickW','rTickL','rPnlTotal','rDayPnl'];
@@ -2092,7 +2151,7 @@ async function load(){
 async function init(){
   buildPanes();wirePanes();
   const loaded=await load();
-  [0,1,2].forEach(n=>{updateDist(n);updateFrictionBreakdown(n);updateVolWindowSummary(n);});
+  [0,1,2].forEach(n=>{updateDist(n);updateFrictionBreakdown(n);updateVolWindowSummary(n);updateDerivedShares(n);});
   const allCv=$('real-cv-all'),allTt=$('real-ct-all');if(allCv&&allTt)wireChart(allCv,allTt);
   const wkCv=$('real-cv-week'),wkTt=$('real-ct-week');if(wkCv&&wkTt)wireChart(wkCv,wkTt);
   const moCv=$('real-cv-month'),moTt=$('real-ct-month');if(moCv&&moTt)wireChart(moCv,moTt);
