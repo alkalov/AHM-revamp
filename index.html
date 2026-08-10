@@ -26,7 +26,11 @@ html,body{height:100%;background:#0d0f12;color:#e2e6ed;font-family:'IBM Plex Mon
 .screens{flex:1;overflow:hidden;position:relative;}
 .screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));display:none;}
 .screen.active{display:block;}
-.screen.scr-tbl-fixed.active{display:flex;}
+/* Table tab only: flat flex column, no outer scroll — each .dv-half manages
+   its own scroll independently. Deliberately avoids nested auto-overflow
+   chains, since that pattern is what broke scrolling in a prior version. */
+#scr-tbl{padding-bottom:0;}
+#scr-tbl.active{display:flex;flex-direction:column;overflow:hidden;}
 .bnav{position:fixed;bottom:0;left:0;right:0;height:calc(56px + env(safe-area-inset-bottom,0px));background:#131720;border-top:1px solid #252d3d;display:flex;align-items:flex-start;padding-top:4px;z-index:100;}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:5px 0 0;position:relative;color:#4d5a6e;transition:color .12s;touch-action:manipulation;}
 .nb.on{color:#34d399;}
@@ -132,35 +136,31 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .disc{margin:8px 16px 16px;padding:7px 10px;background:#131720;border:1px solid #252d3d;border-radius:3px;}
 .disc p{font-size:9px;color:#4d5a6e;line-height:1.6;}
 .tbl-controls{display:flex;gap:8px;padding:8px 16px;border-bottom:1px solid #252d3d;align-items:center;background:#131720;}
-
-/* Table tab: strategy bar + interval controls stay pinned; only the
-   table body (both directions) scrolls beneath them. thead stays
-   visible at the top of that scroll region via position:sticky,
-   which only works because .tbl-scroll is now the true scrolling
-   ancestor (overflow-y set here, not on .screen). */
-.scr-tbl-fixed{display:flex;flex-direction:column;overflow:hidden !important;padding-bottom:0 !important;}
-.scr-tbl-fixed .sbar{flex-shrink:0;}
-.scr-tbl-fixed .tbl-controls{flex-shrink:0;}
-.scr-tbl-fixed .tbl-scroll{flex:1;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));}
 .tc-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;white-space:nowrap;}
 .tc-stp{flex:1;}
-.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;}
-table{width:100%;border-collapse:collapse;min-width:580px;}
-thead{background:#1a2030;position:sticky;top:0;z-index:5;}
-th{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.04em;padding:6px 7px;text-align:right;border-bottom:1px solid #252d3d;white-space:nowrap;}
-th:nth-child(1),th:nth-child(2){text-align:center;}th:nth-child(4){text-align:left;}
-tbody tr{border-bottom:1px solid #1a2030;}
-tr.rl{background:rgba(248,113,113,.05);}tr.rb_{background:rgba(96,165,250,.04);}
-tr.rms-w{background:rgba(52,211,153,.07);}tr.rms-w td{color:#34d399 !important;}
-tr.rms-l{background:rgba(248,113,113,.07);}tr.rms-l td{color:#f87171 !important;}
-tr.blow{background:rgba(248,113,113,.1);}tr.blow td{color:#f87171 !important;}
-tr.good{background:rgba(52,211,153,.1);}tr.good td{color:#34d399 !important;}
-td{padding:5px 7px;text-align:right;font-size:10px;white-space:nowrap;color:#e2e6ed;}
-td:nth-child(1),td:nth-child(2){text-align:center;color:#4d5a6e;font-size:9px;}
-td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
-.bw{position:relative;overflow:hidden;}.bf{position:absolute;left:0;top:0;bottom:0;pointer-events:none;}
-.bfp{background:rgba(52,211,153,.06);}.bfn{background:rgba(248,113,113,.07);}.bfz{background:rgba(96,165,250,.05);}
-.bw span{position:relative;}
+/* ── Table tab: flat split-screen, no nested scroll chains ── */
+.dv-half{height:50%;display:flex;flex-direction:column;border-bottom:1px solid #252d3d;overflow:hidden;}
+.dv-half:last-child{border-bottom:none;}
+.dv-toggle{display:flex;gap:6px;padding:8px 12px 4px;flex-shrink:0;}
+.dv-tbtn{flex:1;height:26px;background:#131720;border:1px solid #252d3d;border-radius:4px;color:#4d5a6e;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;}
+.dv-tbtn.on{color:#34d399;border-color:#34d399;background:rgba(52,211,153,.06);}
+.dv-picker-hd{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid #252d3d;flex-shrink:0;background:#131720;}
+.dv-wheel{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(56px + env(safe-area-inset-bottom,0px));}
+.dv-row{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #1a2030;touch-action:manipulation;}
+.dv-row.sel{background:rgba(52,211,153,.08);border-left:2px solid #34d399;}
+.dv-row.rl{background:rgba(248,113,113,.04);}.dv-row.rb_{background:rgba(96,165,250,.03);}
+.dv-row.rms-w{background:rgba(52,211,153,.06);}.dv-row.rms-l{background:rgba(248,113,113,.06);}
+.dv-row-l{display:flex;flex-direction:column;gap:2px;}
+.dv-row-day{font-size:11px;font-weight:600;color:#e2e6ed;}
+.dv-row-sub{font-size:8px;color:#4d5a6e;}
+.dv-row-r{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+.dv-row-pnl{font-size:11px;font-weight:600;}
+.dv-row-meta{font-size:8px;color:#4d5a6e;}
+.dv-empty{padding:32px;text-align:center;font-size:10px;color:#4d5a6e;}
+.global-capital{background:#131720;border-bottom:2px solid #34d399;padding-top:2px;}
+.gc-hd{display:flex;align-items:center;gap:6px;padding:9px 12px 6px;}
+.gc-hd span{font-family:'Cabinet Grotesk',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#e2e6ed;}
+.gc-body{padding:0 12px 6px;}
 .tbl-empty{padding:32px;text-align:center;font-size:10px;color:#4d5a6e;}
 .log-body{padding:8px 16px;}
 .log-info{font-size:9px;color:#4d5a6e;text-align:center;margin-bottom:6px;letter-spacing:.07em;}
@@ -279,7 +279,6 @@ canvas.spark{width:100%;height:34px;display:block;}
 .fb-total .fb-lbl{color:#8892a4;font-weight:600;}
 .fb-total .fb-val{color:#34d399;font-weight:600;}
 .fb-tier{font-size:8px;color:#fbbf24;margin-top:4px;letter-spacing:.04em;}
-
 </style>
 </head>
 <body>
@@ -288,7 +287,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 <div class="topbar">
   <div class="brand">
     <span class="brand-name">Anti-Hope Machine</span>
-    <span class="brand-ver">v28</span>
+    <span class="brand-ver">v29</span>
   </div>
   <div class="top-r">
     <button class="guide-btn" onclick="openGuide()">Guide</button>
@@ -299,6 +298,15 @@ canvas.spark{width:100%;height:34px;display:block;}
 <div class="screens">
 
   <div class="screen active" id="scr-sim">
+    <div class="global-capital">
+      <div class="gc-hd">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Capital</span>
+        <button class="ib" onclick="openInfo('globalcap')" style="margin-left:4px;">?</button>
+      </div>
+      <div class="gc-body" id="gc-stepper"></div>
+      <div class="fc-note" style="padding:0 12px 8px;">Shared starting capital across all three strategies — makes A/B/C directly comparable on the same account size. Each strategy still sets its own ticker, price, and share count.</div>
+    </div>
     <div class="sbar">
       <button class="sbtn on" id="stb0" onclick="switchStrat(0)">A</button>
       <button class="sbtn sc-b" id="stb1" onclick="switchStrat(1)">B</button>
@@ -309,24 +317,29 @@ canvas.spark{width:100%;height:34px;display:block;}
     <div id="sp2" style="display:none;"></div>
   </div>
 
-  <div class="screen scr-tbl-fixed" id="scr-tbl">
+  <div class="screen" id="scr-tbl">
     <div class="sbar">
       <button class="sbtn on" id="tsb0" onclick="switchTblStrat(0)">A</button>
       <button class="sbtn sc-b" id="tsb1" onclick="switchTblStrat(1)">B</button>
       <button class="sbtn sc-c" id="tsb2" onclick="switchTblStrat(2)">C</button>
     </div>
-    <div class="tbl-controls">
-      <span class="tc-lbl">Every</span>
-      <div class="tc-stp" id="intv-wrap-0"></div>
-      <div class="tc-stp" id="intv-wrap-1" style="display:none;"></div>
-      <div class="tc-stp" id="intv-wrap-2" style="display:none;"></div>
-      <span class="tc-lbl">days</span>
+    <div class="dv-half">
+      <div class="dv-toggle">
+        <button class="dv-tbtn on" id="dv-single-btn" onclick="dvSetMode('single')">This Strategy</button>
+        <button class="dv-tbtn" id="dv-combo-btn" onclick="dvSetMode('combo')">All Strategies</button>
+      </div>
+      <div class="chart-wrap" style="height:100%;"><canvas class="eqcv" id="dv-cv"></canvas></div>
+      <div id="dv-combo-legend" style="display:none;gap:12px;padding:6px 12px;flex-wrap:wrap;"></div>
     </div>
-    <div class="tbl-scroll">
-      <table>
-        <thead><tr><th>Day</th><th>Cal</th><th>Mo P&L</th><th>Label</th><th>Sh</th><th>WR%</th><th>Tr</th><th>Ticks</th><th>Day%</th><th>P&L</th><th>Ret%</th><th>Fees</th><th>Surplus</th><th>+Sh</th><th>Cumul</th></tr></thead>
-        <tbody id="main-tbody"></tbody>
-      </table>
+    <div class="dv-half">
+      <div class="dv-picker-hd">
+        <span class="tc-lbl">Day</span>
+        <div class="tc-stp" id="intv-wrap-0" style="max-width:110px;"></div>
+        <div class="tc-stp" id="intv-wrap-1" style="max-width:110px;display:none;"></div>
+        <div class="tc-stp" id="intv-wrap-2" style="max-width:110px;display:none;"></div>
+        <span class="tc-lbl">step</span>
+      </div>
+      <div class="dv-wheel" id="dv-wheel"></div>
     </div>
   </div>
 
@@ -580,7 +593,7 @@ const LIM={
   rrSlider:{min:0,max:200,step:1},tickSz:{min:1,max:100,step:1},
   minDp:{min:-200,max:200,step:1},maxDp:{min:-200,max:200,step:1},
   bias:{min:0,max:100,step:5},intv:{min:1,max:30,step:1},
-  startCap:{min:0,max:1000000,step:100},
+  gcStartCap:{min:0,max:1000000,step:100},
   volCeil:{min:0,max:1000000,step:50},
   vwFH_min:{min:0,max:2000000,step:1000},vwFH_max:{min:0,max:2000000,step:1000},
   vwMD_min:{min:0,max:2000000,step:1000},vwMD_max:{min:0,max:2000000,step:1000},
@@ -645,7 +658,7 @@ function switchStrat(n){
   });
   updateDist(n);
 }
-function switchTblStrat(n){activeTblStrat=n;[0,1,2].forEach(i=>{$('tsb'+i).classList.toggle('on',i===n);const iw=$('intv-wrap-'+i);if(iw)iw.style.display=i===n?'flex':'none';});renderTable(n);}
+function switchTblStrat(n){activeTblStrat=n;dvSelIdx=0;[0,1,2].forEach(i=>{$('tsb'+i).classList.toggle('on',i===n);const iw=$('intv-wrap-'+i);if(iw)iw.style.display=i===n?'flex':'none';});renderTable(n);}
 
 function openGuide(){$('gmodal').classList.add('open');}
 function closeGuide(){$('gmodal').classList.remove('open');}
@@ -688,7 +701,7 @@ function cfg(tab){
     minSw:n('minSw',15),maxSw:n('maxSw',40),
     minDp:n('minDp',-2),maxDp:n('maxDp',3),
     bias:n('bias',50)/100,curve:str('curve','linear'),mode:str('mode','rand'),
-    startCap:n('startCap',0),volCeil:n('volCeil',0),
+    volCeil:n('volCeil',0),
     vwFH_min:n('vwFH_min',60000),vwFH_max:n('vwFH_max',120000),
     vwMD_min:n('vwMD_min',15000),vwMD_max:n('vwMD_max',40000),
     vwLH_min:n('vwLH_min',30000),vwLH_max:n('vwLH_max',70000),
@@ -711,7 +724,7 @@ function cfg(tab){
     minSw:on('tog-swing')?r.minSw:Math.round((r.minSw+r.maxSw)/2),maxSw:on('tog-swing')?r.maxSw:Math.round((r.minSw+r.maxSw)/2),dpct:on('tog-dp'),
     minDp:on('tog-dp')?r.minDp:0,maxDp:on('tog-dp')?r.maxDp:0,
     bias:on('tog-bias')?r.bias:0,curve:r.curve,mode:r.mode,
-    startCap:on('tog-startcap')?r.startCap:0,
+    startCap:sv('gcStartCap',0,0), // shared across all strategies — not tab-scoped
     volCeil:on('tog-volceil')?r.volCeil:0,
     vwOn:on('tog-vw'),
     vwFH_min:r.vwFH_min,vwFH_max:r.vwFH_max,
@@ -883,7 +896,6 @@ function _sim(tab){
   $('tbl-pip').classList.add('on');
   renderTable(tab,rows,acct0,c,msp,capped);
   renderStratComparison();
-  redrawAllComboCharts();
   save();
 }
 
@@ -921,18 +933,11 @@ function _drawChart(cv,equity,acct0){
   ctx.strokeStyle=pnls[pnls.length-1]>=0?'#34d399':'#f87171';ctx.lineWidth=2;ctx.stroke();
   cv._cs={equity,acct0,pd,pw,ph,W,H,pnls,mn,rng,xS,yS};
 }
-/* ══════════════════════════════════════════════════════════════
-   COMBINED MULTI-STRATEGY COMPARISON CHART
-   Plots every simulated strategy's real equity curve on one canvas,
-   in that strategy's own colour. A shared y-scale makes magnitude
-   directly comparable; each series keeps its own true length on x,
-   so a strategy that reaches goal faster visibly ends sooner — that
-   itself is the "which is faster" answer, not something to normalize
-   away. Includes a synchronized crosshair across all active series.
-   ══════════════════════════════════════════════════════════════ */
+/* Combined multi-strategy comparison overlay — shared y-scale so magnitude
+   is directly comparable; each series keeps its own true x-length, so a
+   strategy that finishes faster visibly ends sooner on the chart. */
 const STRAT_COLORS=['#34d399','#f87171','#fbbf24'];
 const STRAT_LABELS=['A','B','C'];
-
 function drawCombinedChart(cv,legendEl){
   if(!cv||!cv.getContext)return;
   const active=[0,1,2].filter(i=>simResults[i]&&simResults[i].equity&&simResults[i].equity.length>1);
@@ -945,88 +950,36 @@ function drawCombinedChart(cv,legendEl){
     ctx.fillStyle='#4d5a6e';ctx.font='11px IBM Plex Mono';ctx.textAlign='center';
     ctx.fillText('Run a simulation on any strategy to see it here',W/2,H/2);
     if(legendEl)legendEl.innerHTML='';
-    cv._mcs=null;
     return;
   }
   const pd={t:8,b:8,l:6,r:6};const pw=W-pd.l-pd.r,ph=H-pd.t-pd.b;
-  // Shared scale across ALL active series so magnitude is directly comparable
   let allPnls=[];
   const series=active.map(i=>{
-    const eq=simResults[i].equity;
-    const pnls=eq.map(p=>p.cumPnl);
+    const eq=simResults[i].equity;const pnls=eq.map(p=>p.cumPnl);
     allPnls=allPnls.concat(pnls);
     return{idx:i,eq,pnls,color:STRAT_COLORS[i],label:STRAT_LABELS[i]};
   });
   const mn=Math.min(0,...allPnls),mx=Math.max(0,...allPnls),rng=mx-mn||1;
   const maxLen=Math.max(...series.map(s=>s.pnls.length));
-  const xS=(i,len)=>pd.l+(i/Math.max(maxLen-1,1))*pw; // shared x-scale so relative speed is visible
+  const xS=i=>pd.l+(i/Math.max(maxLen-1,1))*pw;
   const yS=v=>pd.t+ph-((v-mn)/rng)*ph;
   const zy=yS(0);
   ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;ctx.setLineDash([3,4]);
   ctx.beginPath();ctx.moveTo(pd.l,zy);ctx.lineTo(pd.l+pw,zy);ctx.stroke();ctx.setLineDash([]);
   for(const s of series){
     ctx.beginPath();ctx.moveTo(xS(0),yS(s.pnls[0]));
-    for(let i=1;i<s.pnls.length;i++){
-      const cpx=(xS(i-1)+xS(i))/2;
-      ctx.bezierCurveTo(cpx,yS(s.pnls[i-1]),cpx,yS(s.pnls[i]),xS(i),yS(s.pnls[i]));
-    }
+    for(let i=1;i<s.pnls.length;i++){const cpx=(xS(i-1)+xS(i))/2;ctx.bezierCurveTo(cpx,yS(s.pnls[i-1]),cpx,yS(s.pnls[i]),xS(i),yS(s.pnls[i]));}
     ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.stroke();
-    // Mark the endpoint clearly — this is where "who finished first / highest" reads at a glance
     const lastI=s.pnls.length-1;
     ctx.beginPath();ctx.arc(xS(lastI),yS(s.pnls[lastI]),3,0,Math.PI*2);
-    ctx.fillStyle=s.color;ctx.fill();
-    ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=s.color;ctx.fill();ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
   }
-  cv._mcs={series,pd,pw,ph,W,H,mn,rng,xS,yS,maxLen};
   if(legendEl){
     legendEl.innerHTML=series.map(s=>{
-      const last=s.pnls[s.pnls.length-1];
-      const days=s.eq[s.eq.length-1].day;
+      const last=s.pnls[s.pnls.length-1];const days=s.eq[s.eq.length-1].day;
       return`<div style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0;"></span><span style="font-size:9px;color:#8892a4;">${s.label}</span><span style="font-size:9px;font-weight:600;color:${s.color};">${last>=0?'+$':'−$'}${fmt(Math.abs(last))}</span><span style="font-size:8px;color:#4d5a6e;">· ${days}d</span></div>`;
     }).join('');
   }
-}
-
-// Redraws the comparison chart + legend on all three strategy panes at once,
-// since a sim run on ANY strategy changes what every pane's comparison shows.
-function redrawAllComboCharts(){
-  [0,1,2].forEach(tab=>{
-    const s=tab===0?'':'_'+tab;
-    const cv=$('combo-cv'+s),legend=$('combo-legend'+s);
-    if(cv)drawCombinedChart(cv,legend);
-  });
-}
-
-function wireCombinedChart(cv,tt){
-  function onX(cx){
-    const st=cv._mcs;if(!st)return;
-    const rect=cv.getBoundingClientRect();const x=cx-rect.left;
-    if(x<st.pd.l||x>st.pd.l+st.pw){if(tt)tt.textContent='';return;}
-    const idx=Math.round(((x-st.pd.l)/st.pw)*Math.max(st.maxLen-1,0));
-    // Redraw base chart, then overlay crosshair + per-series value readout at this x
-    const activeStrats=simResults.map((r,i)=>r).map((r,i)=>i).filter(i=>simResults[i]);
-    drawCombinedChart(cv,null);
-    const ctx=cv.getContext('2d');
-    const dpr=window.devicePixelRatio||1;
-    ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1;ctx.setLineDash([2,3]);
-    const cx2=st.xS(idx);
-    ctx.beginPath();ctx.moveTo(cx2,st.pd.t);ctx.lineTo(cx2,st.pd.t+st.ph);ctx.stroke();
-    ctx.setLineDash([]);
-    const parts=[];
-    for(const s of st.series){
-      if(idx<s.pnls.length){
-        const val=s.pnls[idx];
-        const cy=st.yS(val);
-        ctx.beginPath();ctx.arc(cx2,cy,3,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();
-        parts.push(`${s.label} ${val>=0?'+$':'−$'}${fmt(Math.abs(val))}`);
-      }
-    }
-    if(tt)tt.textContent=`Day ${idx+1} · `+parts.join(' · ');
-  }
-  cv.addEventListener('mousemove',e=>onX(e.clientX));
-  cv.addEventListener('mouseleave',()=>{if(tt)tt.textContent='';drawCombinedChart(cv,null);});
-  cv.addEventListener('touchmove',e=>{e.preventDefault();onX(e.touches[0].clientX);},{passive:false});
-  cv.addEventListener('touchend',()=>{if(tt)tt.textContent='';drawCombinedChart(cv,null);});
 }
 
 function wireChart(cv,tt){
@@ -1171,6 +1124,27 @@ function buildDiag(c,cumPnl,days,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,
       rows.push(row('Volume ceiling','CAPPED at '+c.volCeil.toLocaleString()+' sh','neu','growth stops here',avgShDisp,c.volCeil,'lower'));
     }
     rows.push(row('Status',wrOk&&c.evNet>0?'PROFITABLE':c.evNet>0?'MARGINAL':'NEGATIVE',wrOk&&c.evNet>0?'pos':c.evNet>0?'neu':'neg'));
+    // ── Which strategy is faster / better, if others have been simulated ──
+    const others=[0,1,2].filter(i=>i!==tab&&simResults[i]&&simResults[i].rows&&simResults[i].rows.length);
+    if(others.length){
+      const myDays=days,myEV=c.evNet;
+      const cmp=others.map(i=>{
+        const r=simResults[i];
+        const oDays=r.rows.length;
+        const oEV=r.c.evNet;
+        return{label:STRAT_LABELS[i],oDays,oEV};
+      });
+      const fasterThan=cmp.filter(o=>myDays<o.oDays).map(o=>o.label);
+      const slowerThan=cmp.filter(o=>myDays>o.oDays).map(o=>o.label);
+      const higherEVThan=cmp.filter(o=>myEV>o.oEV).map(o=>o.label);
+      let speedNote;
+      if(fasterThan.length&&!slowerThan.length)speedNote=`Faster to goal than ${fasterThan.join(', ')}`;
+      else if(slowerThan.length&&!fasterThan.length)speedNote=`Slower to goal than ${slowerThan.join(', ')}`;
+      else if(fasterThan.length&&slowerThan.length)speedNote=`Faster than ${fasterThan.join(', ')}, slower than ${slowerThan.join(', ')}`;
+      else speedNote='Same pace as '+cmp.map(o=>o.label).join(', ');
+      const speedCls=fasterThan.length>=slowerThan.length?'pos':'neg';
+      rows.push(row('vs. other strategies',speedNote,speedCls,higherEVThan.length===cmp.length?'also highest EV/day':higherEVThan.length===0?'lowest EV/day of the three':''));
+    }
   }
   let cls;
   if(capped||c.evNet<0)cls='ng';
@@ -1183,43 +1157,142 @@ function buildDiag(c,cumPnl,days,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,
   if(l)l.innerHTML=rows.join('');
 }
 
+/* ══════════════════════════════════════════════════════════════
+   TABLE TAB — flat, linked equity curve + scroll-wheel day picker.
+   Deliberately avoids nested overflow:auto chains. Only two scroll
+   contexts exist here, siblings not nested: the equity chart never
+   scrolls at all, and .dv-wheel is the ONE scrollable element.
+   ══════════════════════════════════════════════════════════════ */
+let dvMode='single'; // 'single' | 'combo'
+let dvSelIdx=0; // index into the currently shown rows array
+let dvRowsCache=[]; // rows currently rendered in the wheel, for scroll->highlight mapping
+
+function dvSetMode(mode){
+  dvMode=mode;
+  $('dv-single-btn').classList.toggle('on',mode==='single');
+  $('dv-combo-btn').classList.toggle('on',mode==='combo');
+  $('dv-combo-legend').style.display=mode==='combo'?'flex':'none';
+  renderTable(activeTblStrat);
+}
+
 function renderTable(tab,rowsIn,acct0In,cIn,mspIn,cappedIn){
   const res=simResults[tab];
   const rows=rowsIn||res?.rows,acct0=acct0In||res?.acct0,c=cIn||res?.c,msp=mspIn||res?.msp,capped=cappedIn||false;
-  const tbody=$('main-tbody');
-  if(!rows||!rows.length){tbody.innerHTML=`<tr><td colspan="15" class="tbl-empty">No sim data. Run a simulation first.</td></tr>`;return;}
-  const intv=sv('intv',tab,5)||5;tbody.innerHTML='';
+  const wheel=$('dv-wheel');
+  if(!rows||!rows.length){
+    if(wheel)wheel.innerHTML='<div class="dv-empty">No sim data. Run a simulation first.</div>';
+    const cv=$('dv-cv');if(cv&&cv.getContext){const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);}
+    dvRowsCache=[];
+    return;
+  }
+  const intv=sv('intv',tab,5)||5;
   const show=new Set([0,rows.length-1]);
   rows.forEach((r,i)=>{if(r.isMilestone||r.day%intv===0)show.add(i);});
   const sorted=[...show].sort((a,b)=>a-b);
-  const maxA=Math.max(...sorted.map(i=>Math.abs(rows[i].dayPnl)),1);
-  for(const idx of sorted){
-    const r=rows[idx];const tr=document.createElement('tr');
-    if(r.isMilestone)tr.className=r.outcome==='WIN'?'rms-w':'rms-l';
-    else if(r.outcome==='LOSS')tr.className='rl';else if(r.outcome==='BE')tr.className='rb_';
-    if(r.isBlowup)tr.classList.add('blow');if(r.isGood)tr.classList.add('good');
-    const bP=(Math.abs(r.dayPnl)/maxA*100).toFixed(1);
-    const bC=r.dayPnl>0?'bfp':r.dayPnl<0?'bfn':'bfz';
-    const pC=r.dayPnl>0?'#34d399':r.dayPnl<0?'#f87171':'#fbbf24';
-    const moPnl=r.cumPnl-((msp||{})[r.mIdx]||0);
-    const dpS=r.dayPct!=null?(r.dayPct>=0?'+':'')+r.dayPct.toFixed(2)+'%':'—';
-    const dpC=r.dayPct!=null?(r.dayPct>=0?'#34d399':'#f87171'):'#4d5a6e';
-    let label='—';
-    if(r.isMilestone)label='★ '+r.msVal.toLocaleString();
-    else if(r.day===1)label='Start';
-    else if(idx===rows.length-1)label=capped?'Cap':'Goal ✓';
-    const totTr=r.dayWinCt+r.dayLoseCt+r.dayBECt;
-    const wrPct=totTr>0?((r.dayWinCt/totTr)*100).toFixed(0)+'%':'—';
-    tr.innerHTML=`<td>${r.day}</td><td>${cal(r.calMo)}</td><td style="color:#e2e6ed">${(moPnl>=0?'+$':'−$')+fmt(Math.abs(moPnl))}</td><td>${label}</td><td style="color:#fbbf24;font-weight:600">${r.shares.toLocaleString()}</td><td style="color:#4d5a6e;font-size:9px">${wrPct}</td><td style="font-size:9px;color:#8892a4">${r.numTr||'—'}</td><td style="color:${r.dayTicks>0?'#34d399':r.dayTicks<0?'#f87171':'#4d5a6e'}">${r.dayTicks!==0?(r.dayTicks>0?'+':'')+r.dayTicks+'t':'—'}</td><td style="color:${dpC};font-size:9px">${dpS}</td><td class="bw"><div class="bf ${bC}" style="width:${bP}%"></div><span style="color:${pC}">${sgn(r.dayPnl)}</span></td><td style="color:${(r.cumPnl/acct0*100)>=0?'#34d399':'#f87171'};font-size:9px">${pct(r.cumPnl/acct0*100,1)}</td><td style="color:#4d5a6e;font-size:9px">${r.dayFees>0?'−$'+fmt(r.dayFees):'—'}</td><td style="color:#4d5a6e;font-size:9px">${(r.surplus>=0?'$':'−$')+fmt(Math.abs(r.surplus))}</td><td style="color:#fbbf24;font-size:9px">${r.newSh>0?'+'+r.newSh:'—'}</td><td style="color:#e2e6ed;font-weight:600">${(r.cumPnl>=0?'$':'−$')+fmt(Math.abs(r.cumPnl))}</td>`;
-    tbody.appendChild(tr);
+  dvRowsCache=sorted.map(i=>rows[i]);
+  if(dvSelIdx>=dvRowsCache.length)dvSelIdx=dvRowsCache.length-1;
+  if(dvSelIdx<0)dvSelIdx=0;
+
+  if(wheel){
+    wheel.innerHTML='';
+    sorted.forEach((idx,pos)=>{
+      const r=rows[idx];
+      const row=document.createElement('div');
+      row.className='dv-row';
+      if(r.isMilestone)row.classList.add(r.outcome==='WIN'?'rms-w':'rms-l');
+      else if(r.outcome==='LOSS')row.classList.add('rl');else if(r.outcome==='BE')row.classList.add('rb_');
+      if(pos===dvSelIdx)row.classList.add('sel');
+      const moPnl=r.cumPnl-((msp||{})[r.mIdx]||0);
+      let label='Day '+r.day;
+      if(r.isMilestone)label='★ '+r.msVal.toLocaleString()+' sh';
+      else if(r.day===1)label='Start';
+      else if(idx===rows.length-1)label=capped?'Capped':'Goal ✓';
+      const totTr=r.dayWinCt+r.dayLoseCt+r.dayBECt;
+      const wrPct=totTr>0?((r.dayWinCt/totTr)*100).toFixed(0)+'%':'—';
+      const pC=r.dayPnl>0?'#34d399':r.dayPnl<0?'#f87171':'#fbbf24';
+      row.innerHTML=`
+        <div class="dv-row-l">
+          <span class="dv-row-day">${label}</span>
+          <span class="dv-row-sub">${cal(r.calMo)} · ${r.shares.toLocaleString()} sh · WR ${wrPct}</span>
+        </div>
+        <div class="dv-row-r">
+          <span class="dv-row-pnl" style="color:${pC};">${sgn(r.dayPnl)}</span>
+          <span class="dv-row-meta">${(r.cumPnl>=0?'$':'−$')+fmt(Math.abs(r.cumPnl))} total</span>
+        </div>`;
+      row.addEventListener('click',()=>{dvSelIdx=pos;dvRenderWheelSelection();dvDrawChart(tab);});
+      wheel.appendChild(row);
+    });
   }
-  if(capped){const w=document.createElement('tr');w.innerHTML=`<td colspan="15" style="text-align:center;color:#f87171;padding:8px;font-size:9px;">CAPPED AT 10,000 DAYS</td>`;tbody.appendChild(w);}
+  dvDrawChart(tab);
 }
+
+function dvRenderWheelSelection(){
+  const wheel=$('dv-wheel');if(!wheel)return;
+  [...wheel.children].forEach((el,i)=>el.classList.toggle('sel',i===dvSelIdx));
+  const sel=wheel.children[dvSelIdx];
+  if(sel)sel.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+
+function dvDrawChart(tab){
+  const cv=$('dv-cv');if(!cv)return;
+  if(dvMode==='combo'){
+    drawCombinedChart(cv,$('dv-combo-legend'));
+    return;
+  }
+  const res=simResults[tab];
+  if(!res||!res.equity||res.equity.length<2){
+    if(cv.getContext){const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);}
+    return;
+  }
+  _drawChart(cv,res.equity,res.acct0);
+  // Overlay a marker for the currently selected day, linking wheel <-> chart
+  const sel=dvRowsCache[dvSelIdx];
+  if(sel&&cv._cs){
+    const st=cv._cs;
+    const eqIdx=sel.day-1; // equity array is 1 point per simulated day, in order
+    if(eqIdx>=0&&eqIdx<st.pnls.length){
+      const ctx=cv.getContext('2d');
+      const cx=st.xS(eqIdx),cy=st.yS(st.pnls[eqIdx]);
+      ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1;ctx.setLineDash([2,3]);
+      ctx.beginPath();ctx.moveTo(cx,st.pd.t);ctx.lineTo(cx,st.pd.t+st.ph);ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);
+      ctx.fillStyle='#fbbf24';ctx.fill();
+      ctx.strokeStyle='#131720';ctx.lineWidth=2;ctx.stroke();
+    }
+  }
+}
+
+// Scroll-driven selection: as the wheel scrolls, whichever row sits nearest
+// the vertical centre becomes the selected/highlighted day.
+function dvWireWheelScroll(){
+  const wheel=$('dv-wheel');if(!wheel)return;
+  let scrollTimer=null;
+  wheel.addEventListener('scroll',()=>{
+    clearTimeout(scrollTimer);
+    scrollTimer=setTimeout(()=>{
+      const wRect=wheel.getBoundingClientRect();
+      const centerY=wRect.top+wRect.height/2;
+      let closest=0,closestDist=Infinity;
+      [...wheel.children].forEach((el,i)=>{
+        const r=el.getBoundingClientRect();
+        const dist=Math.abs((r.top+r.height/2)-centerY);
+        if(dist<closestDist){closestDist=dist;closest=i;}
+      });
+      if(closest!==dvSelIdx){
+        dvSelIdx=closest;
+        [...wheel.children].forEach((el,i)=>el.classList.toggle('sel',i===dvSelIdx));
+        dvDrawChart(activeTblStrat);
+      }
+    },80);
+  },{passive:true});
+}
+
 
 function exportData(tab){
   const res=simResults[tab];if(!res||!res.rows.length){alert('Run a simulation first.');return;}
   const {rows,acct0,c,msp}=res;const names=['Strat-A','Strat-B','Strat-C'];
-  const L=['AHM v28 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
+  const L=['AHM v29 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
   const show=new Set([0,rows.length-1]);rows.forEach((r,i)=>{if(r.isMilestone||r.day%c.intv===0)show.add(i);});
   for(const idx of [...show].sort((a,b)=>a-b)){const r=rows[idx];const mo=r.cumPnl-((msp||{})[r.mIdx]||0);const dp=r.dayPct!=null?r.dayPct.toFixed(2)+'%':'—';let lbl='';if(r.isMilestone)lbl='Milestone '+r.msVal;else if(r.day===1)lbl='Start';else if(idx===rows.length-1)lbl='Goal';const tt=r.dayWinCt+r.dayLoseCt+r.dayBECt;const wrp=tt>0?((r.dayWinCt/tt)*100).toFixed(0)+'%':'—';L.push([r.day,cal(r.calMo),mo.toFixed(2),lbl,r.shares,r.outcome,wrp,r.numTr||0,r.dayTicks,dp,r.dayPnl.toFixed(2),(r.cumPnl/acct0*100).toFixed(2)+'%',(r.dayFees||0).toFixed(2),r.surplus.toFixed(2),r.newSh,r.cumPnl.toFixed(2)].join(','));}
   const blob=new Blob([L.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);
@@ -1820,7 +1893,7 @@ const INFO={
   price:{t:'Share Price Range',b:'<p>Used for account size and share purchase cost. Set min/max to reflect daily price variation.</p>'},
   sh:{t:'Starting Shares',b:'<p>How many shares you begin with. Starting account = shares × avg price, unless Starting Capital is set directly.</p>'},
   goal:{t:'Share Goal',b:'<p>Target share count. Simulation runs until you reach this, hit the Volume Ceiling (if set), or the 5,000 day cap.</p>'},
-  startcap:{t:'Starting Capital',b:'<p>Override your account starting value directly in dollars instead of deriving it from shares × price. Useful when you know your actual account balance and want the simulation to start from there.</p><p>When set, this takes priority over the shares × price calculation for your starting account size.</p>'},
+  globalcap:{t:'Capital',b:'<p>One shared starting capital value used by every strategy — A, B, and C all compound from the same account size, regardless of what ticker or share price each is testing.</p><p>Set to $0, each strategy falls back to its own Starting Shares × Price Range as its account base — same as before, just per-strategy again in that case.</p><p>Keeping this shared is what makes the Strategy Comparison and combined equity curve genuinely apples-to-apples.</p>'},
   volceil:{t:'Volume Ceiling',b:'<p>A hard cap on share count growth, separate from your Share Goal. Prevents the simulation from over-compounding indefinitely — once shares reach this ceiling, compounding stops even if the Share Goal is higher.</p><p>Acts like the other overrides: when enabled, it constrains the simulation regardless of other settings. Set to 0 to disable.</p>'},
   swing:{t:'Avg Swing',b:'<p>Tick range of a typical price move. Swing Capture % = your profit target as a percentage of the full swing.</p>'},
   pullback:{t:'Pullback',b:'<p>If pullback ≥ effective target, win becomes stop-out (Pullback Kill).</p>'},
@@ -1836,7 +1909,7 @@ const INFO={
   vw:{t:'Volume Windows',b:'<p>Custom per ticker — no assumptions baked in. Set typical volume/minute for three session windows: First Hour, Midday, Last Hour.</p><p>Your Participation Rate (%) determines your comfortable share of that flow. If your Starting Shares exceeds what your participation rate allows for a window volume, that window gets a "squeeze" — extra entry offset and slippage applied to trades landing in it, since you are pushing more size into less liquidity than you would comfortably want.</p><p>Trades are distributed across the three windows automatically based on their position in each simulated day trade sequence — early trades skew toward First Hour, late toward Last Hour.</p><p>Works for any ticker: a thin stock and a liquid one just get different volume numbers — the math scales itself.</p>'},
 };
 
-const SDEFS=[['minP',15,'t'],['maxP',30,'t'],['minL',5,'t'],['maxL',15,'t'],['minWR',55,'%'],['maxWR',65,'%'],['minBE',10,'%'],['maxBE',20,'%'],['minT',2,''],['maxT',5,''],['sh',100,''],['goal',500,''],['minPr',43,''],['maxPr',47,''],['spread',1,'t'],['slip',1,'t'],['buf',1,''],['cap',0,'t'],['disc',85,'%'],['bf',3,'%'],['bs',2,'%'],['gf',3,'%'],['gs_',2,'%'],['minPB',3,'t'],['maxPB',8,'t'],['minEO',1,'t'],['maxEO',4,'t'],['minSw',15,'t'],['maxSw',40,'t'],['rrSlider',0,''],['tickSz',1,'¢'],['minDp',-2,'%'],['maxDp',3,'%'],['bias',50,'%'],['intv',5,''],['startCap',0,'$'],['volCeil',0,'sh'],['vwFH_min',60000,'/m'],['vwFH_max',120000,'/m'],['vwMD_min',15000,'/m'],['vwMD_max',40000,'/m'],['vwLH_min',30000,'/m'],['vwLH_max',70000,'/m'],['partRate',10,'%']];
+const SDEFS=[['minP',15,'t'],['maxP',30,'t'],['minL',5,'t'],['maxL',15,'t'],['minWR',55,'%'],['maxWR',65,'%'],['minBE',10,'%'],['maxBE',20,'%'],['minT',2,''],['maxT',5,''],['sh',100,''],['goal',500,''],['minPr',43,''],['maxPr',47,''],['spread',1,'t'],['slip',1,'t'],['buf',1,''],['cap',0,'t'],['disc',85,'%'],['bf',3,'%'],['bs',2,'%'],['gf',3,'%'],['gs_',2,'%'],['minPB',3,'t'],['maxPB',8,'t'],['minEO',1,'t'],['maxEO',4,'t'],['minSw',15,'t'],['maxSw',40,'t'],['rrSlider',0,''],['tickSz',1,'¢'],['minDp',-2,'%'],['maxDp',3,'%'],['bias',50,'%'],['intv',5,''],['volCeil',0,'sh'],['vwFH_min',60000,'/m'],['vwFH_max',120000,'/m'],['vwMD_min',15000,'/m'],['vwMD_max',40000,'/m'],['vwLH_min',30000,'/m'],['vwLH_max',70000,'/m'],['partRate',10,'%']];
 
 function buildPanes(){
   [0,1,2].forEach(n=>{
@@ -1867,8 +1940,6 @@ function buildPanes(){
     const core=fc('wr','Win Rate %','#34d399','wr',dph('minWR','maxWR'))+fc('be','Breakeven %','#60a5fa','be',dph('minBE','maxBE'))+roLoss+distCard;
     const risk=fc('p','Profit Target','#fbbf24','profit',dph('minP','maxP'))+fc('l','Stop Loss','#f87171','loss',dph('minL','maxL'))+fc('t','Trades / Day','#fb923c','trades',dph('minT','maxT'))+fc('cap','Daily Loss Cap','#f87171','cap',ph('cap'));
 
-    const startCapCard=`<div class="fc off" id="fc-startcap${s}" style="border-left-color:#34d399;"><div class="fc-top"><span class="fc-lbl">Starting Capital <button class="ib" onclick="openInfo('startcap')">?</button></span>${tog('startcap',false)}</div>${ph('startCap')}<div class="fc-note">When ON, overrides shares × price as your starting account value.</div></div>`;
-
     const shGoalCard=`<div class="fc" id="fc-sh${s}" style="border-left-color:#fbbf24"><div class="fc-top"><span class="fc-lbl">Starting Shares <button class="ib" onclick="openInfo('sh')">?</button></span></div>${ph('sh')}</div><div class="fc" id="fc-goal${s}" style="border-left-color:#34d399"><div class="fc-top"><span class="fc-lbl">Share Goal <button class="ib" onclick="openInfo('goal')">?</button></span></div>${ph('goal')}</div>`;
 
     const frictionCard=`<div class="fc" id="fc-comm${s}" style="border-left-color:#fbbf24;"><div class="fc-top"><span class="fc-lbl">Commission (Tiered) <button class="ib" onclick="openInfo('comm')">?</button></span></div><div class="fc-note">Auto-calculated: $0.35 flat round trip under 100 shares, or $0.0035/share × 2 legs at 100+ shares. Scales with your Starting Shares.</div></div><div class="fc" id="fc-fees${s}" style="border-left-color:#34d399;"><div class="fc-top"><span class="fc-lbl">Exchange + Clearing + Reg <button class="ib" onclick="openInfo('fees')">?</button></span>${tog('fees',true)}</div><div class="friction-breakdown" id="fb${s}"><div class="fb-row"><span class="fb-lbl">Commission</span><span class="fb-val" id="fb-comm${s}">—</span></div><div class="fb-row"><span class="fb-lbl">Exchange + Clearing + Reg (0.0067/sh)</span><span class="fb-val" id="fb-ex${s}">—</span></div><div class="fb-row"><span class="fb-lbl">Slippage (×2 legs)</span><span class="fb-val" id="fb-slip${s}">—</span></div><div class="fb-row"><span class="fb-lbl">Spread cost</span><span class="fb-val" id="fb-spr${s}">—</span></div><div class="fb-total"><span class="fb-lbl">Est. round trip</span><span class="fb-val" id="fb-rt${s}">—</span></div></div><div class="fb-tier" id="fb-tier${s}">—</div></div>`;
@@ -1887,7 +1958,7 @@ function buildPanes(){
       ${ph('partRate')}
       <div class="fc-note" id="vw-summary${s}" style="margin-top:6px;"></div>
     </div>`;
-    const ticker=fc('pr','Price Range','#4d5a6e','price',dph('minPr','maxPr'))+startCapCard+shGoalCard+frictionCard+fc('sp','Spread','#fb923c','spread',ph('spread'))+fc('buf','Cash Buffer','#4d5a6e','buf',ph('buf'))+fc('tk','Tick Value','#4d5a6e','tick',ph('tickSz'))+fc('sl','Slippage','#f87171','slip',ph('slip'))+swingCard+fc('pb','Pullback','#60a5fa','pullback',dph('minPB','maxPB'))+fc('eo','Entry Offset','#4d5a6e','eo',dph('minEO','maxEO'))+volWindowCard;
+    const ticker=fc('pr','Price Range','#4d5a6e','price',dph('minPr','maxPr'))+shGoalCard+frictionCard+fc('sp','Spread','#fb923c','spread',ph('spread'))+fc('buf','Cash Buffer','#4d5a6e','buf',ph('buf'))+fc('tk','Tick Value','#4d5a6e','tick',ph('tickSz'))+fc('sl','Slippage','#f87171','slip',ph('slip'))+swingCard+fc('pb','Pullback','#60a5fa','pullback',dph('minPB','maxPB'))+fc('eo','Entry Offset','#4d5a6e','eo',dph('minEO','maxEO'))+volWindowCard;
 
     const psych=fc('bd','Bad Days','#f87171','bd',dph('bf','bs'))+fc('gd','Good Days','#34d399','gd',dph('gf','gs_'))+fc('cs','Discipline %','#4d5a6e','disc',ph('disc'))+fc('bias','Skill Growth %','#252d3d','bias',ph('bias')+sel('curve','<option value="slow" selected>Slow Start</option><option value="linear">Linear</option><option value="fast">Fast Start</option><option value="scurve">S-Curve</option>'));
 
@@ -1941,11 +2012,6 @@ function buildPanes(){
         <div class="diag-hd"><span class="diag-title" id="diag-t${s}">Diagnostics</span><span class="diag-badge" id="diag-b${s}">—</span></div>
         <div class="diag-body" id="diag-l${s}"></div>
       </div>
-      <div class="chart-panel" id="combo-panel${s}">
-        <div class="chart-hd"><span class="chart-lbl">Strategy Comparison · All Active</span><span class="chart-tt" id="combo-tt${s}"></span></div>
-        <div class="chart-wrap"><canvas class="eqcv" id="combo-cv${s}"></canvas></div>
-        <div id="combo-legend${s}" style="display:flex;gap:14px;padding:8px 12px;border-top:1px solid #252d3d;flex-wrap:wrap;"></div>
-      </div>
       <div class="disc"><p>Simulated results are hypothetical. Not financial advice.</p></div>
     `;
   });
@@ -1959,10 +2025,8 @@ function wirePanes(){
       const el=mkStp(id,tab,unit);ph.replaceWith(el);el.id=phid;setV(id,tab,defV);
     });
     const cv=$('cv'+s),tt=$('ct'+s);if(cv&&tt)wireChart(cv,tt);
-    const comboCv=$('combo-cv'+s),comboTt=$('combo-tt'+s);if(comboCv&&comboTt)wireCombinedChart(comboCv,comboTt);
   });
   [0,1,2].forEach(tab=>{
-    const s=tab===0?'':'_'+tab;
     const iw=$('intv-wrap-'+tab);if(!iw)return;
     const el=mkStp('intv',tab,'');iw.replaceWith(el);el.id='intv-wrap-'+tab;
     if(tab!==0)el.style.display='none';
@@ -1970,13 +2034,28 @@ function wirePanes(){
     if(inp){inp.addEventListener('change',()=>renderTable(activeTblStrat));inp.addEventListener('blur',()=>renderTable(activeTblStrat));}
     el.querySelectorAll('.stp-btn').forEach(b=>b.addEventListener('pointerup',()=>setTimeout(()=>renderTable(activeTblStrat),60)));
   });
+  dvWireWheelScroll();
+  const gcEl=$('gc-stepper');
+  if(gcEl){
+    const el=mkStp('gcStartCap',0,'$');gcEl.appendChild(el);
+    const inp=el.querySelector('.stp-val');
+    inp.value=0;
+    // Global capital affects every strategy's cfg() — refresh all three, not just tab 0.
+    const refreshAll=()=>{[0,1,2].forEach(t=>{updateDist(t);updateFrictionBreakdown(t);});save();};
+    inp.removeEventListener?.('change',null);
+    // mkStp already wired change/blur/click to call onSlider(0); override with a
+    // handler that also updates B and C, since this field is shared.
+    el.querySelectorAll('.stp-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeout(refreshAll,10)));
+    inp.addEventListener('change',refreshAll);
+    inp.addEventListener('blur',refreshAll);
+  }
   ['jsc-sleepq','jsc-stress','jsc-fatigue','jsc-conf','jsc-rules','jsc-diet','jsc-hydration'].forEach(id=>mkScale(id,5));
   populateHourSelect('j-timeslept');populateHourSelect('j-timewoke');
 }
 
-const SK='ahm-v28';
+const SK='ahm-v29';
 function getStpIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;SDEFS.forEach(([id])=>ids.push(id+s));});return ids;}
-const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-startcap','tog-volceil','tog-vw'];
+const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-volceil','tog-vw'];
 function getTogIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;TOG_BASE.forEach(id=>ids.push(id+s));});return ids;}
 const SEL_BASE=['curve','mode'];
 const REAL_IDS=['rCapS','rCapC','rTrades','rDays','rWR','rBE','rTickW','rTickL','rPnlTotal','rDayPnl'];
@@ -2019,7 +2098,6 @@ async function init(){
   const moCv=$('real-cv-month'),moTt=$('real-ct-month');if(moCv&&moTt)wireChart(moCv,moTt);
   if(sessionLog.length)resetRealStats();
   else onReal();
-  redrawAllComboCharts();
   if(loaded){if(sessionLog.length)$('log-info').textContent=sessionLog.length+' days logged';if(journalLog.length)renderJournal();}
 }
 init();
