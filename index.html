@@ -139,7 +139,7 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .tc-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;white-space:nowrap;}
 .tc-stp{flex:1;}
 /* ── Table tab: flat split-screen, no nested scroll chains ── */
-.dv-half{height:50%;display:flex;flex-direction:column;border-bottom:1px solid #252d3d;overflow:hidden;}
+.dv-half{flex:1 1 0;min-height:0;display:flex;flex-direction:column;border-bottom:1px solid #252d3d;overflow:hidden;}
 .dv-half:last-child{border-bottom:none;}
 .dv-empty{padding:32px;text-align:center;font-size:10px;color:#4d5a6e;}
 /* Original wide table, restored — now contained in the bottom .dv-half
@@ -289,7 +289,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 <div class="topbar">
   <div class="brand">
     <span class="brand-name">Anti-Hope Machine</span>
-    <span class="brand-ver">v30</span>
+    <span class="brand-ver">v31</span>
   </div>
   <div class="top-r">
     <button class="guide-btn" onclick="openGuide()">Guide</button>
@@ -326,7 +326,7 @@ canvas.spark{width:100%;height:34px;display:block;}
       <button class="sbtn sc-c" id="tsb2" onclick="switchTblStrat(2)">C</button>
     </div>
     <div class="dv-half">
-      <div class="chart-hd" style="padding:8px 12px 4px;"><span class="chart-lbl">Race to Goal · Shares vs Time</span><span class="chart-tt" id="dv-tt"></span></div>
+      <div class="chart-hd" style="padding:8px 12px 4px;"><span class="chart-lbl">Race to Goal · Capital vs Time</span><span class="chart-tt" id="dv-tt"></span></div>
       <div class="chart-wrap" style="height:100%;"><canvas class="eqcv" id="dv-cv"></canvas></div>
       <div id="dv-combo-legend" style="display:flex;gap:12px;padding:6px 12px;flex-wrap:wrap;"></div>
     </div>
@@ -742,14 +742,13 @@ function cfg(tab){
   const avgP=(c.minP+c.maxP)/2;
   let avgL=(c.minL+c.maxL)/2;if(c.rr>0)avgL=avgP/c.rr;
   const avgT=(c.minT+c.maxT)/2,avgPr=(c.minPr+c.maxPr)/2;
-  // Starting Shares toggle: when OFF, derive shares from global Capital ÷ this
-  // strategy's own price midpoint, rather than a manually fixed count.
-  const shOn=on('tog-sh');
-  if(!shOn){
-    const gCap=sv('gcStartCap',0,0);
-    c.sh=gCap>0&&avgPr>0?Math.max(1,Math.round(gCap/avgPr)):c.sh;
-  }
-  const acct0=c.startCap>0?c.startCap:c.sh*avgPr;
+  // Capital always determines share count — no manual override. Shares are
+  // purely a consequence of how much capital is deployed against this
+  // strategy's own price midpoint. This is what makes A/B/C genuinely
+  // comparable: same capital base, shares fall out of that automatically.
+  const gCap=sv('gcStartCap',0,0);
+  c.sh=gCap>0&&avgPr>0?Math.max(1,Math.round(gCap/avgPr)):c.sh;
+  const acct0=gCap>0?gCap:c.sh*avgPr;
   const exFee=0.0067;
   const exCost=c.feesOn?(c.sh*exFee):0;
   const commCost=commissionForShares(c.sh);
@@ -798,11 +797,20 @@ function onSlider(tab){updateDist(tab);updateFrictionBreakdown(tab);updateVolWin
 
 function updateDerivedShares(tab){
   const s=tab===0?'':'_'+tab;
-  const note=$('sh-derived-note'+s);if(!note)return;
-  const on=id=>isOn(id+s);
-  if(on('tog-sh')){note.textContent='';return;}
+  const note=$('sh-derived-note'+s);
   const c=cfg(tab);
-  note.textContent=`Derived: $${fmt(sv('gcStartCap',0,0),0)} capital ÷ $${c.avgPr.toFixed(0)} avg price ≈ ${c.sh.toLocaleString()} shares`;
+  const gCap=sv('gcStartCap',0,0);
+  if(note){
+    note.textContent=gCap>0
+      ? `Set by Capital: $${fmt(gCap,0)} ÷ $${c.avgPr.toFixed(0)} avg price ≈ ${c.sh.toLocaleString()} shares`
+      : `Set Capital above to determine share count.`;
+  }
+  // Starting Shares is now a read-only, derived display — capital is the
+  // only real input. Reflect the derived value and disable manual entry.
+  const shField=$('sh'+s);
+  if(shField){shField.value=c.sh;shField.disabled=true;}
+  const shWrap=shField?.closest('.stp');
+  if(shWrap)shWrap.querySelectorAll('.stp-btn').forEach(b=>b.disabled=true);
 }
 
 function updateVolWindowSummary(tab){
@@ -1226,13 +1234,14 @@ function renderTable(tab,rowsIn,acct0In,cIn,mspIn,cappedIn){
 }
 
 /* ══════════════════════════════════════════════════════════════
-   RACE-TO-GOAL CHART — shares (Y) vs time (X), one line per active
-   strategy, endpoint labeled with capital value at that point. This
-   is the ONE place in the app that charts shares instead of P&L —
-   deliberately, since "who reaches their goal fastest" reads far
-   more clearly on a shares axis than an equity axis, where two
-   different lines stopping at different heights doesn't obviously
-   mean "reached the finish line," just "stopped."
+   RACE-TO-GOAL CHART — capital/equity (Y) vs time (X), one line per
+   active strategy, endpoint annotated with its final share count. Y-axis
+   is equity because that's the actual outcome that matters; share count
+   sits at the endpoint as a label rather than driving the chart's shape,
+   since a chart shaped by share count made the visual height mean the
+   wrong thing. "Who finished first" still reads clearly from WHERE each
+   line stops on the X-axis — that hasn't changed, just what the height
+   represents while getting there.
    ══════════════════════════════════════════════════════════════ */
 function dvDrawRaceChart(cv,legendEl,hoverDay){
   if(!cv||!cv.getContext)return;
@@ -1249,44 +1258,46 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     cv._race=null;
     return;
   }
-  const pd={t:10,b:10,l:8,r:56}; // extra right padding reserves room for endpoint $ labels
+  const pd={t:10,b:10,l:8,r:64}; // extra right padding reserves room for endpoint share-count labels
   const pw=W-pd.l-pd.r,ph=H-pd.t-pd.b;
   const series=active.map(i=>{
     const rows=simResults[i].rows;
-    const shPts=rows.map(r=>({day:r.day,sh:r.shares,cum:r.cumPnl}));
-    return{idx:i,pts:shPts,color:STRAT_COLORS[i],label:STRAT_LABELS[i],acct0:simResults[i].acct0};
+    const acct0=simResults[i].acct0;
+    const pts=rows.map(r=>({day:r.day,sh:r.shares,cum:r.cumPnl,cap:acct0+r.cumPnl}));
+    return{idx:i,pts,color:STRAT_COLORS[i],label:STRAT_LABELS[i],acct0};
   });
   const maxDay=Math.max(...series.map(s=>s.pts[s.pts.length-1].day));
-  const maxSh=Math.max(...series.map(s=>s.pts[s.pts.length-1].sh),1);
-  const minSh=Math.min(...series.map(s=>s.pts[0].sh),0);
-  const shRng=(maxSh-minSh)||1;
+  const allCaps=series.flatMap(s=>s.pts.map(p=>p.cap));
+  const maxCap=Math.max(...allCaps),minCap=Math.min(0,...allCaps);
+  const capRng=(maxCap-minCap)||1;
   const xS=day=>pd.l+(Math.min(day,maxDay)/Math.max(maxDay,1))*pw;
-  const yS=sh=>pd.t+ph-((sh-minSh)/shRng)*ph;
+  const yS=cap=>pd.t+ph-((cap-minCap)/capRng)*ph;
   for(const s of series){
-    ctx.beginPath();ctx.moveTo(xS(s.pts[0].day),yS(s.pts[0].sh));
+    ctx.beginPath();ctx.moveTo(xS(s.pts[0].day),yS(s.pts[0].cap));
     for(let i=1;i<s.pts.length;i++){
       const cpx=(xS(s.pts[i-1].day)+xS(s.pts[i].day))/2;
-      ctx.bezierCurveTo(cpx,yS(s.pts[i-1].sh),cpx,yS(s.pts[i].sh),xS(s.pts[i].day),yS(s.pts[i].sh));
+      ctx.bezierCurveTo(cpx,yS(s.pts[i-1].cap),cpx,yS(s.pts[i].cap),xS(s.pts[i].day),yS(s.pts[i].cap));
     }
     ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.stroke();
     const last=s.pts[s.pts.length-1];
-    const ex=xS(last.day),ey=yS(last.sh);
+    const ex=xS(last.day),ey=yS(last.cap);
     ctx.beginPath();ctx.arc(ex,ey,3.5,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();
     ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
-    // Endpoint capital-value label — this is the visual "finish line" cue
-    const capVal=s.acct0+last.cum;
+    // Endpoint share-count label — the finish-line cue now lives here,
+    // annotating the line rather than shaping it.
     ctx.font='9px IBM Plex Mono';ctx.textAlign='left';ctx.fillStyle=s.color;
-    ctx.fillText('$'+fmt(capVal,0),ex+7,ey+3);
+    ctx.fillText(last.sh.toLocaleString()+'sh',ex+7,ey+3);
   }
   cv._race={series,pd,pw,ph,xS,yS,maxDay};
   if(legendEl){
     legendEl.innerHTML=series.map(s=>{
       const last=s.pts[s.pts.length-1];
-      return`<div style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0;"></span><span style="font-size:9px;color:#8892a4;">${s.label}</span><span style="font-size:9px;font-weight:600;color:${s.color};">${last.sh.toLocaleString()}sh</span><span style="font-size:8px;color:#4d5a6e;">· ${last.day}d</span></div>`;
+      return`<div style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0;"></span><span style="font-size:9px;color:#8892a4;">${s.label}</span><span style="font-size:9px;font-weight:600;color:${s.color};">$${fmt(last.cap,0)}</span><span style="font-size:8px;color:#4d5a6e;">· ${last.sh.toLocaleString()}sh · ${last.day}d</span></div>`;
     }).join('');
   }
   // Crosshair for the currently highlighted/hovered day — drawn on EVERY
-  // active strategy's line simultaneously, not just the one on screen.
+  // active strategy's line simultaneously. Tooltip now reads both share
+  // count and capital value together at that point, per strategy.
   if(hoverDay!=null){
     const st=cv._race;
     const cx=st.xS(hoverDay);
@@ -1298,10 +1309,10 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       let pt=null;
       for(const p of s.pts){if(p.day<=hoverDay)pt=p;else break;}
       if(pt){
-        const cy=st.yS(pt.sh);
+        const cy=st.yS(pt.cap);
         ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();
         ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
-        parts.push(`${s.label} ${pt.sh.toLocaleString()}sh`);
+        parts.push(`${s.label} $${fmt(pt.cap,0)} · ${pt.sh.toLocaleString()}sh`);
       }
     }
     if(tt)tt.textContent=`Day ${hoverDay} · `+parts.join(' · ');
@@ -1351,7 +1362,7 @@ function dvWireTableScroll(){
 function exportData(tab){
   const res=simResults[tab];if(!res||!res.rows.length){alert('Run a simulation first.');return;}
   const {rows,acct0,c,msp}=res;const names=['Strat-A','Strat-B','Strat-C'];
-  const L=['AHM v30 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
+  const L=['AHM v31 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
   const show=new Set([0,rows.length-1]);rows.forEach((r,i)=>{if(r.isMilestone||r.day%c.intv===0)show.add(i);});
   for(const idx of [...show].sort((a,b)=>a-b)){const r=rows[idx];const mo=r.cumPnl-((msp||{})[r.mIdx]||0);const dp=r.dayPct!=null?r.dayPct.toFixed(2)+'%':'—';let lbl='';if(r.isMilestone)lbl='Milestone '+r.msVal;else if(r.day===1)lbl='Start';else if(idx===rows.length-1)lbl='Goal';const tt=r.dayWinCt+r.dayLoseCt+r.dayBECt;const wrp=tt>0?((r.dayWinCt/tt)*100).toFixed(0)+'%':'—';L.push([r.day,cal(r.calMo),mo.toFixed(2),lbl,r.shares,r.outcome,wrp,r.numTr||0,r.dayTicks,dp,r.dayPnl.toFixed(2),(r.cumPnl/acct0*100).toFixed(2)+'%',(r.dayFees||0).toFixed(2),r.surplus.toFixed(2),r.newSh,r.cumPnl.toFixed(2)].join(','));}
   const blob=new Blob([L.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);
@@ -1950,7 +1961,7 @@ const INFO={
   comm:{t:'Commission (Tiered)',b:'<p>Tiered commission model:</p><ul><li><b>Under 100 shares:</b> $0.35 flat per round trip</li><li><b>100 shares and above:</b> $0.0035/share × 2 legs</li></ul><p>This scales correctly as your position size grows through compounding — small positions pay the flat fee, larger positions pay the per-share rate.</p>'},
   fees:{t:'Exchange + Clearing + Reg Fees',b:'<p>Toggleable overhead layer separate from commission:</p><ul><li><b>Exchange + clearing + regulatory:</b> $0.0067/share</li><li><b>Spread:</b> $0.01/share (set via Spread field above)</li></ul><p>These are real costs charged by exchanges and regulators on top of your broker commission. Toggle OFF to see strategy performance in isolation from these overheads.</p>'},
   price:{t:'Share Price Range',b:'<p>Used for account size and share purchase cost. Set min/max to reflect daily price variation.</p>'},
-  sh:{t:'Starting Shares',b:'<p>How many shares you begin with. Starting account = shares × avg price, unless Starting Capital is set directly.</p>'},
+  sh:{t:'Starting Shares',b:'<p>Fully determined by the shared Capital field above — not a manual entry. Shares = Capital ÷ this strategy\\u2019s average price.</p><p>This is what keeps A, B, and C directly comparable: same capital, different tickers, share count falls out automatically for each.</p>'},
   goal:{t:'Share Goal',b:'<p>Target share count. Simulation runs until you reach this, hit the Volume Ceiling (if set), or the 5,000 day cap.</p>'},
   globalcap:{t:'Capital',b:'<p>One shared starting capital value used by every strategy — A, B, and C all compound from the same account size, regardless of what ticker or share price each is testing.</p><p>Set to $0, each strategy falls back to its own Starting Shares × Price Range as its account base — same as before, just per-strategy again in that case.</p><p>Keeping this shared is what makes the Strategy Comparison and combined equity curve genuinely apples-to-apples.</p>'},
   volceil:{t:'Volume Ceiling',b:'<p>A hard cap on share count growth, separate from your Share Goal. Prevents the simulation from over-compounding indefinitely — once shares reach this ceiling, compounding stops even if the Share Goal is higher.</p><p>Acts like the other overrides: when enabled, it constrains the simulation regardless of other settings. Set to 0 to disable.</p>'},
@@ -1999,7 +2010,7 @@ function buildPanes(){
     const core=fc('wr','Win Rate %','#34d399','wr',dph('minWR','maxWR'))+fc('be','Breakeven %','#60a5fa','be',dph('minBE','maxBE'))+roLoss+distCard;
     const risk=fc('p','Profit Target','#fbbf24','profit',dph('minP','maxP'))+fc('l','Stop Loss','#f87171','loss',dph('minL','maxL'))+fc('t','Trades / Day','#fb923c','trades',dph('minT','maxT'))+fc('cap','Daily Loss Cap','#f87171','cap',ph('cap'));
 
-    const shGoalCard=`<div class="fc" id="fc-sh${s}" style="border-left-color:#fbbf24"><div class="fc-top"><span class="fc-lbl">Starting Shares <button class="ib" onclick="openInfo('sh')">?</button></span>${tog('sh',true)}</div>${ph('sh')}<div class="fc-note" id="sh-derived-note${s}"></div></div><div class="fc" id="fc-goal${s}" style="border-left-color:#34d399"><div class="fc-top"><span class="fc-lbl">Share Goal <button class="ib" onclick="openInfo('goal')">?</button></span></div>${ph('goal')}</div>`;
+    const shGoalCard=`<div class="fc" id="fc-sh${s}" style="border-left-color:#fbbf24"><div class="fc-top"><span class="fc-lbl">Starting Shares <button class="ib" onclick="openInfo('sh')">?</button></span></div>${ph('sh')}<div class="fc-note" id="sh-derived-note${s}"></div></div><div class="fc" id="fc-goal${s}" style="border-left-color:#34d399"><div class="fc-top"><span class="fc-lbl">Share Goal <button class="ib" onclick="openInfo('goal')">?</button></span></div>${ph('goal')}</div>`;
 
     const frictionCard=`<div class="fc" id="fc-comm${s}" style="border-left-color:#fbbf24;"><div class="fc-top"><span class="fc-lbl">Commission (Tiered) <button class="ib" onclick="openInfo('comm')">?</button></span></div><div class="fc-note">Auto-calculated: $0.35 flat round trip under 100 shares, or $0.0035/share × 2 legs at 100+ shares. Scales with your Starting Shares.</div></div><div class="fc" id="fc-fees${s}" style="border-left-color:#34d399;"><div class="fc-top"><span class="fc-lbl">Exchange + Clearing + Reg <button class="ib" onclick="openInfo('fees')">?</button></span>${tog('fees',true)}</div><div class="friction-breakdown" id="fb${s}"><div class="fb-row"><span class="fb-lbl">Commission</span><span class="fb-val" id="fb-comm${s}">—</span></div><div class="fb-row"><span class="fb-lbl">Exchange + Clearing + Reg (0.0067/sh)</span><span class="fb-val" id="fb-ex${s}">—</span></div><div class="fb-row"><span class="fb-lbl">Slippage (×2 legs)</span><span class="fb-val" id="fb-slip${s}">—</span></div><div class="fb-row"><span class="fb-lbl">Spread cost</span><span class="fb-val" id="fb-spr${s}">—</span></div><div class="fb-total"><span class="fb-lbl">Est. round trip</span><span class="fb-val" id="fb-rt${s}">—</span></div></div><div class="fb-tier" id="fb-tier${s}">—</div></div>`;
 
@@ -2112,9 +2123,9 @@ function wirePanes(){
   populateHourSelect('j-timeslept');populateHourSelect('j-timewoke');
 }
 
-const SK='ahm-v30';
+const SK='ahm-v31';
 function getStpIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;SDEFS.forEach(([id])=>ids.push(id+s));});return ids;}
-const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-volceil','tog-vw','tog-sh'];
+const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-volceil','tog-vw'];
 function getTogIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;TOG_BASE.forEach(id=>ids.push(id+s));});return ids;}
 const SEL_BASE=['curve','mode'];
 const REAL_IDS=['rCapS','rCapC','rTrades','rDays','rWR','rBE','rTickW','rTickL','rPnlTotal','rDayPnl'];
