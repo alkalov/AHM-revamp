@@ -289,7 +289,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 <div class="topbar">
   <div class="brand">
     <span class="brand-name">Anti-Hope Machine</span>
-    <span class="brand-ver">v31</span>
+    <span class="brand-ver">v32</span>
   </div>
   <div class="top-r">
     <button class="guide-btn" onclick="openGuide()">Guide</button>
@@ -320,17 +320,17 @@ canvas.spark{width:100%;height:34px;display:block;}
   </div>
 
   <div class="screen" id="scr-tbl">
-    <div class="sbar">
-      <button class="sbtn on" id="tsb0" onclick="switchTblStrat(0)">A</button>
-      <button class="sbtn sc-b" id="tsb1" onclick="switchTblStrat(1)">B</button>
-      <button class="sbtn sc-c" id="tsb2" onclick="switchTblStrat(2)">C</button>
-    </div>
     <div class="dv-half">
-      <div class="chart-hd" style="padding:8px 12px 4px;"><span class="chart-lbl">Race to Goal · Capital vs Time</span><span class="chart-tt" id="dv-tt"></span></div>
+      <div class="chart-hd" style="padding:8px 12px 4px;"><span class="chart-lbl">Race to Goal · Capital vs Time</span></div>
       <div class="chart-wrap" style="height:100%;"><canvas class="eqcv" id="dv-cv"></canvas></div>
       <div id="dv-combo-legend" style="display:flex;gap:12px;padding:6px 12px;flex-wrap:wrap;"></div>
     </div>
     <div class="dv-half">
+      <div class="sbar">
+        <button class="sbtn on" id="tsb0" onclick="switchTblStrat(0)">A</button>
+        <button class="sbtn sc-b" id="tsb1" onclick="switchTblStrat(1)">B</button>
+        <button class="sbtn sc-c" id="tsb2" onclick="switchTblStrat(2)">C</button>
+      </div>
       <div class="tbl-controls">
         <span class="tc-lbl">Every</span>
         <div class="tc-stp" id="intv-wrap-0"></div>
@@ -1283,10 +1283,12 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const ex=xS(last.day),ey=yS(last.cap);
     ctx.beginPath();ctx.arc(ex,ey,3.5,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();
     ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
-    // Endpoint share-count label — the finish-line cue now lives here,
-    // annotating the line rather than shaping it.
+    // Static endpoint label — final capital AND final share count together,
+    // the permanent "finish line" readout for this strategy.
     ctx.font='9px IBM Plex Mono';ctx.textAlign='left';ctx.fillStyle=s.color;
-    ctx.fillText(last.sh.toLocaleString()+'sh',ex+7,ey+3);
+    ctx.fillText('$'+fmt(last.cap,0),ex+7,ey-2);
+    ctx.fillStyle='#8892a4';
+    ctx.fillText(last.sh.toLocaleString()+'sh',ex+7,ey+9);
   }
   cv._race={series,pd,pw,ph,xS,yS,maxDay};
   if(legendEl){
@@ -1295,29 +1297,45 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       return`<div style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0;"></span><span style="font-size:9px;color:#8892a4;">${s.label}</span><span style="font-size:9px;font-weight:600;color:${s.color};">$${fmt(last.cap,0)}</span><span style="font-size:8px;color:#4d5a6e;">· ${last.sh.toLocaleString()}sh · ${last.day}d</span></div>`;
     }).join('');
   }
-  // Crosshair for the currently highlighted/hovered day — drawn on EVERY
-  // active strategy's line simultaneously. Tooltip now reads both share
-  // count and capital value together at that point, per strategy.
+  // Crosshair for the currently highlighted/hovered day — the vertical guide
+  // line spans the full chart (it represents "this day" globally), but each
+  // strategy's own dot and floating label are clamped to that strategy's
+  // OWN final day. Without this clamp, a strategy that finished early would
+  // keep sliding its dot rightward forever whenever a longer-running
+  // strategy is also on the chart — the dot needs to stop at its own finish
+  // line, not follow the global scroll position past where its data ends.
   if(hoverDay!=null){
     const st=cv._race;
     const cx=st.xS(hoverDay);
     ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1;ctx.setLineDash([2,3]);
     ctx.beginPath();ctx.moveTo(cx,st.pd.t);ctx.lineTo(cx,st.pd.t+st.ph);ctx.stroke();
     ctx.setLineDash([]);
-    const tt=$('dv-tt');const parts=[];
+    // Day-count label anchored to the crosshair line, upper third of the chart
+    const dayLabelY=st.pd.t+st.ph*0.33;
+    ctx.font='9px IBM Plex Mono';ctx.textAlign='center';
+    const dayText='Day '+hoverDay;
+    const tw=ctx.measureText(dayText).width;
+    ctx.fillStyle='#131720';ctx.fillRect(cx-tw/2-4,dayLabelY-9,tw+8,13);
+    ctx.fillStyle='#e2e6ed';ctx.fillText(dayText,cx,dayLabelY);
     for(const s of st.series){
+      const ownFinalDay=s.pts[s.pts.length-1].day;
+      const clampedDay=Math.min(hoverDay,ownFinalDay); // stop advancing at this strategy's own finish line
       let pt=null;
-      for(const p of s.pts){if(p.day<=hoverDay)pt=p;else break;}
+      for(const p of s.pts){if(p.day<=clampedDay)pt=p;else break;}
       if(pt){
-        const cy=st.yS(pt.cap);
-        ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();
+        const dotX=st.xS(clampedDay),dotY=st.yS(pt.cap);
+        ctx.beginPath();ctx.arc(dotX,dotY,4,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();
         ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
-        parts.push(`${s.label} $${fmt(pt.cap,0)} · ${pt.sh.toLocaleString()}sh`);
+        // Floating capital + share readout, color-coded per strategy,
+        // moving with this strategy's own highlighted point.
+        ctx.font='9px IBM Plex Mono';ctx.textAlign='left';ctx.fillStyle=s.color;
+        const label=`${s.label} $${fmt(pt.cap,0)} · ${pt.sh.toLocaleString()}sh`;
+        const lw=ctx.measureText(label).width;
+        const labelX=Math.min(dotX+8,st.pd.l+st.pw-lw-4);
+        ctx.fillStyle='#131720';ctx.fillRect(labelX-2,dotY-15,lw+4,12);
+        ctx.fillStyle=s.color;ctx.fillText(label,labelX,dotY-6);
       }
     }
-    if(tt)tt.textContent=`Day ${hoverDay} · `+parts.join(' · ');
-  }else{
-    const tt=$('dv-tt');if(tt)tt.textContent='';
   }
 }
 
@@ -1362,7 +1380,7 @@ function dvWireTableScroll(){
 function exportData(tab){
   const res=simResults[tab];if(!res||!res.rows.length){alert('Run a simulation first.');return;}
   const {rows,acct0,c,msp}=res;const names=['Strat-A','Strat-B','Strat-C'];
-  const L=['AHM v31 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
+  const L=['AHM v32 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
   const show=new Set([0,rows.length-1]);rows.forEach((r,i)=>{if(r.isMilestone||r.day%c.intv===0)show.add(i);});
   for(const idx of [...show].sort((a,b)=>a-b)){const r=rows[idx];const mo=r.cumPnl-((msp||{})[r.mIdx]||0);const dp=r.dayPct!=null?r.dayPct.toFixed(2)+'%':'—';let lbl='';if(r.isMilestone)lbl='Milestone '+r.msVal;else if(r.day===1)lbl='Start';else if(idx===rows.length-1)lbl='Goal';const tt=r.dayWinCt+r.dayLoseCt+r.dayBECt;const wrp=tt>0?((r.dayWinCt/tt)*100).toFixed(0)+'%':'—';L.push([r.day,cal(r.calMo),mo.toFixed(2),lbl,r.shares,r.outcome,wrp,r.numTr||0,r.dayTicks,dp,r.dayPnl.toFixed(2),(r.cumPnl/acct0*100).toFixed(2)+'%',(r.dayFees||0).toFixed(2),r.surplus.toFixed(2),r.newSh,r.cumPnl.toFixed(2)].join(','));}
   const blob=new Blob([L.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);
@@ -2123,7 +2141,7 @@ function wirePanes(){
   populateHourSelect('j-timeslept');populateHourSelect('j-timewoke');
 }
 
-const SK='ahm-v31';
+const SK='ahm-v32';
 function getStpIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;SDEFS.forEach(([id])=>ids.push(id+s));});return ids;}
 const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-volceil','tog-vw'];
 function getTogIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;TOG_BASE.forEach(id=>ids.push(id+s));});return ids;}
