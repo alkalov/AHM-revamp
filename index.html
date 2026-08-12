@@ -45,18 +45,36 @@ html,body{height:100%;background:#0d0f12;color:#e2e6ed;font-family:'IBM Plex Mon
 .sbtn.on{color:#34d399;border-color:#34d399;}
 .sbtn.on.sc-b{color:#f87171;border-color:#f87171;}
 .sbtn.on.sc-c{color:#fbbf24;border-color:#fbbf24;}
-.dgrp{border-bottom:1px solid #252d3d;}
-.dgrp-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;cursor:pointer;user-select:none;background:#131720;transition:background .08s;}
-.dgrp-hd:active{background:#1a2030;}
-.dgrp-title{font-family:'Cabinet Grotesk',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#8892a4;}
-.dgrp-r{display:flex;align-items:center;gap:8px;}
-.dgrp-arr{font-size:9px;color:#4d5a6e;transition:transform .2s;}
-.dgrp-arr.open{transform:rotate(180deg);}
 .ovr-badge{font-size:7px;background:rgba(251,191,36,.1);color:#fbbf24;padding:1px 6px;border-radius:2px;letter-spacing:.1em;text-transform:uppercase;display:none;border:1px solid rgba(251,191,36,.2);}
 .ovr-badge.on{display:block;}
-.dgrp-body{overflow:hidden;max-height:0;transition:max-height .28s ease;}
-.dgrp-body.open{max-height:9999px;}
-.dgrp-inner{padding:7px 16px 10px;background:#1a2030;}
+
+/* ══════════════════════════════════════════════════════════════
+   CIRCLE NAVIGATION — replaces the dropdown accordion. Same five
+   categories, same icons/colours, contained differently: idle state
+   is a 3-over-2 cluster of icon-only circles; selecting one animates
+   it to a single centred slot above the rest (which dim and shrink),
+   and its panel scale-emerges outward from that circle's own
+   position — motion stays circular even in the transition, not a
+   rectangular accordion drop.
+   ══════════════════════════════════════════════════════════════ */
+.circ-nav{padding:14px 16px 4px;}
+.circ-cluster{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:4px;}
+.circ-row{display:flex;justify-content:center;gap:14px;}
+.circ-btn{width:56px;height:56px;border-radius:50%;background:#131720;border:1.5px solid #252d3d;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;position:relative;transition:transform .32s cubic-bezier(.34,1.4,.64,1),opacity .28s ease,border-color .28s ease,box-shadow .28s ease;flex-shrink:0;}
+.circ-btn svg{width:20px;height:20px;transition:width .28s,height .28s;}
+.circ-btn .ovr-badge{position:absolute;top:-6px;right:-6px;font-size:6px;padding:1px 4px;}
+.circ-btn.dim{opacity:.32;transform:scale(.78);}
+.circ-btn.sel{transform:scale(1.14);box-shadow:0 0 0 3px rgba(255,255,255,.04),0 4px 18px rgba(0,0,0,.35);}
+.circ-btn.sel svg{width:24px;height:24px;}
+.circ-cluster.has-sel{gap:6px;}
+.circ-cluster.has-sel .circ-row{gap:10px;}
+.circ-label{font-family:'Cabinet Grotesk',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;text-align:center;color:#e2e6ed;height:16px;opacity:1;margin-top:2px;overflow:hidden;transition:height .22s ease,opacity .18s ease,margin .22s ease;}
+.circ-label.dim-out{height:0;opacity:0;margin-top:0;}
+.circ-panel-wrap{overflow:hidden;max-height:0;opacity:0;transform:scale(.94);transform-origin:top center;transition:max-height .38s cubic-bezier(.25,.46,.45,.94),opacity .3s ease,transform .34s cubic-bezier(.25,.46,.45,.94);}
+.circ-panel-wrap.open{max-height:9999px;opacity:1;transform:scale(1);}
+.circ-panel-inner{padding:10px 16px 14px;background:#1a2030;border-radius:14px;margin:8px 0;}
+.circ-hint{text-align:center;font-size:9px;color:#4d5a6e;letter-spacing:.06em;padding:2px 0 6px;}
+
 .fc{background:#131720;border:1px solid #252d3d;border-left-width:2px;border-radius:3px;padding:8px 10px;margin-bottom:5px;}
 .fc.off{opacity:.22;pointer-events:none;}
 .fc.off .fc-top{pointer-events:auto;opacity:1;}
@@ -289,7 +307,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 <div class="topbar">
   <div class="brand">
     <span class="brand-name">Anti-Hope Machine</span>
-    <span class="brand-ver">v32</span>
+    <span class="brand-ver">v35</span>
   </div>
   <div class="top-r">
     <button class="guide-btn" onclick="openGuide()">Guide</button>
@@ -462,10 +480,6 @@ canvas.spark{width:100%;height:34px;display:block;}
         <div class="vs-rows" id="vs-rows"><div style="padding:8px 0;text-align:center;font-size:9px;color:#4d5a6e;">Run a simulation first.</div></div>
       </div>
 
-      <div class="vs-card" id="strat-cmp-card">
-        <div class="vs-hd"><span class="vs-title">Strategy Comparison</span><span class="vs-badge nosim" id="strat-cmp-badge">No Sims Run</span></div>
-        <div id="strat-cmp-body" style="padding:4px 12px 8px;"><div style="padding:8px 0;text-align:center;font-size:9px;color:#4d5a6e;">Run simulations on 2 or more strategies to compare.</div></div>
-      </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;padding:0 2px;">
         <span style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;">Real Trading Data</span>
         <button onclick="resetRealStats()" style="background:transparent;border:1px solid #252d3d;color:#4d5a6e;font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 8px;border-radius:2px;cursor:pointer;letter-spacing:.08em;">↺ Auto-fill from Log</button>
@@ -678,7 +692,29 @@ function onTog(cb,ctrl,tab){
   const b=$('ovr-badge'+s);if(b)b.classList.toggle('on',isOn('tog-rr'+s)||isOn('tog-dp'+s)||isOn('tog-volceil'+s));
 }
 const isOn=id=>{const e=$(id);return!e||e.checked;};
-function toggleGrp(hd){const body=hd.nextElementSibling;const arr=hd.querySelector('.dgrp-arr');const o=body.classList.toggle('open');if(arr)arr.classList.toggle('open',o);}
+function circSelect(tab,catKey){
+  const s=tab===0?'':'_'+tab;
+  const cluster=$('circ-cluster'+s);
+  const panelWrap=$('circ-panel-wrap'+s);
+  const currentSel=cluster?.dataset.sel;
+  const deselecting=currentSel===catKey;
+  cluster.querySelectorAll('.circ-btn').forEach(btn=>{
+    const isThis=btn.dataset.cat===catKey;
+    btn.classList.toggle('sel',isThis&&!deselecting);
+    btn.classList.toggle('dim',!isThis&&!deselecting);
+    const lbl=btn.parentElement.querySelector('.circ-label');
+    // Labels show by default (idle state); any selection hides all of them,
+    // including the tapped circle's own — reappearing once deselected.
+    if(lbl)lbl.classList.toggle('dim-out',!deselecting);
+  });
+  cluster.classList.toggle('has-sel',!deselecting);
+  cluster.dataset.sel=deselecting?'':catKey;
+  document.querySelectorAll('.circ-panel'+s).forEach(p=>{
+    p.style.display=(!deselecting&&p.dataset.cat===catKey)?'block':'none';
+  });
+  if(panelWrap)panelWrap.classList.toggle('open',!deselecting);
+}
+
 
 function commissionForShares(shares){
   if(shares<100) return 0.35;
@@ -1251,7 +1287,17 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   cv.width=W*dpr;cv.height=H*dpr;
   const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
   ctx.fillStyle='#131720';ctx.fillRect(0,0,W,H);
-  if(!active.length){
+  // Real equity line — built purely from what's actually been logged
+  // (sessionLog daily P&L + Stats starting capital), no projection, no
+  // sim math. Fixed reference line, independent of which strategy tab
+  // is active, so it shows big-picture "where you actually are" against
+  // whatever strategies you're testing.
+  const realCapS=+$('rCapS')?.value||0;
+  const sortedLog=sessionLog&&sessionLog.length?[...sessionLog].sort((a,b)=>a.date.localeCompare(b.date)):[];
+  let realCum=0;
+  const realPts=sortedLog.length?sortedLog.map((e,i)=>{realCum+=e.pnl;return{idx:i,date:e.date,cap:realCapS+realCum};}):[];
+  const hasReal=realPts.length>1&&realCapS>0;
+  if(!active.length&&!hasReal){
     ctx.fillStyle='#4d5a6e';ctx.font='11px IBM Plex Mono';ctx.textAlign='center';
     ctx.fillText('Run a simulation to see the race to goal',W/2,H/2);
     if(legendEl)legendEl.innerHTML='';
@@ -1266,12 +1312,30 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const pts=rows.map(r=>({day:r.day,sh:r.shares,cum:r.cumPnl,cap:acct0+r.cumPnl}));
     return{idx:i,pts,color:STRAT_COLORS[i],label:STRAT_LABELS[i],acct0};
   });
-  const maxDay=Math.max(...series.map(s=>s.pts[s.pts.length-1].day));
-  const allCaps=series.flatMap(s=>s.pts.map(p=>p.cap));
+  const maxDay=active.length?Math.max(...series.map(s=>s.pts[s.pts.length-1].day)):(hasReal?realPts.length:1);
+  let allCaps=series.flatMap(s=>s.pts.map(p=>p.cap));
+  if(hasReal)allCaps=allCaps.concat(realPts.map(p=>p.cap));
   const maxCap=Math.max(...allCaps),minCap=Math.min(0,...allCaps);
   const capRng=(maxCap-minCap)||1;
   const xS=day=>pd.l+(Math.min(day,maxDay)/Math.max(maxDay,1))*pw;
   const yS=cap=>pd.t+ph-((cap-minCap)/capRng)*ph;
+  // Draw the real line first, beneath the strategy lines, in white — it's
+  // the backdrop reference, not something competing for attention with
+  // the strategies actively being compared.
+  if(hasReal){
+    ctx.beginPath();ctx.moveTo(xS(0),yS(realPts[0].cap));
+    for(let i=1;i<realPts.length;i++){
+      const cpx=(xS(i-1)+xS(i))/2;
+      ctx.bezierCurveTo(cpx,yS(realPts[i-1].cap),cpx,yS(realPts[i].cap),xS(i),yS(realPts[i].cap));
+    }
+    ctx.strokeStyle='#e2e6ed';ctx.lineWidth=2;ctx.stroke();
+    const lastR=realPts[realPts.length-1];
+    const rex=xS(realPts.length-1),rey=yS(lastR.cap);
+    ctx.beginPath();ctx.arc(rex,rey,3.5,0,Math.PI*2);ctx.fillStyle='#e2e6ed';ctx.fill();
+    ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.font='9px IBM Plex Mono';ctx.textAlign='left';ctx.fillStyle='#e2e6ed';
+    ctx.fillText('$'+fmt(lastR.cap,0)+' real',rex+7,rey+3);
+  }
   for(const s of series){
     ctx.beginPath();ctx.moveTo(xS(s.pts[0].day),yS(s.pts[0].cap));
     for(let i=1;i<s.pts.length;i++){
@@ -1290,12 +1354,17 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     ctx.fillStyle='#8892a4';
     ctx.fillText(last.sh.toLocaleString()+'sh',ex+7,ey+9);
   }
-  cv._race={series,pd,pw,ph,xS,yS,maxDay};
+  cv._race={series,realPts,hasReal,pd,pw,ph,xS,yS,maxDay};
   if(legendEl){
-    legendEl.innerHTML=series.map(s=>{
+    let html=series.map(s=>{
       const last=s.pts[s.pts.length-1];
       return`<div style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0;"></span><span style="font-size:9px;color:#8892a4;">${s.label}</span><span style="font-size:9px;font-weight:600;color:${s.color};">$${fmt(last.cap,0)}</span><span style="font-size:8px;color:#4d5a6e;">· ${last.sh.toLocaleString()}sh · ${last.day}d</span></div>`;
     }).join('');
+    if(hasReal){
+      const lastR=realPts[realPts.length-1];
+      html+=`<div style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:#e2e6ed;flex-shrink:0;"></span><span style="font-size:9px;color:#8892a4;">Real</span><span style="font-size:9px;font-weight:600;color:#e2e6ed;">$${fmt(lastR.cap,0)}</span><span style="font-size:8px;color:#4d5a6e;">· ${realPts.length}d logged</span></div>`;
+    }
+    legendEl.innerHTML=html;
   }
   // Crosshair for the currently highlighted/hovered day — the vertical guide
   // line spans the full chart (it represents "this day" globally), but each
@@ -1380,7 +1449,7 @@ function dvWireTableScroll(){
 function exportData(tab){
   const res=simResults[tab];if(!res||!res.rows.length){alert('Run a simulation first.');return;}
   const {rows,acct0,c,msp}=res;const names=['Strat-A','Strat-B','Strat-C'];
-  const L=['AHM v32 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
+  const L=['AHM v35 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
   const show=new Set([0,rows.length-1]);rows.forEach((r,i)=>{if(r.isMilestone||r.day%c.intv===0)show.add(i);});
   for(const idx of [...show].sort((a,b)=>a-b)){const r=rows[idx];const mo=r.cumPnl-((msp||{})[r.mIdx]||0);const dp=r.dayPct!=null?r.dayPct.toFixed(2)+'%':'—';let lbl='';if(r.isMilestone)lbl='Milestone '+r.msVal;else if(r.day===1)lbl='Start';else if(idx===rows.length-1)lbl='Goal';const tt=r.dayWinCt+r.dayLoseCt+r.dayBECt;const wrp=tt>0?((r.dayWinCt/tt)*100).toFixed(0)+'%':'—';L.push([r.day,cal(r.calMo),mo.toFixed(2),lbl,r.shares,r.outcome,wrp,r.numTr||0,r.dayTicks,dp,r.dayPnl.toFixed(2),(r.cumPnl/acct0*100).toFixed(2)+'%',(r.dayFees||0).toFixed(2),r.surplus.toFixed(2),r.newSh,r.cumPnl.toFixed(2)].join(','));}
   const blob=new Blob([L.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);
@@ -1827,45 +1896,54 @@ function renderEquityCurves(){
 }
 
 function renderStratComparison(){
-  const body=$('strat-cmp-body');const badge=$('strat-cmp-badge');
-  if(!body||!badge)return;
   const COLS=['#34d399','#f87171','#fbbf24'];
   const NAMES=['Strat A','Strat B','Strat C'];
   const active=simResults.map((r,i)=>r?i:-1).filter(i=>i>=0);
+  // Comparison content is identical regardless of which strategy tab is
+  // active — it compares all of them — so compute once, write into all
+  // three per-pane instances (each pane shows it beneath its own
+  // Diagnostics, but the content itself doesn't depend on which pane).
+  let bodyHtml,badgeText,badgeCls;
   if(active.length<2){
-    body.innerHTML='<div style="padding:8px 0;text-align:center;font-size:9px;color:#4d5a6e;">Run simulations on 2 or more strategies to compare.</div>';
-    badge.textContent='No Sims Run';badge.className='vs-badge nosim';return;
-  }
-  badge.textContent=active.length+' Strategies';badge.className='vs-badge ahead';
-  const metrics=[
-    {lbl:'EV / Day',get:r=>r.c.evNet,fmt:v=>sgn(v),better:'higher'},
-    {lbl:'Monthly Est',get:r=>r.c.evNet*21,fmt:v=>sgn(v),better:'higher'},
-    {lbl:'Time to Goal',get:r=>(r.rows.length/252)*12,fmt:v=>cal(v),better:'lower'},
-    {lbl:'Win Rate',get:r=>r.c.wr*100,fmt:v=>v.toFixed(1)+'%',better:'higher'},
-    {lbl:'R:R Ratio',get:r=>r.c.avgL>0?r.c.avgP/r.c.avgL:0,fmt:v=>v.toFixed(2)+':1',better:'higher'},
-    {lbl:'Friction / Day',get:r=>r.c.frDay,fmt:v=>'$'+fmt(v),better:'lower'},
-    {lbl:'Sharpe',get:r=>{const pnls=r.rows.map(e=>e.dayPnl);return sharpe(pnls,r.acct0)||0;},fmt:v=>v.toFixed(2),better:'higher'},
-  ];
-  // Card-per-metric layout: each metric is its own row with strategy values side by side
-  let html='';
-  metrics.forEach(m=>{
-    const vals=active.map(i=>({i,v:m.get(simResults[i])}));
-    const best=m.better==='higher'?Math.max(...vals.map(r=>r.v)):Math.min(...vals.map(r=>r.v));
-    html+=`<div style="background:#1a2030;border-radius:3px;padding:7px 10px;margin-bottom:5px;">`;
-    html+=`<div style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;margin-bottom:5px;">${m.lbl}</div>`;
-    html+=`<div style="display:flex;gap:6px;">`;
-    vals.forEach(({i,v})=>{
-      const isBest=Math.abs(v-best)<1e-9;
-      const bg=isBest?`rgba(${i===0?'52,211,153':i===1?'248,113,113':'251,191,36'},.1)`:'transparent';
-      const border=isBest?`1px solid ${COLS[i]}`:'1px solid #252d3d';
-      html+=`<div style="flex:1;background:${bg};border:${border};border-radius:3px;padding:5px 7px;text-align:center;">`;
-      html+=`<div style="font-size:7px;color:${COLS[i]};letter-spacing:.08em;margin-bottom:2px;">${NAMES[i]}</div>`;
-      html+=`<div style="font-size:12px;font-weight:${isBest?'700':'400'};color:${isBest?COLS[i]:'#8892a4'};">${m.fmt(v)}${isBest?' ★':''}</div>`;
-      html+=`</div>`;
+    bodyHtml='<div style="padding:8px 0;text-align:center;font-size:9px;color:#4d5a6e;">Run simulations on 2 or more strategies to compare.</div>';
+    badgeText='No Sims Run';badgeCls='vs-badge nosim';
+  }else{
+    badgeText=active.length+' Strategies';badgeCls='vs-badge ahead';
+    const metrics=[
+      {lbl:'EV / Day',get:r=>r.c.evNet,fmt:v=>sgn(v),better:'higher'},
+      {lbl:'Monthly Est',get:r=>r.c.evNet*21,fmt:v=>sgn(v),better:'higher'},
+      {lbl:'Time to Goal',get:r=>(r.rows.length/252)*12,fmt:v=>cal(v),better:'lower'},
+      {lbl:'Win Rate',get:r=>r.c.wr*100,fmt:v=>v.toFixed(1)+'%',better:'higher'},
+      {lbl:'R:R Ratio',get:r=>r.c.avgL>0?r.c.avgP/r.c.avgL:0,fmt:v=>v.toFixed(2)+':1',better:'higher'},
+      {lbl:'Friction / Day',get:r=>r.c.frDay,fmt:v=>'$'+fmt(v),better:'lower'},
+      {lbl:'Sharpe',get:r=>{const pnls=r.rows.map(e=>e.dayPnl);return sharpe(pnls,r.acct0)||0;},fmt:v=>v.toFixed(2),better:'higher'},
+    ];
+    let html='';
+    metrics.forEach(m=>{
+      const vals=active.map(i=>({i,v:m.get(simResults[i])}));
+      const best=m.better==='higher'?Math.max(...vals.map(r=>r.v)):Math.min(...vals.map(r=>r.v));
+      html+=`<div style="background:#1a2030;border-radius:3px;padding:7px 10px;margin-bottom:5px;">`;
+      html+=`<div style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;margin-bottom:5px;">${m.lbl}</div>`;
+      html+=`<div style="display:flex;gap:6px;">`;
+      vals.forEach(({i,v})=>{
+        const isBest=Math.abs(v-best)<1e-9;
+        const bg=isBest?`rgba(${i===0?'52,211,153':i===1?'248,113,113':'251,191,36'},.1)`:'transparent';
+        const border=isBest?`1px solid ${COLS[i]}`:'1px solid #252d3d';
+        html+=`<div style="flex:1;background:${bg};border:${border};border-radius:3px;padding:5px 7px;text-align:center;">`;
+        html+=`<div style="font-size:7px;color:${COLS[i]};letter-spacing:.08em;margin-bottom:2px;">${NAMES[i]}</div>`;
+        html+=`<div style="font-size:12px;font-weight:${isBest?'700':'400'};color:${isBest?COLS[i]:'#8892a4'};">${m.fmt(v)}${isBest?' ★':''}</div>`;
+        html+=`</div>`;
+      });
+      html+=`</div></div>`;
     });
-    html+=`</div></div>`;
+    bodyHtml=html;
+  }
+  [0,1,2].forEach(tab=>{
+    const s=tab===0?'':'_'+tab;
+    const body=$('strat-cmp-body'+s),badge=$('strat-cmp-badge'+s);
+    if(body)body.innerHTML=bodyHtml;
+    if(badge){badge.textContent=badgeText;badge.className=badgeCls;}
   });
-  body.innerHTML=html;
 }
 
 // Auto-fill real stats inputs from sessionLog — called on load and by reset button
@@ -2065,16 +2143,43 @@ function buildPanes(){
       // Gear wheel — now Overrides (was Core's icon)
       ovr:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
     };
-    function grp(title,icon,body,open=false,eid=''){
-      return`<div class="dgrp"><div class="dgrp-hd" onclick="toggleGrp(this)"><span class="dgrp-title" style="color:#e2e6ed;display:flex;align-items:center;justify-content:center;gap:6px;flex:1;">${ICONS[icon]||''}${title}</span><div class="dgrp-r">${eid?`<span class="ovr-badge" id="${eid}">OVERRIDE</span>`:''}<span class="dgrp-arr${open?' open':''}">▲</span></div></div><div class="dgrp-body${open?' open':''}"><div class="dgrp-inner">${body}</div></div></div>`;
+    // Circle nav: same five categories, contained as a 3-over-2 circle
+    // cluster instead of an accordion. Selecting a circle emphasizes it
+    // (scale up, others dim) and reveals its panel below the cluster —
+    // the panel's transform-origin anchors to the cluster itself so the
+    // scale-emerge motion stays visually tied to "this circle opened."
+    const CATS=[
+      {key:'core',title:'Core',body:core,eid:''},
+      {key:'risk',title:'Risk',body:risk,eid:''},
+      {key:'ticker',title:'Ticker',body:ticker,eid:''},
+      {key:'psych',title:'Psych',body:psych,eid:''},
+      {key:'ovr',title:'Overrides',body:ovr,eid:'ovr-badge'+s},
+    ];
+    function circBtn(cat){
+      const badgeHtml=cat.eid?`<span class="ovr-badge" id="${cat.eid}">!</span>`:'';
+      return`<div style="display:flex;flex-direction:column;align-items:center;">
+        <button class="circ-btn" data-cat="${cat.key}" onclick="circSelect(${n},'${cat.key}')">
+          ${ICONS[cat.key]||''}${badgeHtml}
+        </button>
+        <span class="circ-label">${cat.title}</span>
+      </div>`;
     }
+    const circHtml=`
+      <div class="circ-nav">
+        <div class="circ-cluster" id="circ-cluster${s}" data-sel="">
+          <div class="circ-row">${circBtn(CATS[0])}${circBtn(CATS[1])}${circBtn(CATS[2])}</div>
+          <div class="circ-row">${circBtn(CATS[3])}${circBtn(CATS[4])}</div>
+        </div>
+        <div class="circ-hint">Tap a circle to open its settings</div>
+        <div class="circ-panel-wrap" id="circ-panel-wrap${s}">
+          <div class="circ-panel-inner">
+            ${CATS.map(cat=>`<div class="circ-panel${s}" data-cat="${cat.key}" style="display:none;">${cat.body}</div>`).join('')}
+          </div>
+        </div>
+      </div>`;
 
     pane.innerHTML=`
-      ${grp('Core','core',core,true)}
-      ${grp('Risk','risk',risk)}
-      ${grp('Ticker','ticker',ticker)}
-      ${grp('Psych','psych',psych)}
-      ${grp('Overrides','ovr',ovr,false,'ovr-badge'+s)}
+      ${circHtml}
       <div class="sim-row">
         <button class="sim-btn ${SCLS}" onclick="simulate(${n})">Simulate</button>
         <button class="exp-btn" onclick="exportData(${n})">CSV</button>
@@ -2099,6 +2204,10 @@ function buildPanes(){
       <div class="diag" id="diag${s}">
         <div class="diag-hd"><span class="diag-title" id="diag-t${s}">Diagnostics</span><span class="diag-badge" id="diag-b${s}">—</span></div>
         <div class="diag-body" id="diag-l${s}"></div>
+      </div>
+      <div class="vs-card" id="strat-cmp-card${s}">
+        <div class="vs-hd"><span class="vs-title">Strategy Comparison</span><span class="vs-badge nosim" id="strat-cmp-badge${s}">No Sims Run</span></div>
+        <div id="strat-cmp-body${s}" style="padding:4px 12px 8px;"><div style="padding:8px 0;text-align:center;font-size:9px;color:#4d5a6e;">Run simulations on 2 or more strategies to compare.</div></div>
       </div>
       <div class="disc"><p>Simulated results are hypothetical. Not financial advice.</p></div>
     `;
@@ -2141,7 +2250,7 @@ function wirePanes(){
   populateHourSelect('j-timeslept');populateHourSelect('j-timewoke');
 }
 
-const SK='ahm-v32';
+const SK='ahm-v35';
 function getStpIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;SDEFS.forEach(([id])=>ids.push(id+s));});return ids;}
 const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-volceil','tog-vw'];
 function getTogIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;TOG_BASE.forEach(id=>ids.push(id+s));});return ids;}
