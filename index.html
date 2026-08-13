@@ -160,6 +160,8 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .dv-half{flex:1 1 0;min-height:0;display:flex;flex-direction:column;border-bottom:1px solid #252d3d;overflow:hidden;}
 .dv-half:last-child{border-bottom:none;}
 .dv-empty{padding:32px;text-align:center;font-size:10px;color:#4d5a6e;}
+.dv-diag{padding:8px 12px 10px;border-top:1px solid #252d3d;background:#131720;flex-shrink:0;}
+.dv-diag-line{font-size:10px;line-height:1.6;padding:2px 0;}
 /* Original wide table, restored — now contained in the bottom .dv-half
    instead of the whole screen. tbl-scroll is the ONE scroll context in
    this half; thead sticks to its top correctly since overflow-y lives
@@ -307,7 +309,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 <div class="topbar">
   <div class="brand">
     <span class="brand-name">Anti-Hope Machine</span>
-    <span class="brand-ver">v35</span>
+    <span class="brand-ver">v36</span>
   </div>
   <div class="top-r">
     <button class="guide-btn" onclick="openGuide()">Guide</button>
@@ -341,7 +343,7 @@ canvas.spark{width:100%;height:34px;display:block;}
     <div class="dv-half">
       <div class="chart-hd" style="padding:8px 12px 4px;"><span class="chart-lbl">Race to Goal · Capital vs Time</span></div>
       <div class="chart-wrap" style="height:100%;"><canvas class="eqcv" id="dv-cv"></canvas></div>
-      <div id="dv-combo-legend" style="display:flex;gap:12px;padding:6px 12px;flex-wrap:wrap;"></div>
+      <div id="dv-diag" class="dv-diag"></div>
     </div>
     <div class="dv-half">
       <div class="sbar">
@@ -1279,6 +1281,13 @@ function renderTable(tab,rowsIn,acct0In,cIn,mspIn,cappedIn){
    line stops on the X-axis — that hasn't changed, just what the height
    represents while getting there.
    ══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   RACE-TO-GOAL CHART — capital/equity (Y) vs time (X), gridlines and
+   axis labels so a first-time viewer understands it unaided. Endpoint
+   and crosshair labels use magnetic stacking: when two strategies'
+   values land close together, their labels separate vertically
+   instead of overlapping into unreadable text.
+   ══════════════════════════════════════════════════════════════ */
 function dvDrawRaceChart(cv,legendEl,hoverDay){
   if(!cv||!cv.getContext)return;
   const active=[0,1,2].filter(i=>simResults[i]&&simResults[i].rows&&simResults[i].rows.length>1);
@@ -1287,11 +1296,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   cv.width=W*dpr;cv.height=H*dpr;
   const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
   ctx.fillStyle='#131720';ctx.fillRect(0,0,W,H);
-  // Real equity line — built purely from what's actually been logged
-  // (sessionLog daily P&L + Stats starting capital), no projection, no
-  // sim math. Fixed reference line, independent of which strategy tab
-  // is active, so it shows big-picture "where you actually are" against
-  // whatever strategies you're testing.
   const realCapS=+$('rCapS')?.value||0;
   const sortedLog=sessionLog&&sessionLog.length?[...sessionLog].sort((a,b)=>a.date.localeCompare(b.date)):[];
   let realCum=0;
@@ -1304,7 +1308,9 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     cv._race=null;
     return;
   }
-  const pd={t:10,b:10,l:8,r:64}; // extra right padding reserves room for endpoint share-count labels
+  // Extra padding on every edge: left for $ axis labels, bottom for date
+  // labels, right for endpoint value labels, top for breathing room.
+  const pd={t:14,b:22,l:44,r:66};
   const pw=W-pd.l-pd.r,ph=H-pd.t-pd.b;
   const series=active.map(i=>{
     const rows=simResults[i].rows;
@@ -1319,9 +1325,38 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   const capRng=(maxCap-minCap)||1;
   const xS=day=>pd.l+(Math.min(day,maxDay)/Math.max(maxDay,1))*pw;
   const yS=cap=>pd.t+ph-((cap-minCap)/capRng)*ph;
-  // Draw the real line first, beneath the strategy lines, in white — it's
-  // the backdrop reference, not something competing for attention with
-  // the strategies actively being compared.
+  const dayToCal=day=>(day/252)*12; // trading days -> calendar months, same conversion used app-wide
+
+  // ── Gridlines + axis labels ──
+  // Horizontal: 4 evenly-spaced $ levels including the zero/start line.
+  const gridN=4;
+  ctx.font='8px IBM Plex Mono';ctx.textAlign='right';
+  for(let i=0;i<=gridN;i++){
+    const cap=minCap+(capRng*i/gridN);
+    const gy=yS(cap);
+    ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(pd.l,gy);ctx.lineTo(pd.l+pw,gy);ctx.stroke();
+    ctx.fillStyle='#4d5a6e';ctx.fillText('$'+fmt(cap,0),pd.l-6,gy+3);
+  }
+  // Vertical: time gridlines at roughly-even day intervals, labeled in
+  // calendar terms so a first-time viewer reads "2mo" not "day 42".
+  const vGridN=Math.min(5,Math.max(2,Math.round(maxDay/40)));
+  ctx.textAlign='center';
+  for(let i=0;i<=vGridN;i++){
+    const day=Math.round((maxDay*i)/vGridN);
+    const gx=xS(day);
+    ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(gx,pd.t);ctx.lineTo(gx,pd.t+ph);ctx.stroke();
+    ctx.fillStyle='#4d5a6e';ctx.fillText(cal(dayToCal(day)),gx,pd.t+ph+13);
+  }
+  // Axis titles
+  ctx.save();
+  ctx.fillStyle='#4d5a6e';ctx.font='7px IBM Plex Mono';
+  ctx.textAlign='left';ctx.fillText('CAPITAL',pd.l-38,pd.t-4);
+  ctx.textAlign='right';ctx.fillText('TIME →',pd.l+pw,H-4);
+  ctx.restore();
+
+  // Draw the real line first, beneath the strategy lines, in white.
   if(hasReal){
     ctx.beginPath();ctx.moveTo(xS(0),yS(realPts[0].cap));
     for(let i=1;i<realPts.length;i++){
@@ -1329,12 +1364,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       ctx.bezierCurveTo(cpx,yS(realPts[i-1].cap),cpx,yS(realPts[i].cap),xS(i),yS(realPts[i].cap));
     }
     ctx.strokeStyle='#e2e6ed';ctx.lineWidth=2;ctx.stroke();
-    const lastR=realPts[realPts.length-1];
-    const rex=xS(realPts.length-1),rey=yS(lastR.cap);
-    ctx.beginPath();ctx.arc(rex,rey,3.5,0,Math.PI*2);ctx.fillStyle='#e2e6ed';ctx.fill();
-    ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
-    ctx.font='9px IBM Plex Mono';ctx.textAlign='left';ctx.fillStyle='#e2e6ed';
-    ctx.fillText('$'+fmt(lastR.cap,0)+' real',rex+7,rey+3);
   }
   for(const s of series){
     ctx.beginPath();ctx.moveTo(xS(s.pts[0].day),yS(s.pts[0].cap));
@@ -1343,74 +1372,168 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       ctx.bezierCurveTo(cpx,yS(s.pts[i-1].cap),cpx,yS(s.pts[i].cap),xS(s.pts[i].day),yS(s.pts[i].cap));
     }
     ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.stroke();
+  }
+
+  // ── Endpoint dots + magnetically-stacked labels ──
+  // Collect every endpoint (real + each strategy) with its natural label
+  // Y position, then resolve collisions by nudging apart any pair whose
+  // labels would overlap — closest pair first, repeated until no overlaps
+  // remain or a safety cap is hit. This is what keeps two strategies that
+  // finish at similar capital from becoming an unreadable stack of text.
+  const endpoints=[];
+  if(hasReal){
+    const lastR=realPts[realPts.length-1];
+    endpoints.push({x:xS(realPts.length-1),y:yS(lastR.cap),color:'#e2e6ed',text:'$'+fmt(lastR.cap,0)+' real'});
+  }
+  for(const s of series){
     const last=s.pts[s.pts.length-1];
     const ex=xS(last.day),ey=yS(last.cap);
-    ctx.beginPath();ctx.arc(ex,ey,3.5,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();
+    endpoints.push({x:ex,y:ey,color:s.color,text:'$'+fmt(last.cap,0)+' · '+last.sh.toLocaleString()+'sh',dotColor:s.color});
+  }
+  dvResolveLabelCollisions(endpoints,11);
+  for(const s of series){
+    const last=s.pts[s.pts.length-1];
+    ctx.beginPath();ctx.arc(xS(last.day),yS(last.cap),3.5,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();
     ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
-    // Static endpoint label — final capital AND final share count together,
-    // the permanent "finish line" readout for this strategy.
-    ctx.font='9px IBM Plex Mono';ctx.textAlign='left';ctx.fillStyle=s.color;
-    ctx.fillText('$'+fmt(last.cap,0),ex+7,ey-2);
-    ctx.fillStyle='#8892a4';
-    ctx.fillText(last.sh.toLocaleString()+'sh',ex+7,ey+9);
   }
-  cv._race={series,realPts,hasReal,pd,pw,ph,xS,yS,maxDay};
-  if(legendEl){
-    let html=series.map(s=>{
-      const last=s.pts[s.pts.length-1];
-      return`<div style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0;"></span><span style="font-size:9px;color:#8892a4;">${s.label}</span><span style="font-size:9px;font-weight:600;color:${s.color};">$${fmt(last.cap,0)}</span><span style="font-size:8px;color:#4d5a6e;">· ${last.sh.toLocaleString()}sh · ${last.day}d</span></div>`;
-    }).join('');
-    if(hasReal){
-      const lastR=realPts[realPts.length-1];
-      html+=`<div style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:#e2e6ed;flex-shrink:0;"></span><span style="font-size:9px;color:#8892a4;">Real</span><span style="font-size:9px;font-weight:600;color:#e2e6ed;">$${fmt(lastR.cap,0)}</span><span style="font-size:8px;color:#4d5a6e;">· ${realPts.length}d logged</span></div>`;
-    }
-    legendEl.innerHTML=html;
+  if(hasReal){
+    const lastR=realPts[realPts.length-1];
+    ctx.beginPath();ctx.arc(xS(realPts.length-1),yS(lastR.cap),3.5,0,Math.PI*2);ctx.fillStyle='#e2e6ed';ctx.fill();
+    ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
   }
-  // Crosshair for the currently highlighted/hovered day — the vertical guide
-  // line spans the full chart (it represents "this day" globally), but each
-  // strategy's own dot and floating label are clamped to that strategy's
-  // OWN final day. Without this clamp, a strategy that finished early would
-  // keep sliding its dot rightward forever whenever a longer-running
-  // strategy is also on the chart — the dot needs to stop at its own finish
-  // line, not follow the global scroll position past where its data ends.
+  ctx.font='9px IBM Plex Mono';ctx.textAlign='left';
+  for(const ep of endpoints){
+    ctx.fillStyle=ep.color;ctx.fillText(ep.text,ep.x+7,ep.labelY!==undefined?ep.labelY:ep.y+3);
+  }
+
+  cv._race={series,realPts,hasReal,pd,pw,ph,xS,yS,maxDay,dayToCal};
+  if(legendEl)legendEl.innerHTML='';
+
+  // Crosshair for the currently highlighted/hovered day.
   if(hoverDay!=null){
     const st=cv._race;
     const cx=st.xS(hoverDay);
     ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1;ctx.setLineDash([2,3]);
     ctx.beginPath();ctx.moveTo(cx,st.pd.t);ctx.lineTo(cx,st.pd.t+st.ph);ctx.stroke();
     ctx.setLineDash([]);
-    // Day-count label anchored to the crosshair line, upper third of the chart
+    // Day-count label anchored to the crosshair, upper third — now with
+    // its calendar equivalent alongside the raw day count.
     const dayLabelY=st.pd.t+st.ph*0.33;
+    const dayText='Day '+hoverDay+' · '+cal(st.dayToCal(hoverDay));
     ctx.font='9px IBM Plex Mono';ctx.textAlign='center';
-    const dayText='Day '+hoverDay;
     const tw=ctx.measureText(dayText).width;
     ctx.fillStyle='#131720';ctx.fillRect(cx-tw/2-4,dayLabelY-9,tw+8,13);
     ctx.fillStyle='#e2e6ed';ctx.fillText(dayText,cx,dayLabelY);
+    // Collect hover-point labels for the same magnetic-stacking treatment.
+    const hoverPts=[];
     for(const s of st.series){
       const ownFinalDay=s.pts[s.pts.length-1].day;
-      const clampedDay=Math.min(hoverDay,ownFinalDay); // stop advancing at this strategy's own finish line
+      const clampedDay=Math.min(hoverDay,ownFinalDay);
       let pt=null;
       for(const p of s.pts){if(p.day<=clampedDay)pt=p;else break;}
-      if(pt){
-        const dotX=st.xS(clampedDay),dotY=st.yS(pt.cap);
-        ctx.beginPath();ctx.arc(dotX,dotY,4,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();
-        ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
-        // Floating capital + share readout, color-coded per strategy,
-        // moving with this strategy's own highlighted point.
-        ctx.font='9px IBM Plex Mono';ctx.textAlign='left';ctx.fillStyle=s.color;
-        const label=`${s.label} $${fmt(pt.cap,0)} · ${pt.sh.toLocaleString()}sh`;
-        const lw=ctx.measureText(label).width;
-        const labelX=Math.min(dotX+8,st.pd.l+st.pw-lw-4);
-        ctx.fillStyle='#131720';ctx.fillRect(labelX-2,dotY-15,lw+4,12);
-        ctx.fillStyle=s.color;ctx.fillText(label,labelX,dotY-6);
-      }
+      if(pt)hoverPts.push({x:st.xS(clampedDay),y:st.yS(pt.cap),color:s.color,text:`${s.label} $${fmt(pt.cap,0)} · ${pt.sh.toLocaleString()}sh`,dotX:st.xS(clampedDay),dotY:st.yS(pt.cap)});
+    }
+    dvResolveLabelCollisions(hoverPts,11);
+    for(const hp of hoverPts){
+      ctx.beginPath();ctx.arc(hp.dotX,hp.dotY,4,0,Math.PI*2);ctx.fillStyle=hp.color;ctx.fill();
+      ctx.strokeStyle='#131720';ctx.lineWidth=1.5;ctx.stroke();
+    }
+    ctx.font='9px IBM Plex Mono';ctx.textAlign='left';
+    for(const hp of hoverPts){
+      const ly=hp.labelY!==undefined?hp.labelY:hp.y-6;
+      const lw=ctx.measureText(hp.text).width;
+      const labelX=Math.min(hp.x+8,st.pd.l+st.pw-lw-4);
+      ctx.fillStyle='#131720';ctx.fillRect(labelX-2,ly-9,lw+4,12);
+      ctx.fillStyle=hp.color;ctx.fillText(hp.text,labelX,ly);
     }
   }
 }
 
+// Magnetic label collision resolution: given a list of {y, ...} points with
+// a shared minimum vertical spacing, nudge any pair closer than that apart
+// (moving both away from each other) until none overlap or the safety cap
+// is reached. Sets point.labelY to the resolved position; leaves point.y
+// untouched (that's still the true data position, used for the dot itself).
+function dvResolveLabelCollisions(points,minGap){
+  points.forEach(p=>{if(p.labelY===undefined)p.labelY=p.y+3;});
+  for(let pass=0;pass<12;pass++){
+    let moved=false;
+    const sorted=[...points].sort((a,b)=>a.labelY-b.labelY);
+    for(let i=0;i<sorted.length-1;i++){
+      const a=sorted[i],b=sorted[i+1];
+      const gap=b.labelY-a.labelY;
+      if(gap<minGap){
+        const shift=(minGap-gap)/2;
+        a.labelY-=shift;b.labelY+=shift;
+        moved=true;
+      }
+    }
+    if(!moved)break;
+  }
+}
+
+// Comparative diagnostic text — replaces the old static legend. Draws
+// genuinely useful observations from whatever's actually been simulated
+// (and the real line, if present), using only white for neutral facts
+// and the app's established green/red for good/bad judgments — no other
+// colours, so the reading stays simple and consistent with the rest of
+// the app's language for "this is fine" vs "this needs attention."
+function dvRenderDiagnostics(){
+  const wrap=$('dv-diag');if(!wrap)return;
+  const active=[0,1,2].filter(i=>simResults[i]&&simResults[i].rows&&simResults[i].rows.length>1);
+  if(!active.length){
+    wrap.innerHTML='<div class="dv-diag-line" style="color:#4d5a6e;">Run a simulation on any strategy to see comparison notes here.</div>';
+    return;
+  }
+  const lines=[];
+  const info=active.map(i=>{
+    const r=simResults[i];
+    const last=r.rows[r.rows.length-1];
+    return{i,label:STRAT_LABELS[i],days:last.day,cap:r.acct0+last.cumPnl,acct0:r.acct0,evNet:r.c.evNet,frDay:r.c.frDay,wr:r.c.wr};
+  });
+  if(info.length>=2){
+    const fastest=info.reduce((a,b)=>a.days<b.days?a:b);
+    const slowest=info.reduce((a,b)=>a.days>b.days?a:b);
+    const richest=info.reduce((a,b)=>a.cap>b.cap?a:b);
+    if(fastest.i!==slowest.i){
+      const dayDiff=slowest.days-fastest.days;
+      lines.push(`<span style="color:#e2e6ed;">${fastest.label} reaches its goal ${cal((dayDiff/252)*12)} sooner than ${slowest.label}.</span>`);
+    }
+    lines.push(`<span style="color:#e2e6ed;">${richest.label} ends with the highest capital: $${fmt(richest.cap,0)}.</span>`);
+    // Friction-quality callouts: green if friction is a small share of
+    // daily edge, red if it's eating a large share — genuinely useful,
+    // not just restating numbers already on the chart.
+    info.forEach(s=>{
+      if(s.evNet<=0)return;
+      const frShare=s.frDay/(s.evNet+s.frDay);
+      if(frShare<0.15){
+        lines.push(`<span style="color:#34d399;">${s.label}'s friction is a small share of its daily edge — efficient.</span>`);
+      }else if(frShare>0.4){
+        lines.push(`<span style="color:#f87171;">${s.label} is losing a large share of its edge to friction — worth revisiting size or target.</span>`);
+      }
+    });
+  }
+  // Real-vs-sim callout, only when there's enough real data to say anything meaningful.
+  const realCapS=+$('rCapS')?.value||0;
+  if(sessionLog&&sessionLog.length>=5&&realCapS>0){
+    const sortedLog=[...sessionLog].sort((a,b)=>a.date.localeCompare(b.date));
+    const realTotal=sortedLog.reduce((a,e)=>a+e.pnl,0);
+    const realCap=realCapS+realTotal;
+    const best=info.reduce((a,b)=>a.cap>b.cap?a:b);
+    if(realCap>=best.cap){
+      lines.push(`<span style="color:#34d399;">Your real trading is ahead of every simulated strategy right now.</span>`);
+    }else{
+      const gap=best.cap-realCap;
+      lines.push(`<span style="color:#f87171;">Real trading is $${fmt(gap,0)} behind ${best.label}'s simulated pace.</span>`);
+    }
+  }
+  wrap.innerHTML=lines.map(l=>`<div class="dv-diag-line">${l}</div>`).join('');
+}
+
 function dvRedrawChart(){
   const cv=$('dv-cv');if(!cv)return;
-  dvDrawRaceChart(cv,$('dv-combo-legend'),dvSelDay);
+  dvDrawRaceChart(cv,null,dvSelDay);
+  dvRenderDiagnostics();
 }
 
 // Live crosshair while scrolling the table — throttled to animation-frame
@@ -1449,7 +1572,7 @@ function dvWireTableScroll(){
 function exportData(tab){
   const res=simResults[tab];if(!res||!res.rows.length){alert('Run a simulation first.');return;}
   const {rows,acct0,c,msp}=res;const names=['Strat-A','Strat-B','Strat-C'];
-  const L=['AHM v35 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
+  const L=['AHM v36 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
   const show=new Set([0,rows.length-1]);rows.forEach((r,i)=>{if(r.isMilestone||r.day%c.intv===0)show.add(i);});
   for(const idx of [...show].sort((a,b)=>a-b)){const r=rows[idx];const mo=r.cumPnl-((msp||{})[r.mIdx]||0);const dp=r.dayPct!=null?r.dayPct.toFixed(2)+'%':'—';let lbl='';if(r.isMilestone)lbl='Milestone '+r.msVal;else if(r.day===1)lbl='Start';else if(idx===rows.length-1)lbl='Goal';const tt=r.dayWinCt+r.dayLoseCt+r.dayBECt;const wrp=tt>0?((r.dayWinCt/tt)*100).toFixed(0)+'%':'—';L.push([r.day,cal(r.calMo),mo.toFixed(2),lbl,r.shares,r.outcome,wrp,r.numTr||0,r.dayTicks,dp,r.dayPnl.toFixed(2),(r.cumPnl/acct0*100).toFixed(2)+'%',(r.dayFees||0).toFixed(2),r.surplus.toFixed(2),r.newSh,r.cumPnl.toFixed(2)].join(','));}
   const blob=new Blob([L.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);
@@ -2250,7 +2373,7 @@ function wirePanes(){
   populateHourSelect('j-timeslept');populateHourSelect('j-timewoke');
 }
 
-const SK='ahm-v35';
+const SK='ahm-v36';
 function getStpIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;SDEFS.forEach(([id])=>ids.push(id+s));});return ids;}
 const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-volceil','tog-vw'];
 function getTogIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;TOG_BASE.forEach(id=>ids.push(id+s));});return ids;}
@@ -2296,7 +2419,43 @@ async function init(){
   if(sessionLog.length)resetRealStats();
   else onReal();
   if(loaded){if(sessionLog.length)$('log-info').textContent=sessionLog.length+' days logged';if(journalLog.length)renderJournal();}
+  wireGlobalResize();
 }
+
+// Canvases size themselves from offsetWidth/offsetHeight at draw time —
+// if that measurement happens before layout has actually settled (very
+// common right after initial page load, and on any viewport change like
+// an orientation rotation), the canvas is drawn at the wrong size and
+// nothing tells it to re-measure afterward. This was the root cause of
+// charts appearing cut off until an unrelated action (scrolling, which
+// happens to trigger a different redraw path) forced a fresh draw. This
+// listener redraws every chart that currently has valid cached state,
+// on any resize/orientation event, debounced so rapid events (like the
+// several fired during a rotation animation) don't cause redraw thrashing.
+let _resizeTimer=null;
+function wireGlobalResize(){
+  const onResize=()=>{
+    clearTimeout(_resizeTimer);
+    _resizeTimer=setTimeout(()=>{
+      // Sim tab per-strategy charts + Stats tab real equity charts —
+      // all driven by _drawChart, all cache their state on cv._cs.
+      ['cv','cv_1','cv_2','real-cv-all','real-cv-week','real-cv-month'].forEach(id=>{
+        const cv=$(id);
+        if(cv&&cv._cs)_drawChart(cv,cv._cs.equity,cv._cs.acct0);
+      });
+      // Table tab combined race chart
+      const dvCv=$('dv-cv');
+      if(dvCv)dvDrawRaceChart(dvCv,null,dvSelDay);
+    },150);
+  };
+  window.addEventListener('resize',onResize);
+  window.addEventListener('orientationchange',onResize);
+  // Fire once shortly after load to catch any layout that hadn't fully
+  // settled at the moment charts first drew (mobile browser chrome,
+  // safe-area insets, and webview quirks can all shift post-paint).
+  setTimeout(onResize,300);
+}
+
 init();
 </script>
 </body>
