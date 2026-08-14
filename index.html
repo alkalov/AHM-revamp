@@ -309,7 +309,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 <div class="topbar">
   <div class="brand">
     <span class="brand-name">Anti-Hope Machine</span>
-    <span class="brand-ver">v36</span>
+    <span class="brand-ver">v37</span>
   </div>
   <div class="top-r">
     <button class="guide-btn" onclick="openGuide()">Guide</button>
@@ -409,64 +409,15 @@ canvas.spark{width:100%;height:34px;display:block;}
       <div class="log-divider"></div>
 
       <div class="jdate" id="jdate">—</div>
-      <div class="jsec">
-        <div class="jsec-hd">Sleep &amp; Recovery</div>
-        <div class="jrow"><label>Time slept</label><select class="jsel" id="j-timeslept" style="min-width:90px;"><option value="">—</option></select></div>
-        <div class="jrow"><label>Time woke up</label><select class="jsel" id="j-timewoke" style="min-width:90px;"><option value="">—</option></select></div>
-        <div class="jrow"><label>Emotion before sleep</label><select class="jsel" id="j-presleep-emo"><option value="">—</option><option>Calm</option><option>Content</option><option>Excited</option><option>Happy</option><option>Grateful</option><option>Hopeful</option><option>Anxious</option><option>Stressed</option><option>Overwhelmed</option><option>Sad</option><option>Angry</option><option>Frustrated</option><option>Restless</option><option>Numb</option><option>Lonely</option></select></div>
-        <div class="jrow"><label>Sleep quality (1–5)</label><div class="scale-row" id="jsc-sleepq"></div></div>
-        <div class="jrow"><label>Social plans night before</label><select class="jsel" id="j-social"><option value="">—</option><option>None — normal night</option><option>Yes — stayed on schedule</option><option>Yes — stayed up late</option></select></div>
-        <div class="jrow"><label>Physical state</label><select class="jsel" id="j-phys"><option value="">—</option><option>Rested</option><option>Energised</option><option>Tired</option><option>Sick</option><option>Sore</option></select></div>
-        <div class="jrow"><label>Feeling sick today</label><select class="jsel" id="j-sick"><option value="">—</option><option>No</option><option>Mildly</option><option>Yes</option></select></div>
-        <div class="jrow"><label>Hydration (1–5)</label><div class="scale-row" id="jsc-hydration"></div></div>
-        <div class="jrow"><label>Felt temperature</label><select class="jsel" id="j-temp"><option value="">—</option><option>Cold</option><option>Comfortable</option><option>Warm/Hot</option></select></div>
-        <div class="jrow"><label>Diet quality (1–5)</label><div class="scale-row" id="jsc-diet"></div></div>
-        <div class="jrow"><label>Exercise</label><select class="jsel" id="j-exercise"><option value="">—</option><option>None</option><option>Light walk</option><option>Moderate</option><option>Intense</option></select></div>
-      </div>
-      <div class="jsec">
-        <div class="jsec-hd">Mental State</div>
-        <div class="jrow"><label>Stress level (1–5)</label><div class="scale-row" id="jsc-stress"></div></div>
-        <div class="jrow"><label>Mental fatigue (1–5)</label><div class="scale-row" id="jsc-fatigue"></div></div>
-        <div class="jrow"><label>Confidence (1–5)</label><div class="scale-row" id="jsc-conf"></div></div>
-        <div class="jrow"><label>Emotional state</label><select class="jsel" id="j-emo"><option value="">—</option><option>Happy</option><option>Content</option><option>Grateful</option><option>Calm</option><option>Focused</option><option>Motivated</option><option>Hopeful</option><option>Anxious</option><option>Overconfident</option><option>Distracted</option><option>Numb</option><option>Frustrated</option><option>Sad</option><option>Angry</option><option>Overwhelmed</option><option>Lonely</option></select></div>
-        <div class="jrow"><label>Emotional conflict/fight</label><select class="jsel" id="j-conflict"><option value="">—</option><option>None</option><option>Minor</option><option>Significant</option></select></div>
-        <div class="jrow"><label>News today</label><select class="jsel" id="j-news"><option value="">—</option><option>Neither</option><option>Good news</option><option>Bad news</option></select></div>
-      </div>
-      <div class="jsec">
-        <div class="jsec-hd">Prayer</div>
-        <div class="jrow"><label>Fajr</label><select class="jsel" id="j-fajr"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
-        <div class="jrow"><label>Dhuhr</label><select class="jsel" id="j-dhuhr"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
-        <div class="jrow"><label>Asr</label><select class="jsel" id="j-asr"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
-        <div class="jrow"><label>Maghreb</label><select class="jsel" id="j-maghreb"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
-        <div class="jrow"><label>Isha</label><select class="jsel" id="j-isha"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
-        <div class="jrow"><label>Sunnah prayers</label><select class="jsel" id="j-sunnah"><option value="">—</option><option>Yes</option><option>No</option></select></div>
-        <div class="jrow"><label>Qiyam al-layl</label><select class="jsel" id="j-qiyam"><option value="">—</option><option>Yes</option><option>No</option></select></div>
-        <div class="jrow"><label>Dhikr</label><select class="jsel" id="j-dhikr"><option value="">—</option><option>Yes</option><option>No</option></select></div>
-      </div>
-      <div class="jsec">
-        <div class="jsec-hd">Market Context</div>
-        <div class="jrow"><label>Price action character</label><select class="jsel" id="j-balance"><option value="">—</option><option>Balanced</option><option>Imbalanced</option></select></div>
-        <div class="jrow"><label>Control</label><select class="jsel" id="j-control"><option value="">—</option><option>Buyers in control</option><option>Sellers in control</option><option>Balanced/contested</option></select></div>
-        <div class="jrow"><label>Behavior</label><select class="jsel" id="j-behavior"><option value="">—</option><option>Normal</option><option>Unusual</option></select></div>
-        <div class="jrow"><label>News day</label><select class="jsel" id="j-newsday"><option value="">—</option><option>Yes</option><option>No</option></select></div>
-        <div class="jrow"><label>Location traded from</label><input class="ni" id="j-location" type="text" placeholder="Home, office..." style="width:120px;text-align:left;"></div>
-        <div class="jrow"><label>Ticker traded</label><input class="ni" id="j-ticker" type="text" placeholder="RGTI" style="width:90px;"></div>
-        <div class="jrow"><label>Software used</label><input class="ni" id="j-software" type="text" placeholder="TradingView..." style="width:120px;text-align:left;"></div>
-        <div class="jrow"><label>Order flow tool</label><select class="jsel" id="j-orderflow"><option value="">—</option><option>Bookmap</option><option>Volume Profile only</option><option>Neither</option></select></div>
-      </div>
-      <div class="jsec">
-        <div class="jsec-hd">Day Grade (Process, Not P&amp;L)</div>
-        <div class="jrow"><label>Overall day grade</label><select class="jsel" id="j-daygrade"><option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>F</option></select></div>
-        <div class="jrow"><label>Market favorability</label><select class="jsel" id="j-marketfav"><option value="">—</option><option>Favorable for my style</option><option>Neutral</option><option>Unfavorable for my style</option></select></div>
-        <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">One focus point for tomorrow</label><textarea class="jnote" id="j-focus" rows="2" placeholder="The one thing that would most improve tomorrow's trading."></textarea></div>
-        <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">Best opportunity (taken or missed)</label><textarea class="jnote" id="j-bestop" rows="2" placeholder="What was the best setup of the day, whether or not you took it?"></textarea></div>
-      </div>
-      <div class="jsec">
-        <div class="jsec-hd">Trading Discipline</div>
-        <div class="jrow"><label>Rule breaks (0–5)</label><div class="scale-row" id="jsc-rules"></div></div>
-        <div class="jrow"><label>Pre-market prep</label><select class="jsel" id="j-prep"><option value="">—</option><option>None</option><option>Brief</option><option>Thorough</option></select></div>
-        <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">Notes</label><textarea class="jnote" id="j-note" rows="3" placeholder="What happened today? What will you change?"></textarea></div>
-      </div>
+
+      <!-- Journal sections compartmentalized into a 3-over-3 circle
+           cluster — same interaction language as the Sim tab's circle
+           nav: idle shows icon + name, tapping emphasizes that circle
+           and scale-emerges its panel below, others dim. Built by
+           buildJournalCircles() at init, not hand-written here, so the
+           six panels' field markup lives in one place only. -->
+      <div id="jcirc-mount"></div>
+
       <button class="j-save-btn" onclick="saveJournal()">Save Entry</button>
       <button class="j-save-btn" onclick="exportLogCSV()" style="border-color:#60a5fa;color:#60a5fa;">Export Log + Journal CSV</button>
       <div class="spark-grid" id="spark-grid" style="display:none;"></div>
@@ -482,27 +433,9 @@ canvas.spark{width:100%;height:34px;display:block;}
         <div class="vs-rows" id="vs-rows"><div style="padding:8px 0;text-align:center;font-size:9px;color:#4d5a6e;">Run a simulation first.</div></div>
       </div>
 
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;padding:0 2px;">
-        <span style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;">Real Trading Data</span>
-        <button onclick="resetRealStats()" style="background:transparent;border:1px solid #252d3d;color:#4d5a6e;font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 8px;border-radius:2px;cursor:pointer;letter-spacing:.08em;">↺ Auto-fill from Log</button>
-      </div>
-      <div class="stats-inp">
-        <div class="si"><label>Total Trades</label><input class="ni" id="rTrades" type="number" placeholder="—" oninput="onReal()" style="width:78px;"></div>
-        <div class="si"><label>Trading Days</label><input class="ni" id="rDays" type="number" placeholder="—" oninput="onReal()" style="width:78px;"></div>
-        <div class="si"><label>Win Rate %</label><input class="ni" id="rWR" type="number" step="0.1" placeholder="—" oninput="onReal()" style="width:78px;"></div>
-        <div class="si"><label>Breakeven %</label><input class="ni" id="rBE" type="number" step="0.1" placeholder="—" oninput="onReal()" style="width:78px;"></div>
-        <div class="si"><label>Avg Win Ticks</label><input class="ni" id="rTickW" type="number" step="0.1" placeholder="—" oninput="onReal()" style="width:78px;"></div>
-        <div class="si"><label>Avg Loss Ticks</label><input class="ni" id="rTickL" type="number" step="0.1" placeholder="—" oninput="onReal()" style="width:78px;"></div>
-        <div class="si"><label>Total P&amp;L $</label><input class="ni" id="rPnlTotal" type="number" step="0.01" placeholder="—" oninput="onReal()" style="width:88px;"></div>
-        <div class="si"><label>Avg Daily P&amp;L $</label><input class="ni" id="rDayPnl" type="number" step="0.01" placeholder="—" oninput="onReal()" style="width:88px;"></div>
-      </div>
-      <div class="stats-grid" style="margin-top:2px;">
-        <div class="sg"><div class="sgl">Loss Rate</div><div class="sgv" id="rLoss" style="color:#f87171">—</div></div>
-        <div class="sg"><div class="sgl">Avg T/Day</div><div class="sgv" id="rAvgT" style="color:#fbbf24">—</div></div>
-        <div class="sg"><div class="sgl">R:R Ratio</div><div class="sgv" id="rRR" style="color:#34d399">—</div></div>
-        <div class="sg"><div class="sgl">Days ±Pace</div><div class="sgv" id="rPace">—</div></div>
-      </div>
-      <div class="fc-note" style="padding:0 4px 8px;">Fields auto-fill from your Log. Edit any value to override. Hit ↺ to revert to auto-computed.</div>
+      <!-- Broker data entry, compartmentalized behind a single circle —
+           same interaction language as the Sim tab and Log tab. -->
+      <div id="scirc-mount"></div>
 
       <div class="slbl" style="margin:8px -16px 0;padding-left:16px;">Weekly Report Card</div>
       <div id="weekly-report" style="padding-top:8px;margin-bottom:4px;"></div>
@@ -526,10 +459,6 @@ canvas.spark{width:100%;height:34px;display:block;}
         <div class="chart-wrap"><canvas class="eqcv" id="real-cv-month"></canvas></div>
       </div>
 
-      <div class="stats-inp">
-        <div class="si"><label>Start Capital $</label><input class="ni" id="rCapS" type="number" placeholder="—" oninput="onReal()" style="width:88px;"></div>
-        <div class="si"><label>Current Capital $</label><input class="ni" id="rCapC" type="number" placeholder="—" oninput="onReal()" style="width:88px;"></div>
-      </div>
       <div class="stats-grid">
         <div class="sg"><div class="sgl">YTD Return</div><div class="sgv" id="rYTD">—</div></div>
       </div>
@@ -1572,7 +1501,7 @@ function dvWireTableScroll(){
 function exportData(tab){
   const res=simResults[tab];if(!res||!res.rows.length){alert('Run a simulation first.');return;}
   const {rows,acct0,c,msp}=res;const names=['Strat-A','Strat-B','Strat-C'];
-  const L=['AHM v36 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
+  const L=['AHM v37 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
   const show=new Set([0,rows.length-1]);rows.forEach((r,i)=>{if(r.isMilestone||r.day%c.intv===0)show.add(i);});
   for(const idx of [...show].sort((a,b)=>a-b)){const r=rows[idx];const mo=r.cumPnl-((msp||{})[r.mIdx]||0);const dp=r.dayPct!=null?r.dayPct.toFixed(2)+'%':'—';let lbl='';if(r.isMilestone)lbl='Milestone '+r.msVal;else if(r.day===1)lbl='Start';else if(idx===rows.length-1)lbl='Goal';const tt=r.dayWinCt+r.dayLoseCt+r.dayBECt;const wrp=tt>0?((r.dayWinCt/tt)*100).toFixed(0)+'%':'—';L.push([r.day,cal(r.calMo),mo.toFixed(2),lbl,r.shares,r.outcome,wrp,r.numTr||0,r.dayTicks,dp,r.dayPnl.toFixed(2),(r.cumPnl/acct0*100).toFixed(2)+'%',(r.dayFees||0).toFixed(2),r.surplus.toFixed(2),r.newSh,r.cumPnl.toFixed(2)].join(','));}
   const blob=new Blob([L.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);
@@ -1620,6 +1549,183 @@ function clearLog(){if(!sessionLog.length)return;if(!confirm('Clear all session 
 
 let journalLog=[];
 function mkScale(id,n){const c=$(id);if(!c)return;c.innerHTML='';for(let i=1;i<=n;i++){const b=document.createElement('button');b.className='scale-btn';b.dataset.v=i;b.textContent=i;b.type='button';b.addEventListener('click',()=>{c.querySelectorAll('.scale-btn').forEach(x=>x.classList.toggle('on',+x.dataset.v<=i));});c.appendChild(b);}}
+
+/* ══════════════════════════════════════════════════════════════
+   JOURNAL CIRCLE NAV — same interaction language as the Sim tab's
+   circle cluster (buildPanes/circSelect), applied to the Log tab's
+   six journal sections. Built once at init from a single source of
+   truth for each panel's field markup, rather than hand-duplicated
+   HTML, so there's exactly one place each field lives.
+   ══════════════════════════════════════════════════════════════ */
+const JICONS={
+  sleep:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
+  mental:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V9"/><path d="M6 3c-1.5 2-2 4-2 6a8 8 0 0 0 16 0c0-2-.5-4-2-6"/></svg>`,
+  prayer:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/><path d="M12 6v3l2 1"/></svg>`,
+  market:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14"/></svg>`,
+  grade:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg>`,
+  discipline:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4z"/></svg>`,
+};
+const JCATS=[
+  {key:'sleep',title:'Sleep',body:()=>`
+    <div class="jrow"><label>Time slept</label><select class="jsel" id="j-timeslept" style="min-width:90px;"><option value="">—</option></select></div>
+    <div class="jrow"><label>Time woke up</label><select class="jsel" id="j-timewoke" style="min-width:90px;"><option value="">—</option></select></div>
+    <div class="jrow"><label>Emotion before sleep</label><select class="jsel" id="j-presleep-emo"><option value="">—</option><option>Calm</option><option>Content</option><option>Excited</option><option>Happy</option><option>Grateful</option><option>Hopeful</option><option>Anxious</option><option>Stressed</option><option>Overwhelmed</option><option>Sad</option><option>Angry</option><option>Frustrated</option><option>Restless</option><option>Numb</option><option>Lonely</option></select></div>
+    <div class="jrow"><label>Sleep quality (1–5)</label><div class="scale-row" id="jsc-sleepq"></div></div>
+    <div class="jrow"><label>Social plans night before</label><select class="jsel" id="j-social"><option value="">—</option><option>None — normal night</option><option>Yes — stayed on schedule</option><option>Yes — stayed up late</option></select></div>
+    <div class="jrow"><label>Physical state</label><select class="jsel" id="j-phys"><option value="">—</option><option>Rested</option><option>Energised</option><option>Tired</option><option>Sick</option><option>Sore</option></select></div>
+    <div class="jrow"><label>Feeling sick today</label><select class="jsel" id="j-sick"><option value="">—</option><option>No</option><option>Mildly</option><option>Yes</option></select></div>
+    <div class="jrow"><label>Hydration (1–5)</label><div class="scale-row" id="jsc-hydration"></div></div>
+    <div class="jrow"><label>Felt temperature</label><select class="jsel" id="j-temp"><option value="">—</option><option>Cold</option><option>Comfortable</option><option>Warm/Hot</option></select></div>
+    <div class="jrow"><label>Diet quality (1–5)</label><div class="scale-row" id="jsc-diet"></div></div>
+    <div class="jrow"><label>Exercise</label><select class="jsel" id="j-exercise"><option value="">—</option><option>None</option><option>Light walk</option><option>Moderate</option><option>Intense</option></select></div>`},
+  {key:'mental',title:'Mental',body:()=>`
+    <div class="jrow"><label>Stress level (1–5)</label><div class="scale-row" id="jsc-stress"></div></div>
+    <div class="jrow"><label>Mental fatigue (1–5)</label><div class="scale-row" id="jsc-fatigue"></div></div>
+    <div class="jrow"><label>Confidence (1–5)</label><div class="scale-row" id="jsc-conf"></div></div>
+    <div class="jrow"><label>Emotional state</label><select class="jsel" id="j-emo"><option value="">—</option><option>Happy</option><option>Content</option><option>Grateful</option><option>Calm</option><option>Focused</option><option>Motivated</option><option>Hopeful</option><option>Anxious</option><option>Overconfident</option><option>Distracted</option><option>Numb</option><option>Frustrated</option><option>Sad</option><option>Angry</option><option>Overwhelmed</option><option>Lonely</option></select></div>
+    <div class="jrow"><label>Emotional conflict/fight</label><select class="jsel" id="j-conflict"><option value="">—</option><option>None</option><option>Minor</option><option>Significant</option></select></div>
+    <div class="jrow"><label>News today</label><select class="jsel" id="j-news"><option value="">—</option><option>Neither</option><option>Good news</option><option>Bad news</option></select></div>`},
+  {key:'prayer',title:'Prayer',body:()=>`
+    <div class="jrow"><label>Fajr</label><select class="jsel" id="j-fajr"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
+    <div class="jrow"><label>Dhuhr</label><select class="jsel" id="j-dhuhr"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
+    <div class="jrow"><label>Asr</label><select class="jsel" id="j-asr"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
+    <div class="jrow"><label>Maghreb</label><select class="jsel" id="j-maghreb"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
+    <div class="jrow"><label>Isha</label><select class="jsel" id="j-isha"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
+    <div class="jrow"><label>Sunnah prayers</label><select class="jsel" id="j-sunnah"><option value="">—</option><option>Yes</option><option>No</option></select></div>
+    <div class="jrow"><label>Qiyam al-layl</label><select class="jsel" id="j-qiyam"><option value="">—</option><option>Yes</option><option>No</option></select></div>
+    <div class="jrow"><label>Dhikr</label><select class="jsel" id="j-dhikr"><option value="">—</option><option>Yes</option><option>No</option></select></div>`},
+  {key:'market',title:'Market',body:()=>`
+    <div class="jrow"><label>Price action character</label><select class="jsel" id="j-balance"><option value="">—</option><option>Balanced</option><option>Imbalanced</option></select></div>
+    <div class="jrow"><label>Control</label><select class="jsel" id="j-control"><option value="">—</option><option>Buyers in control</option><option>Sellers in control</option><option>Balanced/contested</option></select></div>
+    <div class="jrow"><label>Behavior</label><select class="jsel" id="j-behavior"><option value="">—</option><option>Normal</option><option>Unusual</option></select></div>
+    <div class="jrow"><label>News day</label><select class="jsel" id="j-newsday"><option value="">—</option><option>Yes</option><option>No</option></select></div>
+    <div class="jrow"><label>Location traded from</label><input class="ni" id="j-location" type="text" placeholder="Home, office..." style="width:120px;text-align:left;"></div>
+    <div class="jrow"><label>Ticker traded</label><input class="ni" id="j-ticker" type="text" placeholder="RGTI" style="width:90px;"></div>
+    <div class="jrow"><label>Software used</label><input class="ni" id="j-software" type="text" placeholder="TradingView..." style="width:120px;text-align:left;"></div>
+    <div class="jrow"><label>Order flow tool</label><select class="jsel" id="j-orderflow"><option value="">—</option><option>Bookmap</option><option>Volume Profile only</option><option>Neither</option></select></div>`},
+  {key:'grade',title:'Day Grade',body:()=>`
+    <div class="jrow"><label>Overall day grade</label><select class="jsel" id="j-daygrade"><option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>F</option></select></div>
+    <div class="jrow"><label>Market favorability</label><select class="jsel" id="j-marketfav"><option value="">—</option><option>Favorable for my style</option><option>Neutral</option><option>Unfavorable for my style</option></select></div>
+    <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">One focus point for tomorrow</label><textarea class="jnote" id="j-focus" rows="2" placeholder="The one thing that would most improve tomorrow's trading."></textarea></div>
+    <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">Best opportunity (taken or missed)</label><textarea class="jnote" id="j-bestop" rows="2" placeholder="What was the best setup of the day, whether or not you took it?"></textarea></div>`},
+  {key:'discipline',title:'Discipline',body:()=>`
+    <div class="jrow"><label>Rule breaks (0–5)</label><div class="scale-row" id="jsc-rules"></div></div>
+    <div class="jrow"><label>Pre-market prep</label><select class="jsel" id="j-prep"><option value="">—</option><option>None</option><option>Brief</option><option>Thorough</option></select></div>
+    <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">Notes</label><textarea class="jnote" id="j-note" rows="3" placeholder="What happened today? What will you change?"></textarea></div>`},
+];
+
+function buildJournalCircles(){
+  const mount=$('jcirc-mount');if(!mount)return;
+  const circBtn=cat=>`<div style="display:flex;flex-direction:column;align-items:center;">
+    <button class="circ-btn" data-cat="${cat.key}" onclick="circSelectJ('${cat.key}')">${JICONS[cat.key]||''}</button>
+    <span class="circ-label">${cat.title}</span>
+  </div>`;
+  mount.innerHTML=`
+    <div class="circ-nav">
+      <div class="circ-cluster" id="jcirc-cluster" data-sel="">
+        <div class="circ-row">${circBtn(JCATS[0])}${circBtn(JCATS[1])}${circBtn(JCATS[2])}</div>
+        <div class="circ-row">${circBtn(JCATS[3])}${circBtn(JCATS[4])}${circBtn(JCATS[5])}</div>
+      </div>
+      <div class="circ-hint">Tap a circle to open its section</div>
+      <div class="circ-panel-wrap" id="jcirc-panel-wrap">
+        <div class="circ-panel-inner">
+          ${JCATS.map(cat=>`<div class="jcirc-panel" data-cat="${cat.key}" style="display:none;"><div class="jsec-hd" style="margin:-10px -16px 8px;">${cat.title}</div>${cat.body()}</div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  // Scale-row inputs only exist in the DOM now that panels are inserted —
+  // wire them here, same as the original init sequence did.
+  ['jsc-sleepq','jsc-stress','jsc-fatigue','jsc-conf','jsc-rules','jsc-diet','jsc-hydration'].forEach(id=>mkScale(id,5));
+  populateHourSelect('j-timeslept');populateHourSelect('j-timewoke');
+}
+
+function circSelectJ(catKey){
+  const cluster=$('jcirc-cluster');
+  const panelWrap=$('jcirc-panel-wrap');
+  if(!cluster)return;
+  const currentSel=cluster.dataset.sel;
+  const deselecting=currentSel===catKey;
+  cluster.querySelectorAll('.circ-btn').forEach(btn=>{
+    const isThis=btn.dataset.cat===catKey;
+    btn.classList.toggle('sel',isThis&&!deselecting);
+    btn.classList.toggle('dim',!isThis&&!deselecting);
+    const lbl=btn.parentElement.querySelector('.circ-label');
+    if(lbl)lbl.classList.toggle('dim-out',!deselecting);
+  });
+  cluster.classList.toggle('has-sel',!deselecting);
+  cluster.dataset.sel=deselecting?'':catKey;
+  document.querySelectorAll('.jcirc-panel').forEach(p=>{
+    p.style.display=(!deselecting&&p.dataset.cat===catKey)?'block':'none';
+  });
+  if(panelWrap)panelWrap.classList.toggle('open',!deselecting);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   STATS TAB CIRCLE — single circle for manual broker data entry,
+   same interaction pattern as the Sim and Log tab clusters, just
+   sized to one. Everything auto-computed (Weekly Report, Gauges,
+   Real Equity charts, Real vs Sim) stays visible outside it — this
+   circle is only for the fields a person types in by hand.
+   ══════════════════════════════════════════════════════════════ */
+function buildStatsCircle(){
+  const mount=$('scirc-mount');if(!mount)return;
+  const icon=`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>`;
+  mount.innerHTML=`
+    <div class="circ-nav">
+      <div class="circ-cluster" id="scirc-cluster" data-sel="">
+        <div class="circ-row">
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <button class="circ-btn" data-cat="broker" onclick="circSelectS('broker')">${icon}</button>
+            <span class="circ-label">Enter your broker trading data</span>
+          </div>
+        </div>
+      </div>
+      <div class="circ-panel-wrap" id="scirc-panel-wrap">
+        <div class="circ-panel-inner">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+            <span style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;">Real Trading Data</span>
+            <button onclick="resetRealStats()" style="background:transparent;border:1px solid #252d3d;color:#4d5a6e;font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 8px;border-radius:2px;cursor:pointer;letter-spacing:.08em;">↺ Auto-fill from Log</button>
+          </div>
+          <div class="stats-inp">
+            <div class="si"><label>Total Trades</label><input class="ni" id="rTrades" type="number" placeholder="—" oninput="onReal()" style="width:78px;"></div>
+            <div class="si"><label>Trading Days</label><input class="ni" id="rDays" type="number" placeholder="—" oninput="onReal()" style="width:78px;"></div>
+            <div class="si"><label>Win Rate %</label><input class="ni" id="rWR" type="number" step="0.1" placeholder="—" oninput="onReal()" style="width:78px;"></div>
+            <div class="si"><label>Breakeven %</label><input class="ni" id="rBE" type="number" step="0.1" placeholder="—" oninput="onReal()" style="width:78px;"></div>
+            <div class="si"><label>Avg Win Ticks</label><input class="ni" id="rTickW" type="number" step="0.1" placeholder="—" oninput="onReal()" style="width:78px;"></div>
+            <div class="si"><label>Avg Loss Ticks</label><input class="ni" id="rTickL" type="number" step="0.1" placeholder="—" oninput="onReal()" style="width:78px;"></div>
+            <div class="si"><label>Total P&amp;L $</label><input class="ni" id="rPnlTotal" type="number" step="0.01" placeholder="—" oninput="onReal()" style="width:88px;"></div>
+            <div class="si"><label>Avg Daily P&amp;L $</label><input class="ni" id="rDayPnl" type="number" step="0.01" placeholder="—" oninput="onReal()" style="width:88px;"></div>
+            <div class="si"><label>Start Capital $</label><input class="ni" id="rCapS" type="number" placeholder="—" oninput="onReal()" style="width:88px;"></div>
+            <div class="si"><label>Current Capital $</label><input class="ni" id="rCapC" type="number" placeholder="—" oninput="onReal()" style="width:88px;"></div>
+          </div>
+          <div class="stats-grid" style="margin-top:2px;">
+            <div class="sg"><div class="sgl">Loss Rate</div><div class="sgv" id="rLoss" style="color:#f87171">—</div></div>
+            <div class="sg"><div class="sgl">Avg T/Day</div><div class="sgv" id="rAvgT" style="color:#fbbf24">—</div></div>
+            <div class="sg"><div class="sgl">R:R Ratio</div><div class="sgv" id="rRR" style="color:#34d399">—</div></div>
+            <div class="sg"><div class="sgl">Days ±Pace</div><div class="sgv" id="rPace">—</div></div>
+          </div>
+          <div class="fc-note" style="padding:0 4px 0;">Fields auto-fill from your Log. Edit any value to override. Hit ↺ to revert to auto-computed.</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function circSelectS(catKey){
+  const cluster=$('scirc-cluster');
+  const panelWrap=$('scirc-panel-wrap');
+  if(!cluster)return;
+  const currentSel=cluster.dataset.sel;
+  const deselecting=currentSel===catKey;
+  cluster.querySelectorAll('.circ-btn').forEach(btn=>{
+    const isThis=btn.dataset.cat===catKey;
+    btn.classList.toggle('sel',isThis&&!deselecting);
+    const lbl=btn.parentElement.querySelector('.circ-label');
+    if(lbl)lbl.classList.toggle('dim-out',!deselecting);
+  });
+  cluster.dataset.sel=deselecting?'':catKey;
+  if(panelWrap)panelWrap.classList.toggle('open',!deselecting);
+}
+
 function getScale(id){const c=$(id);if(!c)return 0;return[...c.querySelectorAll('.scale-btn.on')].length;}
 function resetScale(id){const c=$(id);if(!c)return;c.querySelectorAll('.scale-btn').forEach(x=>x.classList.remove('on'));}
 
@@ -2369,11 +2475,9 @@ function wirePanes(){
     inp.addEventListener('change',refreshAll);
     inp.addEventListener('blur',refreshAll);
   }
-  ['jsc-sleepq','jsc-stress','jsc-fatigue','jsc-conf','jsc-rules','jsc-diet','jsc-hydration'].forEach(id=>mkScale(id,5));
-  populateHourSelect('j-timeslept');populateHourSelect('j-timewoke');
 }
 
-const SK='ahm-v36';
+const SK='ahm-v37';
 function getStpIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;SDEFS.forEach(([id])=>ids.push(id+s));});return ids;}
 const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-volceil','tog-vw'];
 function getTogIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;TOG_BASE.forEach(id=>ids.push(id+s));});return ids;}
@@ -2411,6 +2515,8 @@ async function load(){
 }
 async function init(){
   buildPanes();wirePanes();
+  buildJournalCircles();
+  buildStatsCircle();
   const loaded=await load();
   [0,1,2].forEach(n=>{updateDist(n);updateFrictionBreakdown(n);updateVolWindowSummary(n);updateDerivedShares(n);});
   const allCv=$('real-cv-all'),allTt=$('real-ct-all');if(allCv&&allTt)wireChart(allCv,allTt);
