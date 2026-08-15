@@ -309,7 +309,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 <div class="topbar">
   <div class="brand">
     <span class="brand-name">Anti-Hope Machine</span>
-    <span class="brand-ver">v37</span>
+    <span class="brand-ver">v38</span>
   </div>
   <div class="top-r">
     <button class="guide-btn" onclick="openGuide()">Guide</button>
@@ -370,6 +370,20 @@ canvas.spark{width:100%;height:34px;display:block;}
   <div class="screen" id="scr-log">
     <div class="slbl">Session &amp; Journal</div>
     <div class="log-body">
+      <div class="jdate" id="jdate">—</div>
+
+      <!-- Journal sections compartmentalized into a 3-over-3 circle
+           cluster — same interaction language as the Sim tab's circle
+           nav: idle shows icon + name, tapping emphasizes that circle
+           and scale-emerges its panel below, others dim. Built by
+           buildJournalCircles() at init, not hand-written here, so the
+           six panels' field markup lives in one place only. -->
+      <div id="jcirc-mount"></div>
+
+      <button class="j-save-btn" onclick="saveJournal()">Save Entry</button>
+
+      <div class="log-divider"></div>
+
       <div class="log-info" id="log-info">0 days logged</div>
       <div class="inp-grp">
         <div class="inp-row"><label>Wins</label><input class="ni" id="dWins" type="number" min="0" placeholder="0" oninput="onDaily()"></div>
@@ -406,19 +420,6 @@ canvas.spark{width:100%;height:34px;display:block;}
         <div class="grade-big" id="sd-grade">—</div>
       </div>
 
-      <div class="log-divider"></div>
-
-      <div class="jdate" id="jdate">—</div>
-
-      <!-- Journal sections compartmentalized into a 3-over-3 circle
-           cluster — same interaction language as the Sim tab's circle
-           nav: idle shows icon + name, tapping emphasizes that circle
-           and scale-emerges its panel below, others dim. Built by
-           buildJournalCircles() at init, not hand-written here, so the
-           six panels' field markup lives in one place only. -->
-      <div id="jcirc-mount"></div>
-
-      <button class="j-save-btn" onclick="saveJournal()">Save Entry</button>
       <button class="j-save-btn" onclick="exportLogCSV()" style="border-color:#60a5fa;color:#60a5fa;">Export Log + Journal CSV</button>
       <div class="spark-grid" id="spark-grid" style="display:none;"></div>
       <div class="jhist" id="jhist"><div class="jhist-hd">History</div><div class="jentry" style="color:#4d5a6e;font-size:10px;text-align:center;padding:14px;">No entries yet.</div></div>
@@ -1430,17 +1431,25 @@ function dvRenderDiagnostics(){
     }
     lines.push(`<span style="color:#e2e6ed;">${richest.label} ends with the highest capital: $${fmt(richest.cap,0)}.</span>`);
     // Friction-quality callouts: green if friction is a small share of
-    // daily edge, red if it's eating a large share — genuinely useful,
-    // not just restating numbers already on the chart.
+    // daily edge, red if it's eating a large share. Strategies sharing
+    // the same finding are grouped into ONE sentence naming all of them,
+    // rather than repeating the same sentence once per strategy.
+    const efficient=[],costly=[];
     info.forEach(s=>{
       if(s.evNet<=0)return;
       const frShare=s.frDay/(s.evNet+s.frDay);
-      if(frShare<0.15){
-        lines.push(`<span style="color:#34d399;">${s.label}'s friction is a small share of its daily edge — efficient.</span>`);
-      }else if(frShare>0.4){
-        lines.push(`<span style="color:#f87171;">${s.label} is losing a large share of its edge to friction — worth revisiting size or target.</span>`);
-      }
+      if(frShare<0.15)efficient.push(s.label);
+      else if(frShare>0.4)costly.push(s.label);
     });
+    const joinNames=arr=>arr.length===1?arr[0]:arr.length===2?arr.join(' and '):arr.slice(0,-1).join(', ')+', and '+arr[arr.length-1];
+    if(efficient.length){
+      const verb=efficient.length>1?'are':'is';
+      lines.push(`<span style="color:#34d399;">${joinNames(efficient)}'s friction ${verb} a small share of ${efficient.length>1?'their':'its'} daily edge — efficient.</span>`);
+    }
+    if(costly.length){
+      const verb=costly.length>1?'are':'is';
+      lines.push(`<span style="color:#f87171;">${joinNames(costly)} ${verb} losing a large share of ${costly.length>1?'their':'its'} edge to friction — worth revisiting size or target.</span>`);
+    }
   }
   // Real-vs-sim callout, only when there's enough real data to say anything meaningful.
   const realCapS=+$('rCapS')?.value||0;
@@ -1501,7 +1510,7 @@ function dvWireTableScroll(){
 function exportData(tab){
   const res=simResults[tab];if(!res||!res.rows.length){alert('Run a simulation first.');return;}
   const {rows,acct0,c,msp}=res;const names=['Strat-A','Strat-B','Strat-C'];
-  const L=['AHM v37 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
+  const L=['AHM v38 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
   const show=new Set([0,rows.length-1]);rows.forEach((r,i)=>{if(r.isMilestone||r.day%c.intv===0)show.add(i);});
   for(const idx of [...show].sort((a,b)=>a-b)){const r=rows[idx];const mo=r.cumPnl-((msp||{})[r.mIdx]||0);const dp=r.dayPct!=null?r.dayPct.toFixed(2)+'%':'—';let lbl='';if(r.isMilestone)lbl='Milestone '+r.msVal;else if(r.day===1)lbl='Start';else if(idx===rows.length-1)lbl='Goal';const tt=r.dayWinCt+r.dayLoseCt+r.dayBECt;const wrp=tt>0?((r.dayWinCt/tt)*100).toFixed(0)+'%':'—';L.push([r.day,cal(r.calMo),mo.toFixed(2),lbl,r.shares,r.outcome,wrp,r.numTr||0,r.dayTicks,dp,r.dayPnl.toFixed(2),(r.cumPnl/acct0*100).toFixed(2)+'%',(r.dayFees||0).toFixed(2),r.surplus.toFixed(2),r.newSh,r.cumPnl.toFixed(2)].join(','));}
   const blob=new Blob([L.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);
@@ -1550,6 +1559,28 @@ function clearLog(){if(!sessionLog.length)return;if(!confirm('Clear all session 
 let journalLog=[];
 function mkScale(id,n){const c=$(id);if(!c)return;c.innerHTML='';for(let i=1;i<=n;i++){const b=document.createElement('button');b.className='scale-btn';b.dataset.v=i;b.textContent=i;b.type='button';b.addEventListener('click',()=>{c.querySelectorAll('.scale-btn').forEach(x=>x.classList.toggle('on',+x.dataset.v<=i));});c.appendChild(b);}}
 
+// Good/Bad/Great — single-select three-way choice, distinct from the
+// cumulative 1-5 fill pattern above. Used for Soul's simple check-in
+// variables and Performance's per-block discipline rating.
+function mkGbg(id){
+  const c=$(id);if(!c)return;
+  c.innerHTML='';
+  [['Bad','#f87171'],['Good','#fbbf24'],['Great','#34d399']].forEach(([label,color])=>{
+    const b=document.createElement('button');
+    b.className='scale-btn';b.dataset.v=label;b.textContent=label;b.type='button';
+    b.style.width='auto';b.style.padding='0 8px';b.style.fontSize='8px';
+    b.addEventListener('click',()=>{
+      const already=b.classList.contains('on');
+      c.querySelectorAll('.scale-btn').forEach(x=>{x.classList.remove('on');x.style.color='';x.style.borderColor='';x.style.background='';});
+      if(!already){b.classList.add('on');b.style.color=color;b.style.borderColor=color+'66';b.style.background=color+'12';}
+    });
+    c.appendChild(b);
+  });
+}
+function getGbg(id){const c=$(id);if(!c)return'';const on=c.querySelector('.scale-btn.on');return on?on.dataset.v:'';}
+function resetGbg(id){const c=$(id);if(!c)return;c.querySelectorAll('.scale-btn').forEach(x=>{x.classList.remove('on');x.style.color='';x.style.borderColor='';x.style.background='';});}
+
+
 /* ══════════════════════════════════════════════════════════════
    JOURNAL CIRCLE NAV — same interaction language as the Sim tab's
    circle cluster (buildPanes/circSelect), applied to the Log tab's
@@ -1558,15 +1589,37 @@ function mkScale(id,n){const c=$(id);if(!c)return;c.innerHTML='';for(let i=1;i<=
    HTML, so there's exactly one place each field lives.
    ══════════════════════════════════════════════════════════════ */
 const JICONS={
-  sleep:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
-  mental:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V9"/><path d="M6 3c-1.5 2-2 4-2 6a8 8 0 0 0 16 0c0-2-.5-4-2-6"/></svg>`,
-  prayer:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/><path d="M12 6v3l2 1"/></svg>`,
-  market:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14"/></svg>`,
+  soul:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg>`,
+  mind:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V9"/><path d="M6 3c-1.5 2-2 4-2 6a8 8 0 0 0 16 0c0-2-.5-4-2-6"/></svg>`,
+  body:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
   grade:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg>`,
-  discipline:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4z"/></svg>`,
+  market:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14"/></svg>`,
+  performance:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
 };
+// Good/Bad/Great selector — three-way version of the existing scale-btn
+// pattern, used for Soul's simple check-in variables.
+function gbgRow(id,label){
+  return`<div class="jrow"><label>${label}</label><div class="scale-row" id="${id}"></div></div>`;
+}
+const TIME_BLOCKS=[
+  {key:'ob1',label:'9:30–11:00'},
+  {key:'ob2',label:'11:00–12:00'},
+  {key:'ob3',label:'12:00–2:00'},
+  {key:'ob4',label:'2:00–4:00'},
+];
 const JCATS=[
-  {key:'sleep',title:'Sleep',body:()=>`
+  {key:'soul',title:'Soul',body:()=>`
+    ${gbgRow('jgbg-worship','Worship')}
+    ${gbgRow('jgbg-faith','Faith')}
+    ${gbgRow('jgbg-prayer','Prayer')}`},
+  {key:'mind',title:'Mind',body:()=>`
+    <div class="jrow"><label>Stress level (1–5)</label><div class="scale-row" id="jsc-stress"></div></div>
+    <div class="jrow"><label>Mental fatigue (1–5)</label><div class="scale-row" id="jsc-fatigue"></div></div>
+    <div class="jrow"><label>Confidence (1–5)</label><div class="scale-row" id="jsc-conf"></div></div>
+    <div class="jrow"><label>Emotional state</label><select class="jsel" id="j-emo"><option value="">—</option><option>Happy</option><option>Content</option><option>Grateful</option><option>Calm</option><option>Focused</option><option>Motivated</option><option>Hopeful</option><option>Anxious</option><option>Overconfident</option><option>Distracted</option><option>Numb</option><option>Frustrated</option><option>Sad</option><option>Angry</option><option>Overwhelmed</option><option>Lonely</option></select></div>
+    <div class="jrow"><label>Emotional conflict/fight</label><select class="jsel" id="j-conflict"><option value="">—</option><option>None</option><option>Minor</option><option>Significant</option></select></div>
+    <div class="jrow"><label>News today</label><select class="jsel" id="j-news"><option value="">—</option><option>Neither</option><option>Good news</option><option>Bad news</option></select></div>`},
+  {key:'body',title:'Body',body:()=>`
     <div class="jrow"><label>Time slept</label><select class="jsel" id="j-timeslept" style="min-width:90px;"><option value="">—</option></select></div>
     <div class="jrow"><label>Time woke up</label><select class="jsel" id="j-timewoke" style="min-width:90px;"><option value="">—</option></select></div>
     <div class="jrow"><label>Emotion before sleep</label><select class="jsel" id="j-presleep-emo"><option value="">—</option><option>Calm</option><option>Content</option><option>Excited</option><option>Happy</option><option>Grateful</option><option>Hopeful</option><option>Anxious</option><option>Stressed</option><option>Overwhelmed</option><option>Sad</option><option>Angry</option><option>Frustrated</option><option>Restless</option><option>Numb</option><option>Lonely</option></select></div>
@@ -1578,40 +1631,28 @@ const JCATS=[
     <div class="jrow"><label>Felt temperature</label><select class="jsel" id="j-temp"><option value="">—</option><option>Cold</option><option>Comfortable</option><option>Warm/Hot</option></select></div>
     <div class="jrow"><label>Diet quality (1–5)</label><div class="scale-row" id="jsc-diet"></div></div>
     <div class="jrow"><label>Exercise</label><select class="jsel" id="j-exercise"><option value="">—</option><option>None</option><option>Light walk</option><option>Moderate</option><option>Intense</option></select></div>`},
-  {key:'mental',title:'Mental',body:()=>`
-    <div class="jrow"><label>Stress level (1–5)</label><div class="scale-row" id="jsc-stress"></div></div>
-    <div class="jrow"><label>Mental fatigue (1–5)</label><div class="scale-row" id="jsc-fatigue"></div></div>
-    <div class="jrow"><label>Confidence (1–5)</label><div class="scale-row" id="jsc-conf"></div></div>
-    <div class="jrow"><label>Emotional state</label><select class="jsel" id="j-emo"><option value="">—</option><option>Happy</option><option>Content</option><option>Grateful</option><option>Calm</option><option>Focused</option><option>Motivated</option><option>Hopeful</option><option>Anxious</option><option>Overconfident</option><option>Distracted</option><option>Numb</option><option>Frustrated</option><option>Sad</option><option>Angry</option><option>Overwhelmed</option><option>Lonely</option></select></div>
-    <div class="jrow"><label>Emotional conflict/fight</label><select class="jsel" id="j-conflict"><option value="">—</option><option>None</option><option>Minor</option><option>Significant</option></select></div>
-    <div class="jrow"><label>News today</label><select class="jsel" id="j-news"><option value="">—</option><option>Neither</option><option>Good news</option><option>Bad news</option></select></div>`},
-  {key:'prayer',title:'Prayer',body:()=>`
-    <div class="jrow"><label>Fajr</label><select class="jsel" id="j-fajr"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
-    <div class="jrow"><label>Dhuhr</label><select class="jsel" id="j-dhuhr"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
-    <div class="jrow"><label>Asr</label><select class="jsel" id="j-asr"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
-    <div class="jrow"><label>Maghreb</label><select class="jsel" id="j-maghreb"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
-    <div class="jrow"><label>Isha</label><select class="jsel" id="j-isha"><option value="">—</option><option>On Time</option><option>Late</option><option>Missed</option></select></div>
-    <div class="jrow"><label>Sunnah prayers</label><select class="jsel" id="j-sunnah"><option value="">—</option><option>Yes</option><option>No</option></select></div>
-    <div class="jrow"><label>Qiyam al-layl</label><select class="jsel" id="j-qiyam"><option value="">—</option><option>Yes</option><option>No</option></select></div>
-    <div class="jrow"><label>Dhikr</label><select class="jsel" id="j-dhikr"><option value="">—</option><option>Yes</option><option>No</option></select></div>`},
+  {key:'grade',title:'Grade',body:()=>`
+    <div class="jrow"><label>Overall day grade</label><select class="jsel" id="j-daygrade"><option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>F</option></select></div>
+    <div class="jrow"><label>Market favorability</label><select class="jsel" id="j-marketfav"><option value="">—</option><option>Favorable for my style</option><option>Neutral</option><option>Unfavorable for my style</option></select></div>
+    <div class="jrow"><label>Rule breaks (0–5)</label><div class="scale-row" id="jsc-rules"></div></div>
+    <div class="jrow"><label>Pre-market prep</label><select class="jsel" id="j-prep"><option value="">—</option><option>None</option><option>Brief</option><option>Thorough</option></select></div>
+    <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">One focus point for tomorrow</label><textarea class="jnote" id="j-focus" rows="2" placeholder="The one thing that would most improve tomorrow's trading."></textarea></div>
+    <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">Best opportunity (taken or missed)</label><textarea class="jnote" id="j-bestop" rows="2" placeholder="What was the best setup of the day, whether or not you took it?"></textarea></div>
+    <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">Notes</label><textarea class="jnote" id="j-note" rows="3" placeholder="What happened today? What will you change?"></textarea></div>`},
   {key:'market',title:'Market',body:()=>`
     <div class="jrow"><label>Price action character</label><select class="jsel" id="j-balance"><option value="">—</option><option>Balanced</option><option>Imbalanced</option></select></div>
     <div class="jrow"><label>Control</label><select class="jsel" id="j-control"><option value="">—</option><option>Buyers in control</option><option>Sellers in control</option><option>Balanced/contested</option></select></div>
     <div class="jrow"><label>Behavior</label><select class="jsel" id="j-behavior"><option value="">—</option><option>Normal</option><option>Unusual</option></select></div>
     <div class="jrow"><label>News day</label><select class="jsel" id="j-newsday"><option value="">—</option><option>Yes</option><option>No</option></select></div>
-    <div class="jrow"><label>Location traded from</label><input class="ni" id="j-location" type="text" placeholder="Home, office..." style="width:120px;text-align:left;"></div>
-    <div class="jrow"><label>Ticker traded</label><input class="ni" id="j-ticker" type="text" placeholder="RGTI" style="width:90px;"></div>
-    <div class="jrow"><label>Software used</label><input class="ni" id="j-software" type="text" placeholder="TradingView..." style="width:120px;text-align:left;"></div>
-    <div class="jrow"><label>Order flow tool</label><select class="jsel" id="j-orderflow"><option value="">—</option><option>Bookmap</option><option>Volume Profile only</option><option>Neither</option></select></div>`},
-  {key:'grade',title:'Day Grade',body:()=>`
-    <div class="jrow"><label>Overall day grade</label><select class="jsel" id="j-daygrade"><option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>F</option></select></div>
-    <div class="jrow"><label>Market favorability</label><select class="jsel" id="j-marketfav"><option value="">—</option><option>Favorable for my style</option><option>Neutral</option><option>Unfavorable for my style</option></select></div>
-    <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">One focus point for tomorrow</label><textarea class="jnote" id="j-focus" rows="2" placeholder="The one thing that would most improve tomorrow's trading."></textarea></div>
-    <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">Best opportunity (taken or missed)</label><textarea class="jnote" id="j-bestop" rows="2" placeholder="What was the best setup of the day, whether or not you took it?"></textarea></div>`},
-  {key:'discipline',title:'Discipline',body:()=>`
-    <div class="jrow"><label>Rule breaks (0–5)</label><div class="scale-row" id="jsc-rules"></div></div>
-    <div class="jrow"><label>Pre-market prep</label><select class="jsel" id="j-prep"><option value="">—</option><option>None</option><option>Brief</option><option>Thorough</option></select></div>
-    <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">Notes</label><textarea class="jnote" id="j-note" rows="3" placeholder="What happened today? What will you change?"></textarea></div>`},
+    <div class="jrow"><label>Location traded from</label><input class="ni" id="j-location" type="text" placeholder="Home, office..." style="width:120px;text-align:left;"></div>`},
+  {key:'performance',title:'Performance',body:()=>`
+    <div class="fc-note" style="padding:2px 0 8px;">Discipline, trades taken, and win/loss tally for each session window — trends here can show if a specific time block is quietly costing you.</div>
+    ${TIME_BLOCKS.map(b=>`
+    <div class="jsec-hd" style="margin:6px -16px 4px;">${b.label}</div>
+    <div class="jrow"><label>Discipline</label><div class="scale-row" id="jgbg-${b.key}-disc"></div></div>
+    <div class="jrow"><label>Trades taken</label><input class="ni" id="j-${b.key}-tr" type="number" min="0" placeholder="0" style="width:60px;"></div>
+    <div class="jrow"><label>Wins</label><input class="ni" id="j-${b.key}-w" type="number" min="0" placeholder="0" style="width:60px;"></div>
+    <div class="jrow"><label>Losses</label><input class="ni" id="j-${b.key}-l" type="number" min="0" placeholder="0" style="width:60px;"></div>`).join('')}`},
 ];
 
 function buildJournalCircles(){
@@ -1636,6 +1677,7 @@ function buildJournalCircles(){
   // Scale-row inputs only exist in the DOM now that panels are inserted —
   // wire them here, same as the original init sequence did.
   ['jsc-sleepq','jsc-stress','jsc-fatigue','jsc-conf','jsc-rules','jsc-diet','jsc-hydration'].forEach(id=>mkScale(id,5));
+  ['jgbg-worship','jgbg-faith','jgbg-prayer',...TIME_BLOCKS.map(b=>'jgbg-'+b.key+'-disc')].forEach(mkGbg);
   populateHourSelect('j-timeslept');populateHourSelect('j-timewoke');
 }
 
@@ -1757,19 +1799,27 @@ function saveJournal(){
     phys:$('j-phys').value,sick:$('j-sick').value,temp:$('j-temp').value,
     emo:$('j-emo').value,conflict:$('j-conflict').value,news:$('j-news').value,
     exercise:$('j-exercise').value,prep:$('j-prep').value,note:$('j-note').value.trim(),
-    fajr:$('j-fajr').value,dhuhr:$('j-dhuhr').value,asr:$('j-asr').value,maghreb:$('j-maghreb').value,isha:$('j-isha').value,
-    sunnah:$('j-sunnah').value,qiyam:$('j-qiyam').value,dhikr:$('j-dhikr').value,
+    worship:getGbg('jgbg-worship'),faith:getGbg('jgbg-faith'),prayer:getGbg('jgbg-prayer'),
     balance:$('j-balance').value,control:$('j-control').value,behavior:$('j-behavior').value,newsday:$('j-newsday').value,
-    location:$('j-location').value.trim(),ticker:$('j-ticker').value.trim(),software:$('j-software').value.trim(),orderflow:$('j-orderflow').value,
+    location:$('j-location').value.trim(),
     daygrade:$('j-daygrade').value,marketfav:$('j-marketfav').value,focus:$('j-focus').value.trim(),bestop:$('j-bestop').value.trim(),
+    blocks:TIME_BLOCKS.map(b=>({
+      key:b.key,
+      disc:getGbg('jgbg-'+b.key+'-disc'),
+      tr:+$('j-'+b.key+'-tr').value||0,
+      w:+$('j-'+b.key+'-w').value||0,
+      l:+$('j-'+b.key+'-l').value||0,
+    })),
   };
   const idx=journalLog.findIndex(e=>e.date===entry.date);
   if(idx>=0)journalLog[idx]=entry;else journalLog.unshift(entry);
   renderJournal();
   $('j-timeslept').value='';$('j-timewoke').value='';$('j-note').value='';$('j-focus').value='';$('j-bestop').value='';
-  $('j-location').value='';$('j-ticker').value='';$('j-software').value='';
-  ['j-phys','j-emo','j-exercise','j-prep','j-social','j-sick','j-temp','j-conflict','j-news','j-fajr','j-dhuhr','j-asr','j-maghreb','j-isha','j-sunnah','j-qiyam','j-dhikr','j-balance','j-control','j-behavior','j-newsday','j-orderflow','j-daygrade','j-marketfav','j-presleep-emo'].forEach(id=>{const e=$(id);if(e)e.value='';});
+  $('j-location').value='';
+  ['j-phys','j-emo','j-exercise','j-prep','j-social','j-sick','j-temp','j-conflict','j-news','j-balance','j-control','j-behavior','j-newsday','j-daygrade','j-marketfav','j-presleep-emo'].forEach(id=>{const e=$(id);if(e)e.value='';});
+  TIME_BLOCKS.forEach(b=>{['tr','w','l'].forEach(f=>{const e=$('j-'+b.key+'-'+f);if(e)e.value='';});});
   ['jsc-sleepq','jsc-stress','jsc-fatigue','jsc-conf','jsc-rules','jsc-diet','jsc-hydration'].forEach(resetScale);
+  ['jgbg-worship','jgbg-faith','jgbg-prayer',...TIME_BLOCKS.map(b=>'jgbg-'+b.key+'-disc')].forEach(resetGbg);
   const btn=document.querySelector('.j-save-btn');if(btn){btn.textContent='Saved';setTimeout(()=>btn.textContent='Save Entry',1500);}
   save();
 }
@@ -1800,9 +1850,7 @@ function renderJournal(){
   const lvl=(n,max=5)=>'█'.repeat(n)+'░'.repeat(max-n);
   hist.innerHTML='<div class="jhist-hd">History — '+journalLog.length+' entries</div>'+
     journalLog.slice(0,10).map(e=>{
-      const prayers=[e.fajr,e.dhuhr,e.asr,e.maghreb,e.isha].filter(Boolean);
-      const onTimeCt=prayers.filter(p=>p==='On Time').length;
-      const prayerSummary=prayers.length?`${onTimeCt}/${prayers.length} on time`:'';
+      const blockSummary=e.blocks?.length?e.blocks.reduce((a,b)=>a+b.w,0)+'W-'+e.blocks.reduce((a,b)=>a+b.l,0)+'L across blocks':'';
       return `<div class="jentry"><div class="jentry-date">${e.date}${e.daygrade?` · Grade ${e.daygrade}`:''}</div><div class="jentry-grid">
       ${e.sleep?`<div class="jentry-cell"><span class="jk">Sleep</span>${e.sleep}h${e.timeSlept!==''&&e.timeWoke!==''?` (${HOUR_LABELS[e.timeSlept]}–${HOUR_LABELS[e.timeWoke]})`:''} · Q${e.sleepQ||'—'}</div>`:''}
       ${e.preSleepEmo?`<div class="jentry-cell"><span class="jk">Pre-Sleep</span>${e.preSleepEmo}</div>`:''}
@@ -1818,10 +1866,10 @@ function renderJournal(){
       ${e.news&&e.news!=='Neither'?`<div class="jentry-cell"><span class="jk">News</span>${e.news}</div>`:''}
       ${e.exercise?`<div class="jentry-cell"><span class="jk">Exercise</span>${e.exercise}</div>`:''}
       ${e.phys?`<div class="jentry-cell"><span class="jk">Physical</span>${e.phys}</div>`:''}
-      ${prayerSummary?`<div class="jentry-cell"><span class="jk">Prayers</span>${prayerSummary}</div>`:''}
-      ${e.qiyam==='Yes'?`<div class="jentry-cell"><span class="jk">Qiyam</span>Yes</div>`:''}
-      ${e.ticker?`<div class="jentry-cell"><span class="jk">Ticker</span>${e.ticker}</div>`:''}
-      ${e.orderflow?`<div class="jentry-cell"><span class="jk">Order Flow</span>${e.orderflow}</div>`:''}
+      ${e.worship?`<div class="jentry-cell"><span class="jk">Worship</span>${e.worship}</div>`:''}
+      ${e.faith?`<div class="jentry-cell"><span class="jk">Faith</span>${e.faith}</div>`:''}
+      ${e.prayer?`<div class="jentry-cell"><span class="jk">Prayer</span>${e.prayer}</div>`:''}
+      ${blockSummary?`<div class="jentry-cell"><span class="jk">Blocks</span>${blockSummary}</div>`:''}
       ${e.marketfav?`<div class="jentry-cell"><span class="jk">Mkt Favorability</span>${e.marketfav}</div>`:''}
       ${e.prep?`<div class="jentry-cell"><span class="jk">Prep</span>${e.prep}</div>`:''}
     </div>${e.focus?`<div class="jentry-note">Focus: ${e.focus.slice(0,80)}${e.focus.length>80?'…':''}</div>`:''}${e.note?`<div class="jentry-note">${e.note.slice(0,100)}${e.note.length>100?'…':''}</div>`:''}</div>`;
@@ -1861,14 +1909,18 @@ const GAUGE_VARS=[
     if(!e.exercise)return null;
     return{'None':0,'Light walk':1,'Moderate':2,'Intense':3}[e.exercise]??null;
   }},
-  {key:'prayerOnTime',label:'Prayer On-Time Rate',unit:'%',extract:e=>{
-    const ps=[e.fajr,e.dhuhr,e.asr,e.maghreb,e.isha].filter(Boolean);
-    if(!ps.length)return null;
-    const score=ps.reduce((a,p)=>a+(p==='On Time'?1:p==='Late'?0.5:0),0);
-    return (score/ps.length)*100;
+  {key:'worship',label:'Worship',unit:'',extract:e=>{
+    if(!e.worship)return null;
+    return{'Bad':0,'Good':1,'Great':2}[e.worship]??null;
   }},
-  {key:'qiyam',label:'Qiyam al-Layl',unit:'',extract:e=>e.qiyam?(e.qiyam==='Yes'?1:0):null},
-  {key:'dhikr',label:'Dhikr',unit:'',extract:e=>e.dhikr?(e.dhikr==='Yes'?1:0):null},
+  {key:'faith',label:'Faith',unit:'',extract:e=>{
+    if(!e.faith)return null;
+    return{'Bad':0,'Good':1,'Great':2}[e.faith]??null;
+  }},
+  {key:'prayer',label:'Prayer',unit:'',extract:e=>{
+    if(!e.prayer)return null;
+    return{'Bad':0,'Good':1,'Great':2}[e.prayer]??null;
+  }},
   {key:'sh',label:'Position Size',unit:' sh',extract:e=>e.sh>0?e.sh:null},
 ];
 
@@ -1996,10 +2048,7 @@ function renderWeeklyReport(){
   const avgSleep=thisWeekJ.length?thisWeekJ.reduce((a,e)=>a+e.sleep,0)/thisWeekJ.length:0;
   const avgStress=thisWeekJ.length?thisWeekJ.reduce((a,e)=>a+(e.stress||0),0)/thisWeekJ.length:0;
   const avgRules=thisWeekJ.length?thisWeekJ.reduce((a,e)=>a+(+e.rules||0),0)/thisWeekJ.length:0;
-  const prayerDays=thisWeekJ.filter(e=>{
-    const ps=[e.fajr,e.dhuhr,e.asr,e.maghreb,e.isha].filter(Boolean);
-    return ps.length>0&&ps.every(p=>p==='On Time');
-  }).length;
+  const greatSoulDays=thisWeekJ.filter(e=>e.worship==='Great'&&e.faith==='Great'&&e.prayer==='Great').length;
   // Compute overall week grade
   let score=50;
   if(wr>allWR)score+=15;else if(wr<allWR-5)score-=15;
@@ -2041,7 +2090,7 @@ function renderWeeklyReport(){
       ${avgSleep>0?`<div class="wrc-row"><span class="wrc-lbl">Avg sleep</span><span class="wrc-val" style="color:${avgSleep>=7?'#34d399':avgSleep>=6?'#fbbf24':'#f87171'}">${avgSleep.toFixed(1)}h</span></div>`:''}
       ${avgStress>0?`<div class="wrc-row"><span class="wrc-lbl">Avg stress</span><span class="wrc-val" style="color:${avgStress<=2?'#34d399':avgStress<=3?'#fbbf24':'#f87171'}">${avgStress.toFixed(1)}/5</span></div>`:''}
       ${avgRules>0?`<div class="wrc-row"><span class="wrc-lbl">Avg rule breaks</span><span class="wrc-val" style="color:${avgRules<1?'#34d399':avgRules<2?'#fbbf24':'#f87171'}">${avgRules.toFixed(1)}/day</span></div>`:''}
-      ${thisWeekJ.length?`<div class="wrc-row"><span class="wrc-lbl">Full prayer days</span><span class="wrc-val" style="color:${prayerDays>=4?'#34d399':prayerDays>=2?'#fbbf24':'#f87171'}">${prayerDays} / ${thisWeekJ.length}</span></div>`:''}
+      ${thisWeekJ.length?`<div class="wrc-row"><span class="wrc-lbl">Great Soul days</span><span class="wrc-val" style="color:${greatSoulDays>=4?'#34d399':greatSoulDays>=2?'#fbbf24':'#f87171'}">${greatSoulDays} / ${thisWeekJ.length}</span></div>`:''}
       <div class="wrc-insight"><div style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px;">Alerts</div>${alertsHtml}</div>
     </div>
   </div>`;
@@ -2246,26 +2295,33 @@ function exportLogCSV(){
   const dates=[...allDates].sort();
   const sessByDate={};sessionLog.forEach(e=>sessByDate[e.date]=e);
   const jByDate={};journalLog.forEach(e=>jByDate[e.date]=e);
+  const blockHeaders=TIME_BLOCKS.flatMap(b=>[b.label+' Discipline',b.label+' Trades',b.label+' Wins',b.label+' Losses']);
   const headers=['Date','Wins','Losses','Breakevens','AvgWinTicks','AvgLossTicks','PnL',
     'ProfitableCount','ProfitableCapture%','BreakevenCount','BreakevenCapture%','LoserCount','LoserCapture%',
     'TimeSlept','TimeWoke','PreSleepEmotion','SleepHrs','SleepQ','SocialNightBefore','Physical','Sick','Hydration','Temp','Diet','Exercise',
     'Stress','Fatigue','Confidence','Emotion','Conflict','News',
-    'Fajr','Dhuhr','Asr','Maghreb','Isha','Sunnah','Qiyam','Dhikr',
-    'Balance','Control','Behavior','NewsDay','Location','Ticker','Software','OrderFlow',
-    'DayGrade','MarketFav','FocusPoint','BestOpportunity','RuleBreaks','PrepLevel','Notes'];
+    'Worship','Faith','Prayer',
+    'Balance','Control','Behavior','NewsDay','Location',
+    'DayGrade','MarketFav','FocusPoint','BestOpportunity','RuleBreaks','PrepLevel','Notes',
+    ...blockHeaders];
   const rows=[headers.join(',')];
   for(const d of dates){
     const s=sessByDate[d]||{},j=jByDate[d]||{};
     const esc=v=>{if(v===undefined||v===null)return'';const str=String(v).replace(/"/g,'""');return str.includes(',')||str.includes('\n')?`"${str}"`:str;};
     const tSlept=j.timeSlept!==undefined&&j.timeSlept!==''?HOUR_LABELS[j.timeSlept]:'';
     const tWoke=j.timeWoke!==undefined&&j.timeWoke!==''?HOUR_LABELS[j.timeWoke]:'';
+    const blockVals=TIME_BLOCKS.flatMap(b=>{
+      const blk=j.blocks?.find(x=>x.key===b.key)||{};
+      return[esc(blk.disc),blk.tr||'',blk.w||'',blk.l||''];
+    });
     rows.push([d,s.w||'',s.l||'',s.b||'',s.tw||'',s.tl||'',s.pnl||'',
       s.totW||'',s.capW||'',s.totBE||'',s.capBE||'',s.totL||'',s.capL||'',
       esc(tSlept),esc(tWoke),esc(j.preSleepEmo),j.sleep||'',j.sleepQ||'',esc(j.social),esc(j.phys),esc(j.sick),j.hydration||'',esc(j.temp),j.diet||'',esc(j.exercise),
       j.stress||'',j.fatigue||'',j.conf||'',esc(j.emo),esc(j.conflict),esc(j.news),
-      esc(j.fajr),esc(j.dhuhr),esc(j.asr),esc(j.maghreb),esc(j.isha),esc(j.sunnah),esc(j.qiyam),esc(j.dhikr),
-      esc(j.balance),esc(j.control),esc(j.behavior),esc(j.newsday),esc(j.location),esc(j.ticker),esc(j.software),esc(j.orderflow),
-      esc(j.daygrade),esc(j.marketfav),esc(j.focus),esc(j.bestop),j.rules||'',esc(j.prep),esc(j.note)
+      esc(j.worship),esc(j.faith),esc(j.prayer),
+      esc(j.balance),esc(j.control),esc(j.behavior),esc(j.newsday),esc(j.location),
+      esc(j.daygrade),esc(j.marketfav),esc(j.focus),esc(j.bestop),j.rules||'',esc(j.prep),esc(j.note),
+      ...blockVals
     ].join(','));
   }
   const blob=new Blob([rows.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);
@@ -2477,7 +2533,7 @@ function wirePanes(){
   }
 }
 
-const SK='ahm-v37';
+const SK='ahm-v38';
 function getStpIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;SDEFS.forEach(([id])=>ids.push(id+s));});return ids;}
 const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-volceil','tog-vw'];
 function getTogIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;TOG_BASE.forEach(id=>ids.push(id+s));});return ids;}
