@@ -13,6 +13,101 @@ input[type=number]{-moz-appearance:textfield;}
 ::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-thumb{background:#252d3d;border-radius:2px;}
 html,body{height:100%;background:#0d0f12;color:#e2e6ed;font-family:'IBM Plex Mono',monospace;font-size:13px;overflow:hidden;}
+
+/* ══════════════════════════════════════════════════════════════
+   GLASS / GLOSS / GLOW SYSTEM
+   Ported from a separate build (reference file, v32-glass) at the
+   user's request — aesthetics only, no layout or math changes.
+   Architecture: one fixed layer of large blurred colour blooms sits
+   behind the entire app; every card is translucent + backdrop-blurred
+   so those blooms diffuse visibly through it, with a diagonal gloss
+   sheen and inset highlight/shadow giving each surface real depth.
+   Accent kept as the app's existing green — only the treatment ported,
+   not the reference file's own blue/cyan colour scheme.
+   ══════════════════════════════════════════════════════════════ */
+:root{--glow-rgb:52,211,153;}
+@media (prefers-reduced-motion:no-preference){
+  body::before{
+    content:'';position:fixed;inset:-10%;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(52,211,153,.16) 0%, transparent 42%),
+      radial-gradient(circle at 85% 15%, rgba(96,165,250,.13) 0%, transparent 45%),
+      radial-gradient(circle at 25% 85%, rgba(251,191,36,.10) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(248,113,113,.09) 0%, transparent 42%);
+    filter:blur(60px);
+  }
+}
+@media (prefers-reduced-motion:reduce){
+  body::before{
+    content:'';position:fixed;inset:-10%;z-index:0;pointer-events:none;
+    background:radial-gradient(circle at 20% 20%, rgba(52,211,153,.08) 0%, transparent 50%);
+    filter:blur(60px);
+  }
+}
+.app{position:relative;z-index:1;}
+
+/* Shared frost treatment: every card class in the app uses the same
+   solid #131720/#252d3d pattern, so one rule covers all of them rather
+   than editing each individually. */
+.fc,.chart-panel,.diag,.grade-card,.jsec,.vs-card,.gauge-row,.wrc,
+.circ-panel-inner,.stats-inp,.stats-grid .sg,.log-info,.inp-grp,
+.spark-cell,.jhist,.friction-breakdown{
+  background:rgba(19,23,32,.55) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(1.3);
+  backdrop-filter:blur(18px) saturate(1.3);
+  border-color:rgba(255,255,255,.08) !important;
+  box-shadow:0 4px 24px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.04);
+  position:relative;
+  overflow:hidden;
+}
+.fc::before,.chart-panel::before,.diag::before,.grade-card::before,.jsec::before,
+.vs-card::before,.gauge-row::before,.wrc::before,.circ-panel-inner::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(135deg,rgba(255,255,255,.05) 0%,transparent 32%,transparent 68%,rgba(255,255,255,.02) 100%);
+}
+.topbar,.sbar,.bnav,.tbl-controls,.dv-diag,.slbl,thead{
+  background:rgba(13,15,18,.6) !important;
+  -webkit-backdrop-filter:blur(14px);
+  backdrop-filter:blur(14px);
+}
+
+/* Circle buttons: gloss sheen + resting glow, selected state blooms
+   brighter using the shared --glow-rgb tint. */
+.circ-btn{
+  background:rgba(19,23,32,.5) !important;
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+  box-shadow:0 2px 12px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.06),0 0 0 0 rgba(var(--glow-rgb),0);
+}
+.circ-btn::after{
+  content:'';position:absolute;inset:0;border-radius:50%;pointer-events:none;
+  background:linear-gradient(145deg,rgba(255,255,255,.14) 0%,transparent 40%);
+}
+.circ-btn.sel{
+  box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 20px 2px rgba(var(--glow-rgb),.35);
+}
+
+/* Press bloom: fast "hot" glow the instant a control is pressed, eased
+   back to resting state on release. Trigger is a JS-added .pressed
+   class (initPressBloom below) since CSS :active alone is unreliable
+   for quick taps on mobile Safari/Chrome — kept here too as a bonus
+   for desktop mouse/trackpad. */
+.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.tog,.sbtn,.scale-btn,.circ-btn,.dv-tbtn{
+  transition:box-shadow .18s ease,transform .12s ease,background .18s ease;
+}
+.sim-btn:active,.j-save-btn:active,.sess-btn:active,.exp-btn:active,.guide-btn:active,
+.ib:active,.stp-btn:active,.nb:active,.sbtn:active,.scale-btn:active,.circ-btn:active,.dv-tbtn:active,
+.sim-btn.pressed,.j-save-btn.pressed,.sess-btn.pressed,.exp-btn.pressed,.guide-btn.pressed,
+.ib.pressed,.stp-btn.pressed,.nb.pressed,.sbtn.pressed,.scale-btn.pressed,.circ-btn.pressed,.dv-tbtn.pressed{
+  box-shadow:0 0 16px 1px rgba(var(--glow-rgb),.4);
+  transform:scale(.97);
+}
+/* Selected table row: same fast-bloom-then-settle pattern for scroll-
+   driven / tap-driven day selection. */
+tr.sel-day.row-bloom{background:rgba(251,191,36,.22) !important;transition:background .12s ease;}
+tr.sel-day{transition:background .5s ease;}
+
+
 .app{display:flex;flex-direction:column;height:100%;}
 .topbar{height:48px;background:#131720;border-bottom:1px solid #252d3d;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;z-index:50;}
 .brand{display:flex;align-items:baseline;gap:8px;}
@@ -160,8 +255,6 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .dv-half{flex:1 1 0;min-height:0;display:flex;flex-direction:column;border-bottom:1px solid #252d3d;overflow:hidden;}
 .dv-half:last-child{border-bottom:none;}
 .dv-empty{padding:32px;text-align:center;font-size:10px;color:#4d5a6e;}
-.dv-diag{padding:8px 12px 10px;border-top:1px solid #252d3d;background:#131720;flex-shrink:0;}
-.dv-diag-line{font-size:10px;line-height:1.6;padding:2px 0;}
 /* Original wide table, restored — now contained in the bottom .dv-half
    instead of the whole screen. tbl-scroll is the ONE scroll context in
    this half; thead sticks to its top correctly since overflow-y lives
@@ -309,7 +402,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 <div class="topbar">
   <div class="brand">
     <span class="brand-name">Anti-Hope Machine</span>
-    <span class="brand-ver">v38</span>
+    <span class="brand-ver">v39</span>
   </div>
   <div class="top-r">
     <button class="guide-btn" onclick="openGuide()">Guide</button>
@@ -343,7 +436,6 @@ canvas.spark{width:100%;height:34px;display:block;}
     <div class="dv-half">
       <div class="chart-hd" style="padding:8px 12px 4px;"><span class="chart-lbl">Race to Goal · Capital vs Time</span></div>
       <div class="chart-wrap" style="height:100%;"><canvas class="eqcv" id="dv-cv"></canvas></div>
-      <div id="dv-diag" class="dv-diag"></div>
     </div>
     <div class="dv-half">
       <div class="sbar">
@@ -1161,6 +1253,20 @@ function buildDiag(c,cumPnl,days,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,
    ══════════════════════════════════════════════════════════════ */
 let dvSelDay=null; // the currently highlighted day (shared across table + chart)
 
+/* Bloom the selected-day table row: fast "hot" state applied the instant
+   the selection changes, held briefly, then eased back to the quiet
+   resting tint (see tr.sel-day / tr.sel-day.row-bloom above). Called on
+   row tap and on scroll-driven selection change, so continuous scrolling
+   keeps it lit and it only settles once you stop. */
+let _rowBloomTimer=null;
+function bloomRow(el){
+  if(!el)return;
+  document.querySelectorAll('#main-tbody tr.row-bloom').forEach(r=>{if(r!==el)r.classList.remove('row-bloom');});
+  el.classList.add('row-bloom');
+  clearTimeout(_rowBloomTimer);
+  _rowBloomTimer=setTimeout(()=>{el.classList.remove('row-bloom');},120);
+}
+
 /* Original wide table, restored — now rendered inside the bottom .dv-half
    instead of full-screen. Row click sets the shared highlighted day, which
    the shares-vs-time chart above reads to draw its crosshair. */
@@ -1194,7 +1300,7 @@ function renderTable(tab,rowsIn,acct0In,cIn,mspIn,cappedIn){
     const totTr=r.dayWinCt+r.dayLoseCt+r.dayBECt;
     const wrPct=totTr>0?((r.dayWinCt/totTr)*100).toFixed(0)+'%':'—';
     tr.innerHTML=`<td>${r.day}</td><td>${cal(r.calMo)}</td><td style="color:#e2e6ed">${(moPnl>=0?'+$':'−$')+fmt(Math.abs(moPnl))}</td><td>${label}</td><td style="color:#fbbf24;font-weight:600">${r.shares.toLocaleString()}</td><td style="color:#4d5a6e;font-size:9px">${wrPct}</td><td style="font-size:9px;color:#8892a4">${r.numTr||'—'}</td><td style="color:${r.dayTicks>0?'#34d399':r.dayTicks<0?'#f87171':'#4d5a6e'}">${r.dayTicks!==0?(r.dayTicks>0?'+':'')+r.dayTicks+'t':'—'}</td><td style="color:${dpC};font-size:9px">${dpS}</td><td style="color:${pC};font-weight:600">${sgn(r.dayPnl)}</td><td style="color:${(r.cumPnl/acct0*100)>=0?'#34d399':'#f87171'};font-size:9px">${pct(r.cumPnl/acct0*100,1)}</td><td style="color:#4d5a6e;font-size:9px">${r.dayFees>0?'−$'+fmt(r.dayFees):'—'}</td><td style="color:#4d5a6e;font-size:9px">${(r.surplus>=0?'$':'−$')+fmt(Math.abs(r.surplus))}</td><td style="color:#fbbf24;font-size:9px">${r.newSh>0?'+'+r.newSh:'—'}</td><td style="color:#e2e6ed;font-weight:600">${(r.cumPnl>=0?'$':'−$')+fmt(Math.abs(r.cumPnl))}</td>`;
-    tr.addEventListener('click',()=>{dvSelDay=r.day;renderTable(tab);});
+    tr.addEventListener('click',()=>{dvSelDay=r.day;renderTable(tab);bloomRow($('main-tbody').querySelector('tr.sel-day'));});
     tbody.appendChild(tr);
   }
   if(capped){const w=document.createElement('tr');w.innerHTML=`<td colspan="15" style="text-align:center;color:#f87171;padding:8px;font-size:9px;">CAPPED AT 10,000 DAYS</td>`;tbody.appendChild(w);}
@@ -1402,76 +1508,9 @@ function dvResolveLabelCollisions(points,minGap){
   }
 }
 
-// Comparative diagnostic text — replaces the old static legend. Draws
-// genuinely useful observations from whatever's actually been simulated
-// (and the real line, if present), using only white for neutral facts
-// and the app's established green/red for good/bad judgments — no other
-// colours, so the reading stays simple and consistent with the rest of
-// the app's language for "this is fine" vs "this needs attention."
-function dvRenderDiagnostics(){
-  const wrap=$('dv-diag');if(!wrap)return;
-  const active=[0,1,2].filter(i=>simResults[i]&&simResults[i].rows&&simResults[i].rows.length>1);
-  if(!active.length){
-    wrap.innerHTML='<div class="dv-diag-line" style="color:#4d5a6e;">Run a simulation on any strategy to see comparison notes here.</div>';
-    return;
-  }
-  const lines=[];
-  const info=active.map(i=>{
-    const r=simResults[i];
-    const last=r.rows[r.rows.length-1];
-    return{i,label:STRAT_LABELS[i],days:last.day,cap:r.acct0+last.cumPnl,acct0:r.acct0,evNet:r.c.evNet,frDay:r.c.frDay,wr:r.c.wr};
-  });
-  if(info.length>=2){
-    const fastest=info.reduce((a,b)=>a.days<b.days?a:b);
-    const slowest=info.reduce((a,b)=>a.days>b.days?a:b);
-    const richest=info.reduce((a,b)=>a.cap>b.cap?a:b);
-    if(fastest.i!==slowest.i){
-      const dayDiff=slowest.days-fastest.days;
-      lines.push(`<span style="color:#e2e6ed;">${fastest.label} reaches its goal ${cal((dayDiff/252)*12)} sooner than ${slowest.label}.</span>`);
-    }
-    lines.push(`<span style="color:#e2e6ed;">${richest.label} ends with the highest capital: $${fmt(richest.cap,0)}.</span>`);
-    // Friction-quality callouts: green if friction is a small share of
-    // daily edge, red if it's eating a large share. Strategies sharing
-    // the same finding are grouped into ONE sentence naming all of them,
-    // rather than repeating the same sentence once per strategy.
-    const efficient=[],costly=[];
-    info.forEach(s=>{
-      if(s.evNet<=0)return;
-      const frShare=s.frDay/(s.evNet+s.frDay);
-      if(frShare<0.15)efficient.push(s.label);
-      else if(frShare>0.4)costly.push(s.label);
-    });
-    const joinNames=arr=>arr.length===1?arr[0]:arr.length===2?arr.join(' and '):arr.slice(0,-1).join(', ')+', and '+arr[arr.length-1];
-    if(efficient.length){
-      const verb=efficient.length>1?'are':'is';
-      lines.push(`<span style="color:#34d399;">${joinNames(efficient)}'s friction ${verb} a small share of ${efficient.length>1?'their':'its'} daily edge — efficient.</span>`);
-    }
-    if(costly.length){
-      const verb=costly.length>1?'are':'is';
-      lines.push(`<span style="color:#f87171;">${joinNames(costly)} ${verb} losing a large share of ${costly.length>1?'their':'its'} edge to friction — worth revisiting size or target.</span>`);
-    }
-  }
-  // Real-vs-sim callout, only when there's enough real data to say anything meaningful.
-  const realCapS=+$('rCapS')?.value||0;
-  if(sessionLog&&sessionLog.length>=5&&realCapS>0){
-    const sortedLog=[...sessionLog].sort((a,b)=>a.date.localeCompare(b.date));
-    const realTotal=sortedLog.reduce((a,e)=>a+e.pnl,0);
-    const realCap=realCapS+realTotal;
-    const best=info.reduce((a,b)=>a.cap>b.cap?a:b);
-    if(realCap>=best.cap){
-      lines.push(`<span style="color:#34d399;">Your real trading is ahead of every simulated strategy right now.</span>`);
-    }else{
-      const gap=best.cap-realCap;
-      lines.push(`<span style="color:#f87171;">Real trading is $${fmt(gap,0)} behind ${best.label}'s simulated pace.</span>`);
-    }
-  }
-  wrap.innerHTML=lines.map(l=>`<div class="dv-diag-line">${l}</div>`).join('');
-}
-
 function dvRedrawChart(){
   const cv=$('dv-cv');if(!cv)return;
   dvDrawRaceChart(cv,null,dvSelDay);
-  dvRenderDiagnostics();
 }
 
 // Live crosshair while scrolling the table — throttled to animation-frame
@@ -1499,6 +1538,7 @@ function dvWireTableScroll(){
           dvSelDay=day;
           [...$('main-tbody').children].forEach(el=>el.classList.remove('sel-day'));
           closest.classList.add('sel-day');
+          bloomRow(closest);
           dvRedrawChart();
         }
       }
@@ -1510,7 +1550,7 @@ function dvWireTableScroll(){
 function exportData(tab){
   const res=simResults[tab];if(!res||!res.rows.length){alert('Run a simulation first.');return;}
   const {rows,acct0,c,msp}=res;const names=['Strat-A','Strat-B','Strat-C'];
-  const L=['AHM v38 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
+  const L=['AHM v39 — '+names[tab],'Generated,'+new Date().toLocaleString(),'','Day,Cal,Mo P&L,Label,Shares,Result,WR%,Trades,Ticks,Day%,P&L,Ret%,Fees,Surplus,+Sh,Cumul'];
   const show=new Set([0,rows.length-1]);rows.forEach((r,i)=>{if(r.isMilestone||r.day%c.intv===0)show.add(i);});
   for(const idx of [...show].sort((a,b)=>a-b)){const r=rows[idx];const mo=r.cumPnl-((msp||{})[r.mIdx]||0);const dp=r.dayPct!=null?r.dayPct.toFixed(2)+'%':'—';let lbl='';if(r.isMilestone)lbl='Milestone '+r.msVal;else if(r.day===1)lbl='Start';else if(idx===rows.length-1)lbl='Goal';const tt=r.dayWinCt+r.dayLoseCt+r.dayBECt;const wrp=tt>0?((r.dayWinCt/tt)*100).toFixed(0)+'%':'—';L.push([r.day,cal(r.calMo),mo.toFixed(2),lbl,r.shares,r.outcome,wrp,r.numTr||0,r.dayTicks,dp,r.dayPnl.toFixed(2),(r.cumPnl/acct0*100).toFixed(2)+'%',(r.dayFees||0).toFixed(2),r.surplus.toFixed(2),r.newSh,r.cumPnl.toFixed(2)].join(','));}
   const blob=new Blob([L.join('\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);
@@ -2533,7 +2573,7 @@ function wirePanes(){
   }
 }
 
-const SK='ahm-v38';
+const SK='ahm-v39';
 function getStpIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;SDEFS.forEach(([id])=>ids.push(id+s));});return ids;}
 const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-volceil','tog-vw'];
 function getTogIds(){const ids=[];[0,1,2].forEach(t=>{const s=t===0?'':'_'+t;TOG_BASE.forEach(id=>ids.push(id+s));});return ids;}
@@ -2569,6 +2609,21 @@ async function load(){
     return true;
   }catch(e){return false;}
 }
+/* Press-bloom trigger: a JS-added/removed .pressed class is the reliable
+   mobile trigger for the fast-glow-then-settle button feedback (CSS
+   :active alone is unreliable for quick taps on iOS/Android). Delegated
+   on document so it covers every button regardless of whether it exists
+   at page-load or gets created later by buildPanes/buildJournalCircles/
+   buildStatsCircle — no per-element wiring needed. */
+function initPressBloom(){
+  const SEL='.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.sbtn,.scale-btn,.circ-btn,.dv-tbtn';
+  const press=e=>{const t=e.target.closest(SEL);if(t)t.classList.add('pressed');};
+  const release=e=>{const t=e.target.closest(SEL);if(t)setTimeout(()=>t.classList.remove('pressed'),120);};
+  document.addEventListener('pointerdown',press,{passive:true});
+  document.addEventListener('pointerup',release,{passive:true});
+  document.addEventListener('pointercancel',release,{passive:true});
+}
+
 async function init(){
   buildPanes();wirePanes();
   buildJournalCircles();
@@ -2582,6 +2637,7 @@ async function init(){
   else onReal();
   if(loaded){if(sessionLog.length)$('log-info').textContent=sessionLog.length+' days logged';if(journalLog.length)renderJournal();}
   wireGlobalResize();
+  initPressBloom();
 }
 
 // Canvases size themselves from offsetWidth/offsetHeight at draw time —
