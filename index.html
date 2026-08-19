@@ -2047,11 +2047,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   // Bullseye silhouette (ring + center dot, same shape as the table row
   // badge) rendered with a glass treatment rather than a flat stroke or
   // a solid sphere body.
-  let rgLabelBox=null; // "FASTEST PATH" text's own box, exposed so the
-  // hover tally pills further down (now anchored to each strategy's own
-  // highlight dot, which can land right where this fixed annotation
-  // sits) can steer clear of it — set inside whichever leader-line
-  // branch below actually gets used.
   if(rapid){
     const mx=xS(rapid.day),my=yS(rapid.cap);
     ctx.save();
@@ -2086,7 +2081,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       ctx.textAlign='right';
       ctx.beginPath();ctx.moveTo(edgeX,edgeY);ctx.lineTo(tipX,tipY);ctx.stroke();
       ctx.fillText(rgLblTxt,anchorX,anchorY+2.5);
-      rgLabelBox={l:anchorX-rgLblW-2,r:anchorX+2,t:anchorY-6,b:anchorY+5};
     }else{
       // 2 o'clock: mirror of 10 o'clock across the vertical axis (30°).
       const ang2=30*Math.PI/180;
@@ -2097,7 +2091,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       ctx.textAlign='left';
       ctx.beginPath();ctx.moveTo(edgeX2,edgeY2);ctx.lineTo(tipX2,tipY2);ctx.stroke();
       ctx.fillText(rgLblTxt,anchorX2,anchorY2+2.5);
-      rgLabelBox={l:anchorX2-2,r:anchorX2+rgLblW+2,t:anchorY2-6,b:anchorY2+5};
     }
     ctx.restore();
   }
@@ -2310,22 +2303,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     ctx.fillText(ep.calTxt,lx,calLy);
   }
 
-  // Each endpoint's own 3/4-line label stack, as a bounding box — exposed
-  // so the hover tally pills further down can steer clear of them. A hover
-  // day close to a strategy's own final day puts that strategy's dot (and
-  // therefore its pill) right where its endpoint labels already live,
-  // since those sit at a fixed position independent of the hover day.
-  // Mirrors the exact y-math the draw loop above just used, so the box
-  // lines up with what's actually on screen rather than an approximation.
-  const epLabelBoxes=endpoints.map(ep=>{
-    const lx=ep.labelX!==undefined?ep.labelX:ep.x;
-    const moLy=ep.labelY!==undefined?ep.labelY:ep.y;
-    const capLy=moLy-LBL_GAP;
-    const calLy=moLy+CAL_GAP;
-    const topLy=ep.sh!=null?(capLy-SHR_GAP):capLy;
-    return{l:lx-ep.lw/2-3,r:lx+ep.lw/2+3,t:topLy-LBL_SIZE-2,b:calLy+CAL_SIZE/2+3};
-  });
-
   cv._race={series,realPts,hasReal,pd,pw,ph,xS,yS,maxDay,dayToCal};
   if(legendEl)legendEl.innerHTML='';
 
@@ -2368,174 +2345,56 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       const clampedDay=Math.min(hoverDay,ownFinalDay);
       let pt=null;
       for(const p of s.pts){if(p.day<=clampedDay)pt=p;else break;}
-      if(pt)hoverPts.push({color:s.color,cap:pt.cap,sh:pt.sh,label:s.label,dotX:st.xS(clampedDay),dotY:st.yS(pt.cap),ownPts:s.pts});
+      if(pt)hoverPts.push({color:s.color,cap:pt.cap,sh:pt.sh,dotX:st.xS(clampedDay),dotY:st.yS(pt.cap)});
     }
     for(const hp of hoverPts){
       drawGlassCircle(ctx,hp.dotX,hp.dotY,7.15);
     }
 
     // Share-count gauges: docked bottom-right in a fixed horizontal row,
-    // independent of the hover day (brought back this round — see
-    // dvGlassGauge above for the "why bring it back" note). Positions are
-    // computed here, before the tally obstacle-avoidance pass below, so
-    // this row's boxes can be fed into that same system as a fixed
-    // obstacle a pill can be nudged clear of; actually drawn further down
-    // so the tallies (the primary hover readout) land on top if the two
-    // ever do end up close.
+    // independent of the hover day. Bottom margin widened this round (was
+    // tight against the plot's own bottom edge) to leave clean room for
+    // the capital numbers now docked flush underneath, so the gauge row
+    // and the tally row below it read as one fixed stat block rather than
+    // crowding each other.
     const gR=22,gGap=10;
     const gRowW=hoverPts.length*gR*2+Math.max(0,hoverPts.length-1)*gGap;
-    const gMarginR=(pd.l+pw+pd.r)*.05,gMarginB=8;
+    const gMarginR=(pd.l+pw+pd.r)*.05,gMarginB=26;
     const gXStart=(pd.l+pw+pd.r)-gMarginR-gRowW+gR;
     const gY=pd.t+ph-gMarginB;
-    const gaugeBoxes=hoverPts.map((hp,i)=>{
-      const gx=gXStart+i*(gR*2+gGap);
-      return{gx,box:{l:gx-gR,r:gx+gR,t:gY-gR*2,b:gY+2}};
-    });
+    const gX=hoverPts.map((hp,i)=>gXStart+i*(gR*2+gGap));
+    for(let i=0;i<hoverPts.length;i++){
+      const hp=hoverPts[i];
+      dvGlassGauge(ctx,gX[i],gY,gR,hp.sh/shRange,hexToRgb(hp.color),hp.sh);
+    }
 
-    // Capital tallies: anchored on each strategy's OWN highlight dot
-    // (hp.dotX/dotY), each pill floating just above its own dot. Obstacle
-    // avoidance runs the same "magnetic" technique as the endpoint-
-    // triangle labels (dvResolveLabelCollisions for mutual pill-vs-pill
-    // spacing, an obstacle pass modelled directly on dvAvoidCurves for
-    // everything else) rather than a snap-to-fixed-offset jump — a pill
-    // is pushed up only as far as the actual overlap requires, alternating
-    // with the mutual-spacing pass across a few rounds. Obstacle kinds: the
-    // equity curves themselves, the fixed-position text clusters that
-    // don't move with the hover day (FASTEST PATH callout, every
-    // endpoint's own label stack), the day-tally circle (tracks the hover
-    // x-position near a pill's own dot, at a fixed y), and now the share
-    // gauges' fixed row along the bottom. Colour identity is no longer
-    // carried by the border alone — the strategy letter (A/B/C) is back
-    // as a prefix inside the pill, its own request this round: relying on
-    // a pill's floating vertical position to imply "who's ahead" reads as
-    // confusing since that position is really just each dot's own value
-    // on the Y axis, jittered further by the avoidance passes above, not
-    // a deliberate ranking; an explicit small marker on whichever pill
-    // currently holds the highest capital (computed fresh each hover
-    // frame, ties all mark) replaces having to read stack order as a
-    // leaderboard. Value text stays neutral. Width still fixed off the
-    // chart's own capital ceiling (`maxCap`) so pills never resize as the
-    // hovered value's digit count changes, now with the letter's own
-    // (also fixed) width folded in.
-    ctx.font='8px IBM Plex Mono';ctx.textAlign='left';
-    const tallyRowH=14,tallyGap=3;
-    ctx.font='700 8px IBM Plex Mono';
-    const letterW=Math.max(...STRAT_LABELS.map(l=>ctx.measureText(l).width))+7;
-    ctx.font='8px IBM Plex Mono';
-    const tallyBoxW=ctx.measureText('$'+fmt(maxCap,0)).width+16+letterW+10;
+    // Capital tallies: docked flush underneath the share gauges now, one
+    // per strategy directly below its own gauge, instead of floating near
+    // each strategy's own highlight dot — the floating version chased
+    // curves and dodged obstacle boxes all over the chart as the hover day
+    // changed, which read as sporadic and didn't hold a stable left-to-
+    // right A/B/C order. A fixed dock under an already-fixed row is
+    // stable by construction: always the same order the gauges are
+    // already in, no avoidance/collision logic needed at all — including
+    // no longer stepping around the FASTEST PATH marker, which is fine to
+    // be crossed. No pill body or border either — just the number,
+    // colour-coded directly in the strategy's own colour (the border used
+    // to be the only thing carrying that colour; the text carries it
+    // now). The highest-capital marker stays, same small triangle,
+    // sitting beside the number instead of inside a pill.
     const leaderCap=hoverPts.length?Math.max(...hoverPts.map(hp=>hp.cap)):null;
-    const DOT_R=7.15,tallyGapAboveDot=6;
-    const DT_R=27.9;
-    const dayTallyBox={l:cx-DT_R,r:cx+DT_R,t:dayLabelY-DT_R,b:dayLabelY+DT_R};
-    const tallyBoxObstacles=(rgLabelBox?epLabelBoxes.concat([rgLabelBox]):epLabelBoxes).concat([dayTallyBox]).concat(gaugeBoxes.map(g=>g.box));
-    for(const hp of hoverPts){
-      hp.y=hp.dotY-DOT_R-tallyGapAboveDot-tallyRowH;
-      hp.labelX=Math.min(Math.max(hp.dotX-tallyBoxW/2,pd.l),pd.l+pw-tallyBoxW);
-    }
-    function dvAvoidTallyObstacles(){
-      let moved=false;
-      for(const hp of hoverPts){
-        const tx=hp.labelX,blockTop=hp.labelY,blockBot=hp.labelY+tallyRowH;
-        for(const pts of avoidCurves){
-          // A pill is deliberately anchored just above its OWN dot, which
-          // sits ON this exact curve — during a volatile/choppy stretch
-          // that curve can wobble back up above the pill's own anchor
-          // point elsewhere within the pill's horizontal footprint, which
-          // read as a self-collision and could chase the pill's position
-          // most of the way up the canvas fighting its own line. Only
-          // OTHER strategies' curves (and the real-log line) are genuine
-          // obstacles here.
-          if(pts===hp.ownPts)continue;
-          for(const sx of[tx,tx+tallyBoxW]){
-            const day=Math.max(0,Math.min(maxDay,((sx-pd.l)/pw)*maxDay));
-            const cap=dvCapAtDay(pts,day);
-            if(cap==null)continue;
-            const cy=yS(cap);
-            if(cy>blockTop-4&&cy<blockBot+4){
-              const req=cy-7-tallyRowH;
-              if(req<hp.labelY){hp.labelY=req;moved=true;}
-            }
-          }
-        }
-        for(const ob of tallyBoxObstacles){
-          if(tx+tallyBoxW<=ob.l||tx>=ob.r)continue;
-          if(blockBot>ob.t&&blockTop<ob.b+4){
-            const req=ob.t-tallyRowH-4;
-            if(req<hp.labelY){hp.labelY=req;moved=true;}
-          }
-        }
-      }
-      return moved;
-    }
-    for(let round=0;round<6;round++){
-      dvResolveLabelCollisions(hoverPts,tallyRowH+tallyGap);
-      if(!dvAvoidTallyObstacles())break;
-    }
-    // Hard floor at the canvas top, then a guaranteed downward cascade to
-    // restore minimum spacing — three curves running nearly coincident at
-    // the hovered day (a real case: their values can sit within a few px
-    // of each other) leaves obstacle-avoidance nowhere clear to push a
-    // pill to, so more than one pill can land at/near this same floor.
-    // Flooring them and trusting dvResolveLabelCollisions to re-fix
-    // spacing affoward can ping-pong — its mutual-push can shove the
-    // topmost point back up past the floor trying to make room, which
-    // then gets re-floored next pass, and so on. A one-shot sorted
-    // cascade instead guarantees both constraints at once: nothing above
-    // the floor, and never less than minGap between neighbours, by only
-    // ever pushing a lower pill further DOWN to clear the one above it.
-    hoverPts.forEach(hp=>{if(hp.labelY<pd.t+2)hp.labelY=pd.t+2;});
-    const sortedHp=[...hoverPts].sort((a,b)=>a.labelY-b.labelY);
-    for(let i=1;i<sortedHp.length;i++){
-      const minY=sortedHp[i-1].labelY+tallyRowH+tallyGap;
-      if(sortedHp[i].labelY<minY)sortedHp[i].labelY=minY;
-    }
-    for(const hp of hoverPts){
-      let tallyY=hp.labelY,tallyX=hp.labelX;
-      // Final fixed-obstacle recheck, unconditional — not just for pills
-      // resting at the floor. The floor+cascade pass above guarantees the
-      // canvas-top floor and pill-vs-pill spacing, but the cascade only
-      // ever pushes a LOWER pill further down to clear the one above it,
-      // which can walk it back into a fixed obstacle (the day-tally
-      // circle especially, since it isn't pinned to the canvas' top edge
-      // the way FASTEST PATH/endpoint stacks usually are) that an earlier
-      // obstacle-avoidance round had already nudged it clear of. So check
-      // every fixed obstacle against this pill's final resting spot
-      // regardless of where that spot ended up, and step sideways clear
-      // of whichever ones still overlap — unioned together since several
-      // can sit flush against one another with no gap. (Curve obstacles
-      // aren't handled here — a curve is naturally cleared by a big
-      // enough sideways step away from a text cluster too, and isn't the
-      // hard-edged, fixed-position case this guards.)
-      let unionL=null,unionR=null;
-      for(const ob of tallyBoxObstacles){
-        if(tallyX+tallyBoxW<=ob.l||tallyX>=ob.r)continue;
-        if(tallyY+tallyRowH>ob.t&&tallyY<ob.b){
-          unionL=unionL==null?ob.l:Math.min(unionL,ob.l);
-          unionR=unionR==null?ob.r:Math.max(unionR,ob.r);
-        }
-      }
-      if(unionL!=null){
-        const spaceLeft=unionL-pd.l,spaceRight=(pd.l+pw)-unionR;
-        tallyX=spaceLeft>=spaceRight?Math.max(pd.l,unionL-tallyBoxW-4):Math.min(pd.l+pw-tallyBoxW,unionR+4);
-      }
+    ctx.textAlign='center';
+    ctx.font='700 9.5px IBM Plex Mono';
+    const tallyY=gY+16;
+    for(let i=0;i<hoverPts.length;i++){
+      const hp=hoverPts[i];
       const [tr,tg,tb]=hexToRgb(hp.color);
-      dvGlassTally(ctx,tallyX,tallyY,tallyBoxW,tallyRowH,[tr,tg,tb]);
-      ctx.font='700 8px IBM Plex Mono';
-      ctx.fillStyle=`rgba(${tr},${tg},${tb},.85)`;
-      ctx.fillText(hp.label,tallyX+8,tallyY+tallyRowH/2+3);
-      ctx.font='8px IBM Plex Mono';
-      ctx.fillStyle='rgba(226,230,237,.75)';
-      ctx.fillText('$'+fmt(hp.cap,0),tallyX+8+letterW,tallyY+tallyRowH/2+3);
-      // Leader marker: a small solid triangle at the pill's right edge on
-      // whichever strategy currently holds the highest capital — a
-      // deliberate, explicit "who's ahead" cue instead of leaving that to
-      // be inferred from stack position. Neutral white/silver rather than
-      // a strategy colour (amber is already strategy C's own identity
-      // colour, so a gold/amber marker would risk reading as "this is
-      // strategy C" instead of "this one's leading" when C happens not to
-      // be the one in front).
+      const txt='$'+fmt(hp.cap,0);
+      ctx.fillStyle=`rgba(${tr},${tg},${tb},.9)`;
+      ctx.fillText(txt,gX[i],tallyY);
       if(hp.cap>=leaderCap){
-        const mx=tallyX+tallyBoxW-9,my=tallyY+tallyRowH/2;
+        const tw=ctx.measureText(txt).width;
+        const mx=gX[i]+tw/2+8,my=tallyY-3;
         ctx.beginPath();
         ctx.moveTo(mx,my-3.2);
         ctx.lineTo(mx-3,my+2.4);
@@ -2544,10 +2403,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
         ctx.fillStyle='rgba(255,255,255,.82)';
         ctx.fill();
       }
-    }
-    for(let i=0;i<hoverPts.length;i++){
-      const hp=hoverPts[i];
-      dvGlassGauge(ctx,gaugeBoxes[i].gx,gY,gR,hp.sh/shRange,hexToRgb(hp.color),hp.sh);
     }
   }else if(dtEl){
     dtEl.classList.remove('show');
