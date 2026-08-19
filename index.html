@@ -1428,12 +1428,15 @@ function drawGlassTriangle(ctx,x,y,r,rgb,gradTop,gradBottom){
   // soft layered glow, vertical-gradient stroke and thin specular
   // highlight used on the lines themselves — so the two read as one
   // continuous material. The fill/interior below is untouched by any of
-  // this, same neutral panel wash it's always had.
+  // this, same neutral panel wash it's always had. Glow alphas here
+  // mirror the curve stroke's own 30% cut (not separately requested, but
+  // left un-cut here would visibly mismatch the now-dimmer curve right at
+  // the seam where the two are meant to read as one material).
   ctx.save();
   tracePath();
   ctx.lineJoin='round';
-  ctx.lineWidth=5;ctx.strokeStyle=`rgba(${cr},${cg},${cb},.056)`;ctx.stroke();
-  ctx.lineWidth=3;ctx.strokeStyle=`rgba(${cr},${cg},${cb},.093)`;ctx.stroke();
+  ctx.lineWidth=5;ctx.strokeStyle=`rgba(${cr},${cg},${cb},.0392)`;ctx.stroke();
+  ctx.lineWidth=3;ctx.strokeStyle=`rgba(${cr},${cg},${cb},.0651)`;ctx.stroke();
   ctx.restore();
 
   // Neutral panel base (matches .chart-panel's rgba(18,23,33,.42)) with
@@ -1468,9 +1471,11 @@ function drawGlassTriangle(ctx,x,y,r,rgb,gradTop,gradBottom){
   ctx.stroke();
   ctx.restore();
 
+  // Specular highlight cut 30% to match the curve's own flare cut, same
+  // seam-consistency reasoning as the border glow above.
   ctx.save();
   ctx.beginPath();ctx.moveTo(leftX,topY);ctx.lineTo(rightX,topY);
-  ctx.strokeStyle='rgba(255,255,255,.16)';ctx.lineWidth=.6;
+  ctx.strokeStyle='rgba(255,255,255,.112)';ctx.lineWidth=.6;
   ctx.stroke();
   ctx.restore();
 
@@ -2022,10 +2027,14 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   }
   function dvStrokeGlassCurve(path,rgb){
     const [r,g,b]=rgb;
+    // Glow (the two soft under-strokes) and flare (the thin top specular
+    // highlight below) both cut 30% this round. The main gradient stroke
+    // in between is the curve's own visible line, not glow/flare, so its
+    // alpha is untouched.
     ctx.save();
     ctx.lineJoin='round';ctx.lineCap='round';
-    ctx.lineWidth=7;ctx.strokeStyle=`rgba(${r},${g},${b},.056)`;ctx.stroke(path);
-    ctx.lineWidth=4.5;ctx.strokeStyle=`rgba(${r},${g},${b},.093)`;ctx.stroke(path);
+    ctx.lineWidth=7;ctx.strokeStyle=`rgba(${r},${g},${b},.0392)`;ctx.stroke(path);
+    ctx.lineWidth=4.5;ctx.strokeStyle=`rgba(${r},${g},${b},.0651)`;ctx.stroke(path);
     ctx.restore();
 
     ctx.save();
@@ -2040,7 +2049,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     ctx.save();
     ctx.translate(0,-1.1);
     ctx.lineJoin='round';ctx.lineCap='round';
-    ctx.strokeStyle='rgba(255,255,255,.16)';ctx.lineWidth=.7;
+    ctx.strokeStyle='rgba(255,255,255,.112)';ctx.lineWidth=.7;
     ctx.stroke(path);
     ctx.restore();
   }
