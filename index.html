@@ -1179,18 +1179,22 @@ function hexToRgb(hex){
 // Table row badge for a strategy's own rapid-growth day — same ring +
 // dot design as the chart's on-curve marker, just as an inline SVG.
 const RG_BADGE_SVG='<svg class="rg-row-badge" viewBox="0 0 16 16" width="10" height="10"><circle cx="8" cy="8" r="6" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" fill="#fff"/></svg> ';
-/* Running-tally chip. Simplified back down from a proportional bottom
-   accumulation bar to a plain colour-coded border — once width is fixed
-   and comparable and the number itself is legible, the bar's own length
-   wasn't earning its keep as a second thing to read, so a single
-   coloured outline carries "which strategy" now. Body still keeps the
-   same base fill + 135° diagonal gloss (the app's shared "card" gloss
-   direction — see .chart-panel and drawGlassTriangle's own gloss pass —
-   used in place of the day-tally's top-down radial highlight, which
-   read as dead space at this shape's proportions). Value text stays
-   neutral; the border is the only coloured element. Width/height/
-   position are the caller's call — this only draws within whatever box
-   it's given. */
+/* Running-tally chip. Colour lives only in the border — a single
+   coloured outline carries "which strategy" now that width is fixed/
+   comparable and the number itself is legible. Body fill/highlight now
+   matches the day-tally circle's own numbers directly (its base
+   rgba(18,23,33,.32) and its highlight's .28→.04→0 alpha curve) rather
+   than the fainter, separate "shared card" gloss from last round — kept
+   the highlight running along the same 135° diagonal (still can't do a
+   true elliptical-from-top radial cheaply in canvas, and the day-tally's
+   own top-down orientation was already tried and called dead weight on
+   this long, low shape) since only colour/opacity were asked to match,
+   not the day-tally's own shape or gradient direction. Border is no
+   longer a single crisp stroke — shadowBlur softens its edge into a
+   feathered outline instead of a hard cutoff, at a slightly lower core
+   alpha to compensate for the extra visual weight the blur adds. Value
+   text stays neutral. Width/height/position are the caller's call —
+   this only draws within whatever box it's given. */
 function dvGlassTally(ctx,x,y,w,h,rgb){
   const r=Math.min(6,h/2);
   ctx.save();
@@ -1200,18 +1204,21 @@ function dvGlassTally(ctx,x,y,w,h,rgb){
   ctx.save();
   ctx.clip();
 
-  ctx.fillStyle='rgba(18,23,33,.28)';
+  ctx.fillStyle='rgba(18,23,33,.32)';
   ctx.fillRect(x,y,w,h);
   const gloss=ctx.createLinearGradient(x,y,x+w,y+h);
-  gloss.addColorStop(0,'rgba(255,255,255,.05)');
-  gloss.addColorStop(.55,'rgba(255,255,255,0)');
+  gloss.addColorStop(0,'rgba(255,255,255,.28)');
+  gloss.addColorStop(.55,'rgba(255,255,255,.04)');
+  gloss.addColorStop(.85,'rgba(255,255,255,0)');
   ctx.fillStyle=gloss;
   ctx.fillRect(x,y,w,h);
 
   ctx.restore();
   const [br,bg,bb]=rgb;
-  ctx.lineWidth=1.2;
-  ctx.strokeStyle=`rgba(${br},${bg},${bb},.6)`;
+  ctx.shadowColor=`rgba(${br},${bg},${bb},.7)`;
+  ctx.shadowBlur=4;
+  ctx.lineWidth=1.4;
+  ctx.strokeStyle=`rgba(${br},${bg},${bb},.4)`;
   ctx.stroke();
   ctx.restore();
 }
