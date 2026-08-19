@@ -2384,7 +2384,11 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     // sitting beside the number instead of inside a pill.
     const leaderCap=hoverPts.length?Math.max(...hoverPts.map(hp=>hp.cap)):null;
     ctx.textAlign='center';
-    ctx.font='700 9.5px IBM Plex Mono';
+    // Same size as the gauges' own share-count number (7.2px, matching
+    // this chart's other small-label size) rather than sized on its own —
+    // reads as one consistent stat block with the gauges above it instead
+    // of the capital line stepping up in prominence over the share count.
+    ctx.font='700 7.2px IBM Plex Mono';
     const tallyY=gY+16;
     for(let i=0;i<hoverPts.length;i++){
       const hp=hoverPts[i];
