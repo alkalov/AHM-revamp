@@ -275,7 +275,7 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    blocks hover/touch on the canvas beneath it. Fades in via JS toggling
    .show (see dvUpdateRapidOverlay) rather than drawing on every redraw. */
 .rg-overlay{
-  position:absolute;top:0;left:0;width:50%;height:50%; /* exactly 25% of the chart's area */
+  position:absolute;top:0;left:0;width:65%;height:65%; /* box scaled 30% bigger (linear) over the prior 50%/50% */
   padding:8px 10px;box-sizing:border-box;
   display:flex;flex-direction:column;justify-content:center;
   pointer-events:none;opacity:0;transition:opacity 7s ease;z-index:2;
@@ -283,15 +283,16 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .rg-overlay.show{opacity:1;}
 /* Time value and the big word text stack together in normal flow — "1y
    6mo" directly above "TO RAPID GROWTH" — rather than layered on top of
-   one another; same colour/opacity so the two read as one callout. */
+   one another; same colour/opacity so the two read as one callout. Sizes
+   are 30% bigger than the previous pass (26px/32px -> 34px/42px). */
 .rg-time{
-  font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:26px;
+  font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:34px;
   color:rgba(226,230,237,.42);white-space:nowrap;line-height:1;
 }
 .rg-bottom{
-  font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:32px;
+  font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:42px;
   line-height:.86;letter-spacing:-.01em;text-transform:uppercase;
-  color:rgba(226,230,237,.42);margin-top:4px;
+  color:rgba(226,230,237,.42);margin-top:5px;
 }
 .rg-row-badge{vertical-align:-1px;margin-right:2px;}
 .chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #232b3d;}
@@ -1850,8 +1851,8 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const [r,g,b]=rgb;
     ctx.save();
     ctx.lineJoin='round';ctx.lineCap='round';
-    ctx.lineWidth=7;ctx.strokeStyle=`rgba(${r},${g},${b},.06)`;ctx.stroke(path);
-    ctx.lineWidth=4.5;ctx.strokeStyle=`rgba(${r},${g},${b},.1)`;ctx.stroke(path);
+    ctx.lineWidth=7;ctx.strokeStyle=`rgba(${r},${g},${b},.056)`;ctx.stroke(path);
+    ctx.lineWidth=4.5;ctx.strokeStyle=`rgba(${r},${g},${b},.093)`;ctx.stroke(path);
     ctx.restore();
 
     ctx.save();
