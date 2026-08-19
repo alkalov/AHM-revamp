@@ -111,28 +111,29 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
   backdrop-filter:blur(20px);
   border-color:rgba(255,255,255,.1) !important;
 }
-/* Primary strategy button: stronger gloss since it's the focal action
-   on each screen, plus a soft colour-matched glow underneath it. */
+/* Primary strategy button: flat solid fill (per reference — a native
+   control reads as a clean colour disc, not a glassy gloss card), just
+   a faint top edge lift and a tight, low-key drop shadow. No more
+   coloured ambient "halo" glow, and no diagonal gloss sheen. */
 .sim-btn{
-  background-image:linear-gradient(135deg,rgba(255,255,255,.32),rgba(255,255,255,0) 60%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -10px 14px -8px rgba(0,0,0,.3),
-             0 10px 24px -8px rgba(52,211,153,.35);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 14px -8px rgba(0,0,0,.4);
 }
 
-/* Circle buttons: gloss sheen + resting glow, selected state blooms
-   brighter using the shared --glow-rgb tint. */
+/* Circle buttons: same flat-first treatment — barely-there gloss (just
+   enough to read as a lit surface, not a streak), resting glow off by
+   default, selected state's halo capped at 15%. */
 .circ-btn{
   background:rgba(18,23,33,.4) !important;
   -webkit-backdrop-filter:blur(12px);
   backdrop-filter:blur(12px);
-  box-shadow:0 2px 12px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.06),0 0 0 0 rgba(var(--glow-rgb),0);
+  box-shadow:0 2px 12px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.06);
 }
 .circ-btn::after{
   content:'';position:absolute;inset:0;border-radius:50%;pointer-events:none;
-  background:linear-gradient(145deg,rgba(255,255,255,.14) 0%,transparent 40%);
+  background:linear-gradient(145deg,rgba(255,255,255,.05) 0%,transparent 30%);
 }
 .circ-btn.sel{
-  box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 20px 2px rgba(var(--glow-rgb),.35);
+  box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(var(--glow-rgb),.15);
 }
 
 /* Press bloom: fast "hot" glow the instant a control is pressed, eased
@@ -147,7 +148,7 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
 .ib:active,.stp-btn:active,.nb:active,.sbtn:active,.scale-btn:active,.circ-btn:active,.dv-tbtn:active,
 .sim-btn.pressed,.j-save-btn.pressed,.sess-btn.pressed,.exp-btn.pressed,.guide-btn.pressed,
 .ib.pressed,.stp-btn.pressed,.nb.pressed,.sbtn.pressed,.scale-btn.pressed,.circ-btn.pressed,.dv-tbtn.pressed{
-  box-shadow:0 0 16px 1px rgba(var(--glow-rgb),.4);
+  box-shadow:0 0 14px 1px rgba(var(--glow-rgb),.15);
   transform:scale(.97);
 }
 /* Nav items also pick up the accent colour itself the instant they're
@@ -266,8 +267,28 @@ tr.sel-day{transition:background .5s ease;}
 .chart-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 12px 3px;}
 .chart-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;}
 .chart-tt{font-size:10px;color:#34d399;min-height:14px;text-align:right;font-weight:500;}
-.chart-wrap{height:120px;}
+.chart-wrap{height:120px;position:relative;}
 canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:none;}
+/* "X to rapid growth" — big kinetic-typography overlay sitting over the
+   chart's upper-left quarter, replacing what used to be a coloured glass
+   panel. No background of its own; pointer-events:none so it never
+   blocks hover/touch on the canvas beneath it. Fades in via JS toggling
+   .show (see dvUpdateRapidOverlay) rather than drawing on every redraw. */
+.rg-overlay{
+  position:absolute;top:0;left:0;width:52%;height:52%;
+  padding:10px 12px;box-sizing:border-box;
+  display:flex;flex-direction:column;justify-content:space-between;
+  pointer-events:none;opacity:0;transition:opacity 1.1s ease;z-index:2;
+}
+.rg-overlay.show{opacity:1;}
+.rg-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.rg-num,.rg-time{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;color:#e2e6ed;white-space:nowrap;}
+.rg-bottom{
+  font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:22px;
+  line-height:.92;letter-spacing:-.01em;text-transform:uppercase;
+  color:rgba(226,230,237,.38);align-self:flex-start;
+}
+.rg-row-badge{vertical-align:-1px;margin-right:2px;}
 .chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #232b3d;}
 .cm{padding:7px 10px;border-right:1px solid #232b3d;border-bottom:1px solid #232b3d;}
 .cm:nth-child(even){border-right:none;}
@@ -498,7 +519,13 @@ canvas.spark{width:100%;height:34px;display:block;}
   <div class="screen" id="scr-tbl">
     <div class="dv-half">
       <div class="chart-hd" style="padding:8px 12px 4px;"><span class="chart-lbl">Race to Goal · Capital vs Time</span></div>
-      <div class="chart-wrap" style="height:100%;"><canvas class="eqcv" id="dv-cv"></canvas></div>
+      <div class="chart-wrap" style="height:100%;">
+        <canvas class="eqcv" id="dv-cv"></canvas>
+        <div class="rg-overlay" id="rg-overlay">
+          <div class="rg-top"><span class="rg-num" id="rg-num">—</span><span class="rg-time" id="rg-time">—</span></div>
+          <div class="rg-bottom">to rapid growth</div>
+        </div>
+      </div>
     </div>
     <div class="dv-half">
       <div class="sbar">
@@ -1092,6 +1119,13 @@ function hexToRgb(hex){
    out of that reach — e.g. an endpoint label near the right edge of a
    chart — gets flat glass with no highlight, since nothing would
    realistically be lighting it from that corner. */
+// Neutral background used for label boxes that should blend into the
+// chart panel behind the canvas rather than announce themselves in a
+// strategy's colour — only the text should carry that.
+const BG_PANEL_RGB=[16,20,29];
+// Table row badge for a strategy's own rapid-growth day — same ring +
+// dot design as the chart's on-curve marker, just as an inline SVG.
+const RG_BADGE_SVG='<svg class="rg-row-badge" viewBox="0 0 16 16" width="10" height="10"><circle cx="8" cy="8" r="6" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" fill="#fff"/></svg> ';
 function glassLabelBox(ctx,x,y,w,h,rgb,litZone){
   const r=Math.min(5,h/2);
   ctx.save();
@@ -1518,6 +1552,12 @@ function renderTable(tab,rowsIn,acct0In,cIn,mspIn,cappedIn){
   const intv=sv('intv',tab,5)||5;tbody.innerHTML='';
   const show=new Set([0,rows.length-1]);
   rows.forEach((r,i)=>{if(r.isMilestone||r.day%intv===0)show.add(i);});
+  // This strategy's own rapid-growth day (same detector the chart uses,
+  // run on just this strategy's rows) always gets a row, even if the
+  // day/interval sampling above wouldn't otherwise include it.
+  const rgHit=dvStrategyRapidGrowth(rows.map(r=>({day:r.day,cap:acct0+r.cumPnl})));
+  const rgIdx=rgHit?rows.findIndex(r=>r.day===rgHit.day):-1;
+  if(rgIdx>=0)show.add(rgIdx);
   const sorted=[...show].sort((a,b)=>a-b);
   const maxA=Math.max(...sorted.map(i=>Math.abs(rows[i].dayPnl)),1);
   for(const idx of sorted){
@@ -1535,7 +1575,8 @@ function renderTable(tab,rowsIn,acct0In,cIn,mspIn,cappedIn){
     else if(idx===rows.length-1)label=capped?'Cap':'Goal ✓';
     const totTr=r.dayWinCt+r.dayLoseCt+r.dayBECt;
     const wrPct=totTr>0?((r.dayWinCt/totTr)*100).toFixed(0)+'%':'—';
-    tr.innerHTML=`<td>${r.day}</td><td>${cal(r.calMo)}</td><td style="color:#e2e6ed">${(moPnl>=0?'+$':'−$')+fmt(Math.abs(moPnl))}</td><td>${label}</td><td style="color:#fbbf24;font-weight:600">${r.shares.toLocaleString()}</td><td style="color:#4d5a6e;font-size:9px">${wrPct}</td><td style="font-size:9px;color:#8892a4">${r.numTr||'—'}</td><td style="color:${r.dayTicks>0?'#34d399':r.dayTicks<0?'#f87171':'#4d5a6e'}">${r.dayTicks!==0?(r.dayTicks>0?'+':'')+r.dayTicks+'t':'—'}</td><td style="color:${dpC};font-size:9px">${dpS}</td><td style="color:${pC};font-weight:600">${sgn(r.dayPnl)}</td><td style="color:${(r.cumPnl/acct0*100)>=0?'#34d399':'#f87171'};font-size:9px">${pct(r.cumPnl/acct0*100,1)}</td><td style="color:#4d5a6e;font-size:9px">${r.dayFees>0?'−$'+fmt(r.dayFees):'—'}</td><td style="color:#4d5a6e;font-size:9px">${(r.surplus>=0?'$':'−$')+fmt(Math.abs(r.surplus))}</td><td style="color:#fbbf24;font-size:9px">${r.newSh>0?'+'+r.newSh:'—'}</td><td style="color:#e2e6ed;font-weight:600">${(r.cumPnl>=0?'$':'−$')+fmt(Math.abs(r.cumPnl))}</td>`;
+    const rgBadge=idx===rgIdx?RG_BADGE_SVG:'';
+    tr.innerHTML=`<td>${rgBadge}${r.day}</td><td>${cal(r.calMo)}</td><td style="color:#e2e6ed">${(moPnl>=0?'+$':'−$')+fmt(Math.abs(moPnl))}</td><td>${label}</td><td style="color:#fbbf24;font-weight:600">${r.shares.toLocaleString()}</td><td style="color:#4d5a6e;font-size:9px">${wrPct}</td><td style="font-size:9px;color:#8892a4">${r.numTr||'—'}</td><td style="color:${r.dayTicks>0?'#34d399':r.dayTicks<0?'#f87171':'#4d5a6e'}">${r.dayTicks!==0?(r.dayTicks>0?'+':'')+r.dayTicks+'t':'—'}</td><td style="color:${dpC};font-size:9px">${dpS}</td><td style="color:${pC};font-weight:600">${sgn(r.dayPnl)}</td><td style="color:${(r.cumPnl/acct0*100)>=0?'#34d399':'#f87171'};font-size:9px">${pct(r.cumPnl/acct0*100,1)}</td><td style="color:#4d5a6e;font-size:9px">${r.dayFees>0?'−$'+fmt(r.dayFees):'—'}</td><td style="color:#4d5a6e;font-size:9px">${(r.surplus>=0?'$':'−$')+fmt(Math.abs(r.surplus))}</td><td style="color:#fbbf24;font-size:9px">${r.newSh>0?'+'+r.newSh:'—'}</td><td style="color:#e2e6ed;font-weight:600">${(r.cumPnl>=0?'$':'−$')+fmt(Math.abs(r.cumPnl))}</td>`;
     tr.addEventListener('click',()=>{dvSelDay=r.day;renderTable(tab);bloomRow($('main-tbody').querySelector('tr.sel-day'));});
     tbody.appendChild(tr);
   }
@@ -1560,32 +1601,74 @@ function renderTable(tab,rowsIn,acct0In,cIn,mspIn,cappedIn){
    values land close together, their labels separate vertically
    instead of overlapping into unreadable text.
    ══════════════════════════════════════════════════════════════ */
+// Single-strategy rapid-growth detector: the earliest point where a
+// rolling window of daily capital growth first runs materially (1.5x)
+// hotter than the strategy's own whole-run average. A simple, defensible
+// proxy for "this is where compounding visibly takes off" — not a
+// rigorous inflection-point detector, just enough to anchor a marker.
+// Operates on one strategy's own pts array so it can be reused both by
+// the chart (one call per active strategy) and by the table (a single
+// strategy's own rows), rather than only ever comparing across strategies.
+function dvStrategyRapidGrowth(pts){
+  if(!pts||pts.length<6)return null;
+  const first=pts[0].cap,last=pts[pts.length-1].cap;
+  if(last-first<=0)return null;
+  const totalDays=(pts[pts.length-1].day-pts[0].day)||1;
+  const avgRate=(last-first)/totalDays;
+  const win=Math.max(5,Math.floor(pts.length/10));
+  for(let i=win;i<pts.length;i++){
+    const a=pts[i-win],b=pts[i];
+    const rate=(b.cap-a.cap)/((b.day-a.day)||1);
+    if(rate>avgRate*1.5)return{day:a.day,cap:a.cap};
+  }
+  return null;
+}
 function dvFindRapidGrowth(series){
-  // Earliest point, across all ACTIVE strategies (checked individually —
-  // never against some blended/combined curve), where a rolling window of
-  // daily capital growth first runs materially (1.5x) hotter than that
-  // strategy's own whole-run average. A simple, defensible proxy for
-  // "this is where compounding visibly takes off" — not a rigorous
-  // inflection-point detector, just enough to anchor a diagnostic note.
+  // Earliest point, across all ACTIVE strategies (checked individually via
+  // dvStrategyRapidGrowth — never against some blended/combined curve).
+  // Exactly one strategy can "own" the overall earliest point.
   let best=null;
   for(const s of series){
-    const pts=s.pts;
-    if(pts.length<6)continue;
-    const first=pts[0].cap,last=pts[pts.length-1].cap;
-    if(last-first<=0)continue;
-    const totalDays=(pts[pts.length-1].day-pts[0].day)||1;
-    const avgRate=(last-first)/totalDays;
-    const win=Math.max(5,Math.floor(pts.length/10));
-    for(let i=win;i<pts.length;i++){
-      const a=pts[i-win],b=pts[i];
-      const rate=(b.cap-a.cap)/((b.day-a.day)||1);
-      if(rate>avgRate*1.5){
-        if(!best||a.day<best.day)best={day:a.day,cap:a.cap,idx:s.idx,color:s.color};
-        break;
-      }
-    }
+    const hit=dvStrategyRapidGrowth(s.pts);
+    if(hit&&(!best||hit.day<best.day))best={...hit,idx:s.idx,color:s.color};
   }
   return best;
+}
+// Near-plateau monthly rate: average daily capital growth over just the
+// TRAILING slice of a strategy's run (last ~15%, min 5 points), times 21
+// trading days/month. Deliberately excludes the early ramp-up period —
+// a whole-run average gets diluted by the slow beginning and reads lower
+// than what the strategy is actually doing "now," near the end of the
+// table where its behaviour has settled.
+function dvPlateauMoRate(pts){
+  if(!pts||pts.length<2)return 0;
+  const win=Math.max(1,Math.min(pts.length-1,Math.max(5,Math.floor(pts.length*0.15))));
+  const start=pts[pts.length-1-win],end=pts[pts.length-1];
+  const days=(end.day-start.day)||1;
+  return (end.cap-start.cap)/days*21;
+}
+// The "X to rapid growth" note lives as an HTML overlay (#rg-overlay,
+// positioned over the same upper-left quarter of the chart) rather than
+// canvas text — real typography plus a CSS opacity transition for the
+// fade-in, which canvas text can't do cheaply. Only touches the DOM
+// (and re-triggers the fade) when the underlying point actually changes,
+// so hover-driven redraws don't replay the fade on every frame.
+let _rgLastKey=null;
+function dvUpdateRapidOverlay(rapid,dayToCal,series){
+  const el=$('rg-overlay');
+  if(!el)return;
+  if(!rapid){el.classList.remove('show');_rgLastKey=null;return;}
+  const key=rapid.idx+'_'+rapid.day;
+  if(key===_rgLastKey)return;
+  _rgLastKey=key;
+  const winStrat=series.find(s=>s.idx===rapid.idx);
+  const mo=winStrat?dvPlateauMoRate(winStrat.pts):0;
+  const numEl=$('rg-num'),timeEl=$('rg-time');
+  if(numEl)numEl.textContent=(mo>=0?'+$':'−$')+fmt(Math.abs(mo),0)+'/mo';
+  if(timeEl)timeEl.textContent=cal(dayToCal(rapid.day));
+  el.classList.remove('show');
+  void el.offsetWidth; // force reflow so the opacity transition re-triggers
+  requestAnimationFrame(()=>el.classList.add('show'));
 }
 
 function dvDrawRaceChart(cv,legendEl,hoverDay){
@@ -1624,14 +1707,15 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   const dataMinCap=allCaps.length?Math.min(0,...allCaps):0;
   const dataMaxDay=active.length?Math.max(...series.map(s=>s.pts[s.pts.length-1].day)):(hasReal?realPts.length:1);
 
-  // ── Universal scale ──
-  // Y maxes out at a fixed $1,000,000 goal line so the axis reads the same
-  // way run after run — the whole point of a "universal" scale — but if a
-  // strategy actually blows past that, the ceiling grows to fit it (with
-  // 8% headroom) instead of clipping the curve off-canvas. X gets ~12%
-  // headroom past the longest curve's last day so endpoint markers and
-  // labels never sit flush against the right edge.
-  const maxCap=Math.max(1000000,dataMaxCap*1.08);
+  // ── Scale ──
+  // Y scales to the actual data (20% headroom above the highest point) so
+  // the curves fill the available frame instead of leaving most of it
+  // empty — a fixed $1M ceiling looked "correct" but left a run that
+  // topped out at $20-30k stranded in the bottom sliver of the chart. X
+  // gets ~12% headroom past the longest curve's last day so endpoint
+  // markers/labels never sit flush against the right edge. A small floor
+  // keeps a near-flat/near-zero run from being scaled up into noise.
+  const maxCap=Math.max(dataMaxCap*1.2,1000);
   const minCap=dataMinCap;
   const capRng=(maxCap-minCap)||1;
   const maxDay=Math.max(1,dataMaxDay*1.12);
@@ -1668,22 +1752,13 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   ctx.textAlign='right';ctx.fillText('TIME →',pd.l+pw,H-4);
   ctx.restore();
 
-  // ── "Time to rapid growth" diagnostic note ──
-  // Drawn now (before the curves) so it sits as a backdrop the lines can
-  // cross over rather than a panel competing with them for attention.
-  // Sized to roughly a quarter of the plot's area, upper-left, per spec.
+  // ── "Time to rapid growth" diagnostic ──
+  // No longer a canvas-drawn panel — it's a fading-in HTML overlay (see
+  // dvUpdateRapidOverlay) sitting over this same upper-left quarter of
+  // the chart, so it can use real typography and a CSS fade instead of
+  // canvas text tricks.
   const rapid=dvFindRapidGrowth(series);
-  if(rapid){
-    const nw=pw*0.5,nh=ph*0.5;
-    const [nr,ng,nb]=hexToRgb(rapid.color);
-    glassLabelBox(ctx,pd.l+6,pd.t+6,nw,nh,[nr,ng,nb],false);
-    ctx.textAlign='left';
-    ctx.font='7px IBM Plex Mono';ctx.fillStyle='rgba(226,230,237,.5)';
-    ctx.fillText('DIAGNOSTIC',pd.l+14,pd.t+21);
-    ctx.font='bold 11px IBM Plex Mono';ctx.fillStyle='#e2e6ed';
-    ctx.fillText(cal(dayToCal(rapid.day))+' to',pd.l+14,pd.t+39);
-    ctx.fillText('rapid growth',pd.l+14,pd.t+53);
-  }
+  dvUpdateRapidOverlay(rapid,dayToCal,series);
 
   // Draw the real line first, beneath the strategy lines, in white.
   if(hasReal){
@@ -1742,13 +1817,17 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     endpoints.push({x:ex,y:ey,color:s.color,text:'$'+fmt(last.cap,0)+' · '+last.sh.toLocaleString()+'sh'});
   }
   const TRI_R=6.5,TRI_H=TRI_R*2.1;
+  // Near-plateau rate (last ~15% of the run), not the whole-history
+  // average — the early ramp-up days otherwise drag the figure down
+  // below what the strategy is actually doing by the end of the table.
   for(const s of series){
     const last=s.pts[s.pts.length-1];
-    moPoints.push({x:Math.min(Math.max(xS(last.day),pd.l+24),pd.l+pw-24),y:yS(last.cap)-TRI_H-4,mo:simResults[s.idx].c.evNet*21});
+    moPoints.push({x:Math.min(Math.max(xS(last.day),pd.l+24),pd.l+pw-24),y:yS(last.cap)-TRI_H-4,mo:dvPlateauMoRate(s.pts)});
   }
   if(hasReal&&realPts.length>1){
     const lastR=realPts[realPts.length-1];
-    const moReal=((lastR.cap-realPts[0].cap)/(realPts.length-1))*21;
+    const realAsPts=realPts.map((p,i)=>({day:i,cap:p.cap}));
+    const moReal=dvPlateauMoRate(realAsPts);
     moPoints.push({x:Math.min(Math.max(xS(realPts.length-1),pd.l+24),pd.l+pw-24),y:yS(lastR.cap)-TRI_H-4,mo:moReal});
   }
   dvResolveLabelCollisions([...endpoints,...moPoints],12);
@@ -1812,13 +1891,16 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       const [r,g,b]=hexToRgb(hp.color);
       drawGlassSphere(ctx,hp.dotX,hp.dotY,6.5,[r,g,b]);
     }
+    // Background matches the chart panel itself (not the strategy's
+    // colour) so only the text — in each strategy's own colour — stands
+    // out; the box's job is just to keep the line behind it from making
+    // the number unreadable, not to be another coloured shape.
     ctx.font='9px IBM Plex Mono';ctx.textAlign='left';
     for(const hp of hoverPts){
       const ly=hp.labelY!==undefined?hp.labelY:hp.y-6;
       const lw=ctx.measureText(hp.text).width;
       const labelX=Math.min(hp.x+10,st.pd.l+st.pw-lw-4);
-      const [r,g,b]=hexToRgb(hp.color);
-      glassLabelBox(ctx,labelX-4,ly-9,lw+8,13,[r,g,b],labelX<st.pd.l+st.pw*.5&&ly<st.pd.t+st.ph*.5);
+      glassLabelBox(ctx,labelX-4,ly-9,lw+8,13,BG_PANEL_RGB,labelX<st.pd.l+st.pw*.5&&ly<st.pd.t+st.ph*.5);
       ctx.fillStyle=hp.color;ctx.fillText(hp.text,labelX,ly);
     }
   }
@@ -2878,6 +2960,7 @@ function buildPanes(){
       <div class="sim-row">
         <button class="sim-btn ${SCLS}" onclick="simulate(${n})">Simulate</button>
         <button class="exp-btn" onclick="exportData(${n})">CSV</button>
+        <button class="exp-btn" onclick="clearStrategy(${n})" title="Reset Strategy ${L} to defaults">Clear</button>
       </div>
       <div class="mode-row">
         <span class="mode-lbl">Sim Mode</span>
@@ -2907,6 +2990,42 @@ function buildPanes(){
       <div class="disc"><p>Simulated results are hypothetical. Not financial advice.</p></div>
     `;
   });
+}
+
+// Resets one strategy tab back to its shipped defaults: every stepper in
+// SDEFS, every override toggle (routed through onTog so the off-state
+// styling/label/badge all follow, same as a real click), the two
+// selects, and any simulation results/derived displays for that tab.
+// Does not touch the other two strategies or the shared Capital field.
+const TOG_DEFAULTS=[['dist',false],['dp',false],['fees',true],['rr',false],['swing',true],['volceil',false],['vw',false]];
+function clearStrategy(tab){
+  const L=['A','B','C'][tab];
+  if(!confirm('Clear Strategy '+L+' back to defaults? This wipes its settings and any simulation results.'))return;
+  const s=tab===0?'':'_'+tab;
+  SDEFS.forEach(([id,defV])=>setV(id,tab,defV));
+  TOG_DEFAULTS.forEach(([id,def])=>{
+    const cb=$('tog-'+id+s);if(!cb)return;
+    cb.checked=def;
+    onTog(cb,'fc-'+id+s,tab);
+  });
+  const curveEl=$('curve'+s);if(curveEl)curveEl.value='slow';
+  const modeEl=$('mode'+s);if(modeEl)modeEl.value='rand';
+  onSlider(tab);
+  simResults[tab]=null;
+  const cv=$('cv'+s);if(cv){const ctx=cv.getContext('2d');if(ctx)ctx.clearRect(0,0,cv.width,cv.height);}
+  const ttEl=$('ct'+s);if(ttEl)ttEl.textContent='';
+  const CM_DEFAULT_CLS={'cm-ttg':'cmv steel','cm-cap':'cmv amb','cm-ret':'cmv','cm-ann':'cmv'};
+  Object.keys(CM_DEFAULT_CLS).forEach(id=>{const e=$(id+s);if(e){e.textContent='—';e.className=CM_DEFAULT_CLS[id];}});
+  ['cm-ttgs','cm-caps','cm-rets'].forEach(id=>{const e=$(id+s);if(e)e.textContent='—';});
+  const diagT=$('diag-t'+s),diagB=$('diag-b'+s),diagL=$('diag-l'+s),diagEl=$('diag'+s);
+  if(diagT)diagT.textContent='Diagnostics';
+  if(diagB)diagB.textContent='—';
+  if(diagL)diagL.innerHTML='';
+  if(diagEl)diagEl.className='diag';
+  renderStratComparison();
+  if(activeTblStrat===tab)renderTable(tab);
+  dvRedrawChart();
+  save();
 }
 
 function wirePanes(){
