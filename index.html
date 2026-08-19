@@ -293,11 +293,17 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    left-leaning format as-is. Top row (the time value) got tighter
    letter-spacing this round since the wide monospace advance widths at
    58px read as too airy; the bottom row's own spacing/line-height was
-   called out as already good and is untouched. */
+   called out as already good and is untouched. The value is two tokens
+   ("1y" and "6mo") separated by one literal space character — in a
+   monospace font at 58px that space glyph is as wide as any other
+   character, so letter-spacing alone barely dented the visible gap
+   between the year and month parts. word-spacing targets that specific
+   character instead, pulling the month value in close to the year value
+   without also cramming the digits within each token together. */
 .rg-time{
   font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:58px;
   color:rgba(226,230,237,.95);white-space:nowrap;line-height:1;
-  letter-spacing:-.03em;
+  letter-spacing:-.03em;word-spacing:-.5em;
   text-shadow:0 0 10px rgba(226,230,237,.03);
 }
 .rg-bottom{
@@ -312,11 +318,16 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    2) and use backdrop-filter to visibly blur/refract the rapid-growth
    text where the two overlap, instead of being hidden behind it. Glass
    look: a radial highlight from the top fading toward the bottom, like
-   light entering the top of the panel, plus the blur for a frosted feel. */
+   light entering the top of the panel, plus the blur for a frosted feel.
+   Reshaped from a pill into a circle this round, stacking three short
+   lines (the "Day" label, the day count, then the calendar value)
+   instead of one line of text. */
 .dv-daytally{
   position:absolute;left:0;top:0;transform:translate(-50%,-50%);
-  padding:4px 10px;border-radius:7px;box-sizing:border-box;
-  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  width:62px;height:62px;border-radius:50%;box-sizing:border-box;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1px;
+  font-family:'IBM Plex Mono',monospace;
   color:#e2e6ed;white-space:nowrap;
   background:
     radial-gradient(ellipse 100% 70% at 50% 0%, rgba(255,255,255,.28) 0%, rgba(255,255,255,.04) 55%, rgba(255,255,255,0) 85%),
@@ -327,6 +338,9 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
   pointer-events:none;opacity:0;transition:opacity .12s ease;z-index:3;
 }
 .dv-daytally.show{opacity:1;}
+.dv-dt-label{font-size:6.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(226,230,237,.55);line-height:1;}
+.dv-dt-num{font-size:16px;font-weight:700;line-height:1.05;}
+.dv-dt-cal{font-size:8px;font-weight:500;color:rgba(226,230,237,.72);line-height:1;}
 .chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #232b3d;}
 .cm{padding:7px 10px;border-right:1px solid #232b3d;border-bottom:1px solid #232b3d;}
 .cm:nth-child(even){border-right:none;}
@@ -562,7 +576,11 @@ canvas.spark{width:100%;height:34px;display:block;}
           <span class="rg-time" id="rg-time">—</span>
           <div class="rg-bottom">to rapid growth</div>
         </div>
-        <div class="dv-daytally" id="dv-daytally"></div>
+        <div class="dv-daytally" id="dv-daytally">
+          <span class="dv-dt-label">Day</span>
+          <span class="dv-dt-num" id="dv-dt-num"></span>
+          <span class="dv-dt-cal" id="dv-dt-cal"></span>
+        </div>
       </div>
     </div>
     <div class="dv-half">
@@ -1153,10 +1171,11 @@ function hexToRgb(hex){
 const RG_BADGE_SVG='<svg class="rg-row-badge" viewBox="0 0 16 16" width="10" height="10"><circle cx="8" cy="8" r="6" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" fill="#fff"/></svg> ';
 /* Glossy/liquid glass pill for the running-tally readout: a sleek dark
    base with the strategy's colour living at the TOP and draining down
-   into black at the bottom — reversed from the previous pass, which
-   pooled colour at the bottom under a white sheen near the top. No
-   border/outline any more; colour indication is carried entirely by the
-   fill gradient, no glow or flare involved. */
+   into black at the bottom. No border/outline; colour indication is
+   carried entirely by the fill gradient, no glow or flare involved.
+   Base + gradient alphas dropped this round to bring it in line with the
+   day-tally's transparency (that one sits at a .32 base) — more of the
+   chart now reads through the pill instead of it sitting near-opaque. */
 function dvGlassTally(ctx,x,y,w,h,rgb){
   const [cr,cg,cb]=rgb;
   const r=Math.min(6,h/2);
@@ -1165,58 +1184,59 @@ function dvGlassTally(ctx,x,y,w,h,rgb){
   ctx.beginPath();
   ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
   ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
-  ctx.fillStyle='rgba(14,18,26,.84)';ctx.fill();
+  ctx.fillStyle='rgba(14,18,26,.42)';ctx.fill();
   ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
 
   ctx.save();
   ctx.clip();
   const pool=ctx.createLinearGradient(0,y,0,y+h);
-  pool.addColorStop(0,`rgba(${cr},${cg},${cb},.5)`);
-  pool.addColorStop(.55,`rgba(${Math.round(cr*.3)},${Math.round(cg*.3)},${Math.round(cb*.3)},.35)`);
-  pool.addColorStop(1,'rgba(0,0,0,.55)');
+  pool.addColorStop(0,`rgba(${cr},${cg},${cb},.38)`);
+  pool.addColorStop(.55,`rgba(${Math.round(cr*.3)},${Math.round(cg*.3)},${Math.round(cb*.3)},.22)`);
+  pool.addColorStop(1,'rgba(0,0,0,.3)');
   ctx.fillStyle=pool;ctx.fillRect(x,y,w,h);
   ctx.restore();
 
   ctx.restore();
 }
 /* ══════════════════════════════════════════════════════════════
-   GLASS CIRCLE — hover/highlight points render through this. Replaces
-   the earlier "glass sphere" 3-D orb look: rather than a lit marble
-   coloured per strategy, every one of these is now a flat frosted lens
-   in the SAME neutral tone as the chart's own background (sampled from
-   its lower half — see DV_BG_MATCH_RGB), so it reads as a small
-   magnifying glass set into the chart rather than a coloured marker.
-   The curve's own colour already identifies the strategy; this circle's
-   job is just to mark "look here", so no colour, bloom, or specular
-   flare — just one solid disc with a single off-centre lens highlight
-   for a magnifying-glass feel. (Previous pass also stroked a second
-   ring at 60% radius inside the disc — read as a stray "circle inside
-   the circle" and removed; there is exactly one shape now.) No hazy
-   frost tint either — the highlight fades straight to the base colour.
-   10% less opacity and 10% larger than the previous pass. Endpoint/
+   GLASS CIRCLE — hover/highlight points render through this. Redesigned
+   again this round: the neutral background-matched disc read as too dark
+   and too "UI-outlined" (a flat stroked rim rather than actual glass), so
+   it's rebuilt as a genuinely translucent lens — mostly see-through, no
+   stroked border at all. Definition comes purely from a radial fill that
+   brightens toward an off-centre highlight (the magnifying-glass core)
+   and cools/dims gently toward the rim, so the edge is soft the way a
+   real lens's is rather than outlined. This is meant to sit alongside
+   the "glass tube" (curves/triangle borders) and "glossy/liquid" (tally
+   pills) materials as the lightest, airiest of the three. Endpoint/
    "finished" points use drawGlassTriangle instead, see below.
    ══════════════════════════════════════════════════════════════ */
-const DV_BG_MATCH_RGB=[10,23,34]; // sampled from the app's own lower-background tone
 function drawGlassCircle(ctx,x,y,r){
-  const [br,bg,bb]=DV_BG_MATCH_RGB;
-  const lightX=x-r*.18,lightY=y-r*.22;
+  const lightX=x-r*.22,lightY=y-r*.28;
   ctx.save();
 
+  // Base lens body — translucent throughout, no flat opaque disc. Bright
+  // near the highlight, cooling toward a dim, soft-edged rim with no hard
+  // stroke to define the boundary.
   ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
-  ctx.fillStyle=`rgba(${br},${bg},${bb},.7)`;
+  const base=ctx.createRadialGradient(lightX,lightY,0,x,y,r*1.08);
+  base.addColorStop(0,'rgba(255,255,255,.24)');
+  base.addColorStop(.45,'rgba(219,228,240,.13)');
+  base.addColorStop(.8,'rgba(160,178,201,.08)');
+  base.addColorStop(1,'rgba(120,138,163,.03)');
+  ctx.fillStyle=base;
   ctx.fill();
 
+  // Refractive core — the bright "magnifying" highlight, offset like
+  // light catching a curved lens surface.
   ctx.save();
   ctx.clip();
-  const lens=ctx.createRadialGradient(lightX,lightY,r*.08,x,y,r*1.05);
-  lens.addColorStop(0,`rgba(${Math.min(255,br+55)},${Math.min(255,bg+55)},${Math.min(255,bb+55)},.36)`);
-  lens.addColorStop(1,`rgba(${br},${bg},${bb},0)`);
+  const lens=ctx.createRadialGradient(lightX,lightY,0,lightX,lightY,r*.7);
+  lens.addColorStop(0,'rgba(255,255,255,.55)');
+  lens.addColorStop(1,'rgba(255,255,255,0)');
   ctx.fillStyle=lens;
   ctx.fillRect(x-r,y-r,r*2,r*2);
   ctx.restore();
-
-  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
-  ctx.lineWidth=.8;ctx.strokeStyle='rgba(255,255,255,.14)';ctx.stroke();
 
   ctx.restore();
 }
@@ -1929,7 +1949,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     ctx.beginPath();ctx.moveTo(mx,pd.t+ph);ctx.lineTo(mx,my);ctx.stroke();
     ctx.setLineDash([]);
     ctx.restore();
-    drawGlassBullseye(ctx,mx,my,9.1,[255,255,255]);
+    drawGlassBullseye(ctx,mx,my,10.92,[255,255,255]);
   }
 
   // ── Endpoints: upside-down glass triangles marking the final point of
@@ -2051,7 +2071,13 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     // that text where the two overlap, instead of being hidden behind it.
     const dayLabelY=st.pd.t+st.ph*0.33;
     if(dtEl){
-      dtEl.textContent='Day '+hoverDay+' · '+cal(st.dayToCal(hoverDay));
+      // Circle now stacks three lines (label/day-count/calendar value) as
+      // separate child elements, so populate those directly rather than
+      // overwriting the whole element's textContent (which would wipe out
+      // the child spans along with the static "Day" label).
+      const dtNum=$('dv-dt-num'),dtCal=$('dv-dt-cal');
+      if(dtNum)dtNum.textContent=Math.round(hoverDay);
+      if(dtCal)dtCal.textContent=cal(st.dayToCal(hoverDay));
       dtEl.style.left=cx+'px';
       dtEl.style.top=dayLabelY+'px';
       dtEl.classList.add('show');
@@ -2078,16 +2104,24 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     // Running tallies dock in a fixed bottom-right stack instead of
     // chasing the cursor around the chart — a static spot reads calmer
     // than three labels jostling for space near a busy hover point.
+    // Left edges are shared across all rows (sized to the widest label)
+    // so the A/B/C strategy letters line up in a column instead of each
+    // pill being individually right-aligned; the group's own right edge —
+    // driven by the widest pill — keeps the same bottom-right anchor as
+    // before, so the block as a whole doesn't move.
     ctx.font='9px IBM Plex Mono';ctx.textAlign='left';
     const rowH=15,rowGap=3,marginR=6,marginB=6;
     const stackH=hoverPts.length*rowH+Math.max(0,hoverPts.length-1)*rowGap;
     let rowY=st.pd.t+st.ph-marginB-stackH;
+    let maxBoxW=0;
     for(const hp of hoverPts){
-      const lw=ctx.measureText(hp.text).width;
-      const boxW=lw+16;
-      const boxX=st.pd.l+st.pw-marginR-boxW;
+      hp.boxW=ctx.measureText(hp.text).width+16;
+      if(hp.boxW>maxBoxW)maxBoxW=hp.boxW;
+    }
+    const boxX=st.pd.l+st.pw-marginR-maxBoxW;
+    for(const hp of hoverPts){
       const [r,g,b]=hexToRgb(hp.color);
-      dvGlassTally(ctx,boxX,rowY,boxW,rowH,[r,g,b]);
+      dvGlassTally(ctx,boxX,rowY,hp.boxW,rowH,[r,g,b]);
       ctx.fillStyle=hp.color;
       ctx.fillText(hp.text,boxX+8,rowY+rowH/2+3);
       rowY+=rowH+rowGap;
