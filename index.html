@@ -1179,24 +1179,20 @@ function hexToRgb(hex){
 // Table row badge for a strategy's own rapid-growth day — same ring +
 // dot design as the chart's on-curve marker, just as an inline SVG.
 const RG_BADGE_SVG='<svg class="rg-row-badge" viewBox="0 0 16 16" width="10" height="10"><circle cx="8" cy="8" r="6" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" fill="#fff"/></svg> ';
-/* Running-tally chip, body matched to the day-tally circle's own glass
-   treatment (same base tone, same white sheen entering from the top,
-   same hairline border) — canvas can't reproduce the day-tally's
-   backdrop-filter blur/refraction (that only works on a real HTML
-   layer, which is why the day-tally itself is one), so this reproduces
-   its gradient and border look as closely as canvas drawing allows.
-   Colour no longer lives in the chip's body or an accent bar, and the
-   value text is a neutral tone rather than the strategy's own colour —
-   colour identity now comes entirely from the accumulation bar flush
-   against the bottom edge, drawn here so it's clipped to the same
-   rounded shape as the body. Its length (left-to-right, relative to the
-   chip's own width) is this strategy's capital relative to whichever of
-   the active strategies is furthest ahead at this exact hover moment —
-   since all three are read at the same elapsed day, the relative bar
-   lengths double as an at-a-glance pace comparison, not just a capital
-   readout. Positioning (static bottom-right dock, 5% from the chart's
-   true right edge, shared left edge so the pills line up) is set by the
-   caller, unchanged here. */
+/* Running-tally chip. Dropped the day-tally's own top-down radial
+   highlight — at this shape's long, low proportions it wasn't reading
+   as anything, just dead flat space — in favour of the SAME 135°
+   diagonal gloss the app's shared card material uses everywhere else
+   (.chart-panel, .disc, etc — see the shared-frost-treatment rule near
+   the top of the stylesheet, and drawGlassTriangle's own gloss pass,
+   which this now matches). Kept faint (half that shared recipe's own
+   peak alpha) and the base fill/border lightened too, per "less
+   overstated" — this chip should read as a quiet backing plate, not a
+   card competing with the chart itself.
+   Colour lives only in the accumulation bar flush against the bottom
+   edge (clipped to the same rounded shape as the body); the value text
+   stays a neutral tone. Width/height/position are the caller's call —
+   this only draws within whatever box it's given. */
 function dvGlassTally(ctx,x,y,w,h,barFrac,barRgb){
   const r=Math.min(6,h/2);
   ctx.save();
@@ -1206,24 +1202,84 @@ function dvGlassTally(ctx,x,y,w,h,barFrac,barRgb){
   ctx.save();
   ctx.clip();
 
-  ctx.fillStyle='rgba(18,23,33,.32)';
+  ctx.fillStyle='rgba(18,23,33,.28)';
   ctx.fillRect(x,y,w,h);
-  const sheen=ctx.createLinearGradient(0,y,0,y+h);
-  sheen.addColorStop(0,'rgba(255,255,255,.28)');
-  sheen.addColorStop(.55,'rgba(255,255,255,.04)');
-  sheen.addColorStop(.85,'rgba(255,255,255,0)');
-  ctx.fillStyle=sheen;
+  const gloss=ctx.createLinearGradient(x,y,x+w,y+h);
+  gloss.addColorStop(0,'rgba(255,255,255,.05)');
+  gloss.addColorStop(.55,'rgba(255,255,255,0)');
+  ctx.fillStyle=gloss;
   ctx.fillRect(x,y,w,h);
 
   const [br,bg,bb]=barRgb;
-  const barH=2.5;
-  ctx.fillStyle=`rgba(${br},${bg},${bb},.85)`;
+  const barH=2;
+  ctx.fillStyle=`rgba(${br},${bg},${bb},.62)`;
   ctx.fillRect(x,y+h-barH,w*Math.max(0,Math.min(1,barFrac)),barH);
 
   ctx.restore();
   ctx.lineWidth=1;
-  ctx.strokeStyle='rgba(255,255,255,.12)';
+  ctx.strokeStyle='rgba(255,255,255,.08)';
   ctx.stroke();
+  ctx.restore();
+}
+/* Share-count gauge — a half-circle dial, split out of the capital tally
+   entirely now that shares and capital are two different measurements
+   (one a pace/quantity readout, the other a $ amount) and were
+   confusing to read mashed into one chip. Same glass material as
+   dvGlassTally right above (translucent body, faint 135° gloss,
+   hairline border) so the two read as one family, just domed instead of
+   pill-shaped — flat edge down, curve up, share count centred in the
+   dome with a small "SHARES" caption under it. Colour still lives in
+   exactly one place, same rule as the capital bar: a single strategy-
+   coloured stroke, proportional fill against a range, number/caption
+   both neutral. Here that coloured element arcs across the TOP of the
+   dome (there's no straight bottom edge on a half-circle to run a bar
+   along, so the equivalent gesture becomes a gauge sweep instead of a
+   fill bar) rather than sitting flush along a bottom edge.
+   cx = centre x; cyBase = y of the flat/diameter edge; r = radius;
+   frac = 0..1 arc fill; rgb = this strategy's colour; shareVal = the
+   number drawn in the centre. */
+function dvGlassGauge(ctx,cx,cyBase,r,frac,rgb,shareVal){
+  ctx.save();
+  const tracePath=()=>{
+    ctx.beginPath();
+    ctx.moveTo(cx-r,cyBase);
+    ctx.arc(cx,cyBase,r,Math.PI,2*Math.PI,false);
+    ctx.closePath();
+  };
+  ctx.save();
+  tracePath();
+  ctx.clip();
+  ctx.fillStyle='rgba(18,23,33,.28)';
+  ctx.fillRect(cx-r,cyBase-r,r*2,r);
+  const gloss=ctx.createLinearGradient(cx-r,cyBase-r,cx+r,cyBase);
+  gloss.addColorStop(0,'rgba(255,255,255,.05)');
+  gloss.addColorStop(.55,'rgba(255,255,255,0)');
+  ctx.fillStyle=gloss;
+  ctx.fillRect(cx-r,cyBase-r,r*2,r);
+  ctx.restore();
+  tracePath();
+  ctx.lineWidth=1;ctx.strokeStyle='rgba(255,255,255,.08)';ctx.stroke();
+
+  const [gr,gg,gb]=rgb;
+  ctx.beginPath();
+  ctx.arc(cx,cyBase,r-3,Math.PI,Math.PI+Math.max(0,Math.min(1,frac))*Math.PI,false);
+  ctx.lineCap='round';ctx.lineWidth=2;
+  ctx.strokeStyle=`rgba(${gr},${gg},${gb},.68)`;
+  ctx.stroke();
+
+  // Number + caption sit low in the dome (close to the flat base, where
+  // a half-circle is at its widest) rather than centred on the dome's
+  // full height — keeps them clear of the arc above even when the arc
+  // sweeps most of the way round at a near-full fraction.
+  ctx.textAlign='center';
+  ctx.fillStyle='rgba(226,230,237,.78)';
+  ctx.font='700 9px IBM Plex Mono';
+  ctx.fillText(Math.round(shareVal).toLocaleString(),cx,cyBase-9);
+  ctx.fillStyle='rgba(163,173,190,.5)';
+  ctx.font='6px IBM Plex Mono';
+  ctx.textBaseline='alphabetic';
+  ctx.fillText('SHARES',cx,cyBase-1);
+
   ctx.restore();
 }
 /* ══════════════════════════════════════════════════════════════
@@ -1862,6 +1918,13 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   if(hasReal)allCaps=allCaps.concat(realPts.map(p=>p.cap));
   const dataMaxCap=allCaps.length?Math.max(...allCaps):0;
   const dataMinCap=allCaps.length?Math.min(0,...allCaps):0;
+  // Same 20%-headroom convention as the capital range below, applied to
+  // share counts for the share gauges further down — a stable ceiling
+  // across the whole batch rather than whatever's active at a given
+  // hover moment.
+  const allShares=series.flatMap(s=>s.pts.map(p=>p.sh));
+  const dataMaxSh=allShares.length?Math.max(...allShares):0;
+  const shRange=Math.max(dataMaxSh*1.2,1);
   const dataMaxDay=active.length?Math.max(...series.map(s=>s.pts[s.pts.length-1].day)):(hasReal?realPts.length:1);
 
   // ── Scale ──
@@ -1983,41 +2046,40 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const RG_MK_R=14.2; // 10.92 × 1.3 — 30% bigger
     drawGlassBullseye(ctx,mx,my,RG_MK_R,[255,255,255]);
 
-    // "Fastest path" annotation — a map-pin-style callout with an elbow:
-    // the leader starts at the marker's own 10-o'clock point (up and to
-    // the left) and runs at that angle for a short stretch, then bends
-    // to run flat/horizontal the rest of the way, with the text sitting
-    // at that horizontal end. Mirrors to the marker's 2-o'clock point
-    // (up and to the right) instead when there isn't room on the left.
+    // "Fastest path" annotation — a single straight leader at the
+    // marker's own 10-o'clock angle running all the way out to the text,
+    // no horizontal bend/shelf. Mirrors to the marker's 2-o'clock point
+    // instead when there isn't room for the label between the marker and
+    // the chart's left edge.
     ctx.save();
     ctx.font='700 7px IBM Plex Mono';
     ctx.fillStyle='rgba(255,255,255,.7)';
     ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=.8;
     const rgLblTxt='FASTEST PATH';
     const rgLblW=ctx.measureText(rgLblTxt).width;
-    const diagLen=9,horizLen=12,textGap=5;
+    const leadLen=21,textGap=5;
     // 10 o'clock: 150° in standard math convention (0°=east,90°=north);
     // screen y grows downward, so the y component is negated.
     const ang10=150*Math.PI/180;
     const dx10=Math.cos(ang10),dy10=-Math.sin(ang10);
     const edgeX=mx+RG_MK_R*dx10,edgeY=my+RG_MK_R*dy10;
-    const elbowX=edgeX+diagLen*dx10,elbowY=edgeY+diagLen*dy10;
-    const fitsLeft=(elbowX-horizLen-textGap-rgLblW)>=pd.l;
+    const tipX=edgeX+leadLen*dx10,tipY=edgeY+leadLen*dy10;
+    const anchorX=tipX+textGap*dx10,anchorY=tipY+textGap*dy10;
+    const fitsLeft=(anchorX-rgLblW)>=pd.l;
     if(fitsLeft){
       ctx.textAlign='right';
-      const hEndX=elbowX-horizLen;
-      ctx.beginPath();ctx.moveTo(edgeX,edgeY);ctx.lineTo(elbowX,elbowY);ctx.lineTo(hEndX,elbowY);ctx.stroke();
-      ctx.fillText(rgLblTxt,hEndX-textGap,elbowY+2.5);
+      ctx.beginPath();ctx.moveTo(edgeX,edgeY);ctx.lineTo(tipX,tipY);ctx.stroke();
+      ctx.fillText(rgLblTxt,anchorX,anchorY+2.5);
     }else{
       // 2 o'clock: mirror of 10 o'clock across the vertical axis (30°).
       const ang2=30*Math.PI/180;
       const dx2=Math.cos(ang2),dy2=-Math.sin(ang2);
       const edgeX2=mx+RG_MK_R*dx2,edgeY2=my+RG_MK_R*dy2;
-      const elbowX2=edgeX2+diagLen*dx2,elbowY2=edgeY2+diagLen*dy2;
+      const tipX2=edgeX2+leadLen*dx2,tipY2=edgeY2+leadLen*dy2;
+      const anchorX2=tipX2+textGap*dx2,anchorY2=tipY2+textGap*dy2;
       ctx.textAlign='left';
-      const hEndX2=elbowX2+horizLen;
-      ctx.beginPath();ctx.moveTo(edgeX2,edgeY2);ctx.lineTo(elbowX2,elbowY2);ctx.lineTo(hEndX2,elbowY2);ctx.stroke();
-      ctx.fillText(rgLblTxt,hEndX2+textGap,elbowY2+2.5);
+      ctx.beginPath();ctx.moveTo(edgeX2,edgeY2);ctx.lineTo(tipX2,tipY2);ctx.stroke();
+      ctx.fillText(rgLblTxt,anchorX2,anchorY2+2.5);
     }
     ctx.restore();
   }
@@ -2182,43 +2244,59 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       const clampedDay=Math.min(hoverDay,ownFinalDay);
       let pt=null;
       for(const p of s.pts){if(p.day<=clampedDay)pt=p;else break;}
-      if(pt)hoverPts.push({color:s.color,cap:pt.cap,text:`$${fmt(pt.cap,0)} · ${pt.sh.toLocaleString()}sh`,dotX:st.xS(clampedDay),dotY:st.yS(pt.cap)});
+      if(pt)hoverPts.push({color:s.color,cap:pt.cap,sh:pt.sh,dotX:st.xS(clampedDay),dotY:st.yS(pt.cap)});
     }
     for(const hp of hoverPts){
       drawGlassCircle(ctx,hp.dotX,hp.dotY,7.15);
     }
-    // Running tallies dock in a fixed bottom-right stack instead of
-    // chasing the cursor around the chart — a static spot reads calmer
-    // than three labels jostling for space near a busy hover point. No
-    // strategy-letter prefix any more — colour identity is carried by
-    // the bottom accumulation bar (see dvGlassTally) instead of a text
-    // label, so the value text can stay a plain neutral tone. Left edges
-    // are still shared across all rows (sized to the widest label) so
-    // the pills line up in a column instead of each being individually
-    // right-aligned; that left alignment holds regardless of where the
-    // group's right edge sits. Right margin is a percentage (5%) of the
-    // FULL canvas width — not just the inner plot width — since "5% from
-    // the right side" reads as measured from the chart's actual visible
-    // edge, not from the data-plot boundary that sits pd.r (30px)
-    // further in.
-    ctx.font='9px IBM Plex Mono';ctx.textAlign='left';
     const chartW=st.pd.l+st.pw+st.pd.r;
-    const rowH=15,rowGap=3,marginR=chartW*.05,marginB=6;
-    const stackH=hoverPts.length*rowH+Math.max(0,hoverPts.length-1)*rowGap;
-    let rowY=st.pd.t+st.ph-marginB-stackH;
-    let maxBoxW=0,maxCap=0;
+
+    // Capital tallies: static dock on the LEFT now, directly under the
+    // "time to rapid growth" HTML overlay — that overlay's own box (see
+    // .rg-overlay) is defined as the top 47% of this same canvas, so its
+    // bottom edge in canvas-space is just H*.47. No strategy-letter
+    // prefix, no accent bar — colour lives only in the bottom
+    // accumulation bar (see dvGlassTally), value text stays neutral.
+    // Every row is drawn at one FIXED width, measured off the chart's
+    // own capital ceiling (`maxCap`, the same 20%-over-batch-max value
+    // already driving the Y axis) rather than off whatever's actually
+    // hovered — a row's width no longer changes as the hovered value's
+    // digit count changes, which was what made "who's ahead" unreadable.
+    // The bar's fraction reuses that same ceiling as its denominator too,
+    // so its length is a stable, absolute capital read — not relative to
+    // just whichever strategies happen to be active at this exact hover
+    // moment (that read like a race-to-finish-day indicator, not a
+    // capital gauge).
+    ctx.font='8px IBM Plex Mono';ctx.textAlign='left';
+    const tallyRowH=14,tallyGap=3;
+    const tallyBoxW=ctx.measureText('$'+fmt(maxCap,0)).width+16;
+    const tallyX=st.pd.l;
+    let tallyY=H*0.47+8;
     for(const hp of hoverPts){
-      hp.boxW=ctx.measureText(hp.text).width+16;
-      if(hp.boxW>maxBoxW)maxBoxW=hp.boxW;
-      if(hp.cap>maxCap)maxCap=hp.cap;
+      const barFrac=hp.cap/maxCap;
+      dvGlassTally(ctx,tallyX,tallyY,tallyBoxW,tallyRowH,barFrac,hexToRgb(hp.color));
+      ctx.fillStyle='rgba(226,230,237,.75)';
+      ctx.fillText('$'+fmt(hp.cap,0),tallyX+8,tallyY+tallyRowH/2+3);
+      tallyY+=tallyRowH+tallyGap;
     }
-    const boxX=chartW-marginR-maxBoxW;
+
+    // Share-count gauges: split out into their own half-circle dial (see
+    // dvGlassGauge) and docked where the old combined capital+shares
+    // tally used to sit — bottom-right, 5% off the chart's true right
+    // edge (full canvas width, not just the inner plot width, same "5%
+    // from the right side" reading as before). Same range convention as
+    // the capital bars (20% headroom over the batch's highest share
+    // count) and the same "colour lives only in the line" rule, just
+    // arced across the top of the dome instead of run along a rectangle's
+    // bottom edge.
+    const gR=22,gGap=10;
+    const gRowW=hoverPts.length*gR*2+Math.max(0,hoverPts.length-1)*gGap;
+    const gMarginR=chartW*.05,gMarginB=8;
+    let gX=chartW-gMarginR-gRowW+gR;
+    const gY=st.pd.t+st.ph-gMarginB;
     for(const hp of hoverPts){
-      const barFrac=maxCap>0?hp.cap/maxCap:0;
-      dvGlassTally(ctx,boxX,rowY,hp.boxW,rowH,barFrac,hexToRgb(hp.color));
-      ctx.fillStyle='rgba(226,230,237,.85)';
-      ctx.fillText(hp.text,boxX+8,rowY+rowH/2+3);
-      rowY+=rowH+rowGap;
+      dvGlassGauge(ctx,gX,gY,gR,hp.sh/shRange,hexToRgb(hp.color),hp.sh);
+      gX+=gR*2+gGap;
     }
   }else if(dtEl){
     dtEl.classList.remove('show');
