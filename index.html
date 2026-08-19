@@ -1179,32 +1179,27 @@ function hexToRgb(hex){
 // Table row badge for a strategy's own rapid-growth day — same ring +
 // dot design as the chart's on-curve marker, just as an inline SVG.
 const RG_BADGE_SVG='<svg class="rg-row-badge" viewBox="0 0 16 16" width="10" height="10"><circle cx="8" cy="8" r="6" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" fill="#fff"/></svg> ';
-/* Glossy/liquid glass pill for the running-tally readout: a sleek dark
-   base with the strategy's colour living at the TOP and draining down
-   into black at the bottom. No border/outline; colour indication is
-   carried entirely by the fill gradient, no glow or flare involved.
-   Base + gradient alphas dropped again this round for more see-through
-   glass — asked for "more translucency" a second time, so pushed further
-   past the day-tally's own .32 base rather than just matching it. */
+/* Glossy/liquid glass pill for the running-tally readout. Previous passes
+   layered a near-black backing fill under the colour gradient plus a
+   black drop shadow — called out as "too bold, too solid," not reading
+   as glass. Both are gone now: no backing fill, no shadow, no black
+   anywhere in the shape. What's left is just the colour gradient itself
+   (kept, per feedback — "the green radial") fading straight from the
+   strategy's own colour down to full transparency, so the chart shows
+   through cleanly rather than compositing through a dark panel first. */
 function dvGlassTally(ctx,x,y,w,h,rgb){
   const [cr,cg,cb]=rgb;
   const r=Math.min(6,h/2);
   ctx.save();
-  ctx.shadowColor='rgba(0,0,0,.4)';ctx.shadowBlur=5;ctx.shadowOffsetY=2;
   ctx.beginPath();
   ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
   ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
-  ctx.fillStyle='rgba(14,18,26,.26)';ctx.fill();
-  ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
-
-  ctx.save();
   ctx.clip();
+
   const pool=ctx.createLinearGradient(0,y,0,y+h);
-  pool.addColorStop(0,`rgba(${cr},${cg},${cb},.25)`);
-  pool.addColorStop(.55,`rgba(${Math.round(cr*.3)},${Math.round(cg*.3)},${Math.round(cb*.3)},.13)`);
-  pool.addColorStop(1,'rgba(0,0,0,.18)');
+  pool.addColorStop(0,`rgba(${cr},${cg},${cb},.32)`);
+  pool.addColorStop(1,`rgba(${cr},${cg},${cb},0)`);
   ctx.fillStyle=pool;ctx.fillRect(x,y,w,h);
-  ctx.restore();
 
   ctx.restore();
 }
@@ -1963,6 +1958,21 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     ctx.setLineDash([]);
     ctx.restore();
     drawGlassBullseye(ctx,mx,my,10.92,[255,255,255]);
+
+    // "Fastest path" annotation — names what this marker is for. Floated
+    // just above the marker; clamped on both axes so it can't run off
+    // the top edge (marker sitting high on the chart) or either side
+    // (marker sitting near the start/end of the timeline).
+    ctx.save();
+    ctx.font='700 7px IBM Plex Mono';
+    ctx.textAlign='center';
+    ctx.fillStyle='rgba(255,255,255,.7)';
+    const rgLblTxt='FASTEST PATH';
+    const rgLblHalfW=ctx.measureText(rgLblTxt).width/2;
+    const rgLblX=Math.min(Math.max(mx,pd.l+rgLblHalfW+2),pd.l+pw-rgLblHalfW-2);
+    const rgLblY=Math.max(pd.t+9,my-10.92-8);
+    ctx.fillText(rgLblTxt,rgLblX,rgLblY);
+    ctx.restore();
   }
 
   // ── Endpoints: upside-down glass triangles marking the final point of
