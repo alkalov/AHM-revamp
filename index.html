@@ -1179,14 +1179,20 @@ function hexToRgb(hex){
 // Table row badge for a strategy's own rapid-growth day — same ring +
 // dot design as the chart's on-curve marker, just as an inline SVG.
 const RG_BADGE_SVG='<svg class="rg-row-badge" viewBox="0 0 16 16" width="10" height="10"><circle cx="8" cy="8" r="6" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" fill="#fff"/></svg> ';
-/* Glossy/liquid glass pill for the running-tally readout. Previous passes
-   layered a near-black backing fill under the colour gradient plus a
-   black drop shadow — called out as "too bold, too solid," not reading
-   as glass. Both are gone now: no backing fill, no shadow, no black
-   anywhere in the shape. What's left is just the colour gradient itself
-   (kept, per feedback — "the green radial") fading straight from the
-   strategy's own colour down to full transparency, so the chart shows
-   through cleanly rather than compositing through a dark panel first. */
+/* Frosted glass chip — open redesign for the running-tally readout
+   ("redesign for me" brief). Every earlier pass tried to communicate
+   strategy colour by tinting the whole pill, and kept reading as too
+   bold/too solid no matter how far the alpha or the black backing was
+   dialled back. This version stops tinting the body at all: the chip is
+   a near-clear frosted surface (a faint upper-left catch-light, the same
+   kind of soft glass highlight the day-tally circle and hover lenses
+   use), and the strategy colour is concentrated into a slim rounded
+   accent bar on the left edge plus the value text itself — colour still
+   reads at a glance, but the body of the chip stays genuinely
+   see-through instead of colour-washed. No shadow, no full border, no
+   black. Positioning (static bottom-right dock, 5% from the chart's true
+   right edge, shared left edge so A/B/C line up) is unchanged — all set
+   by the caller, not this function. */
 function dvGlassTally(ctx,x,y,w,h,rgb){
   const [cr,cg,cb]=rgb;
   const r=Math.min(6,h/2);
@@ -1196,55 +1202,47 @@ function dvGlassTally(ctx,x,y,w,h,rgb){
   ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
   ctx.clip();
 
-  const pool=ctx.createLinearGradient(0,y,0,y+h);
-  pool.addColorStop(0,`rgba(${cr},${cg},${cb},.32)`);
-  pool.addColorStop(1,`rgba(${cr},${cg},${cb},0)`);
-  ctx.fillStyle=pool;ctx.fillRect(x,y,w,h);
+  const frost=ctx.createRadialGradient(x+w*.18,y,0,x+w*.18,y+h,w*.95);
+  frost.addColorStop(0,'rgba(255,255,255,.13)');
+  frost.addColorStop(.6,'rgba(226,230,237,.05)');
+  frost.addColorStop(1,'rgba(226,230,237,.02)');
+  ctx.fillStyle=frost;
+  ctx.fillRect(x,y,w,h);
+
+  ctx.fillStyle=`rgba(${cr},${cg},${cb},.85)`;
+  ctx.fillRect(x,y,2.5,h);
 
   ctx.restore();
 }
 /* ══════════════════════════════════════════════════════════════
    GLASS CIRCLE — hover/highlight points render through this. Redesigned
-   again this round: the neutral background-matched disc read as too dark
-   and too "UI-outlined" (a flat stroked rim rather than actual glass), so
-   it's rebuilt as a genuinely translucent lens — mostly see-through, no
-   stroked border at all. Definition comes purely from a radial fill that
-   brightens toward an off-centre highlight (the magnifying-glass core)
-   and cools/dims gently toward the rim, so the edge is soft the way a
-   real lens's is rather than outlined. This is meant to sit alongside
-   the "glass tube" (curves/triangle borders) and "glossy/liquid" (tally
-   pills) materials as the lightest, airiest of the three. Endpoint/
+   again this round on an open brief ("new design, doesn't have to be
+   totally different in essence") specifically to move away from glow:
+   every earlier pass built the highlight out of soft radial gradients,
+   and even after dialling that "glow" down hard last round it still read
+   as glow-ish, because a gradient blob is what a glow *is*. This version
+   drops radial gradients entirely — no blur, no soft-edged spread. It's
+   two flat, hard-edged fills instead: a plain translucent disc for the
+   body (no gradient falloff, so no glow) and one small solid dot offset
+   toward the upper-left standing in for a catch-light. Still the same
+   basic idea as before — a small glass lens marking a point on the
+   curve — just executed without anything that blurs outward. Endpoint/
    "finished" points use drawGlassTriangle instead, see below.
    ══════════════════════════════════════════════════════════════ */
 function drawGlassCircle(ctx,x,y,r){
-  const lightX=x-r*.22,lightY=y-r*.28;
   ctx.save();
 
-  // Base lens body, tuned in three separately-named ways this round:
-  // "opacity" (the solid near-centre presence of the disc, stops 0/.45)
-  // is up 15%; "glow" (the soft outer haze the same gradient trails off
-  // into, stops .8/1) is down 90%, so the rim reads crisp instead of
-  // hazy; "glare" is the separate refractive highlight below, down 30%.
+  // Flat glass body — a single translucent fill, no gradient, so there's
+  // no soft glow-style falloff at all.
   ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
-  const base=ctx.createRadialGradient(lightX,lightY,0,x,y,r*1.08);
-  base.addColorStop(0,'rgba(255,255,255,.28)');
-  base.addColorStop(.45,'rgba(219,228,240,.15)');
-  base.addColorStop(.8,'rgba(160,178,201,.01)');
-  base.addColorStop(1,'rgba(120,138,163,.003)');
-  ctx.fillStyle=base;
+  ctx.fillStyle='rgba(226,230,237,.22)';
   ctx.fill();
 
-  // Refractive core — the bright "magnifying" highlight ("glare"),
-  // offset like light catching a curved lens surface. Toned down 30%
-  // from last pass so it reads as a gentler glint, less blown-out.
-  ctx.save();
-  ctx.clip();
-  const lens=ctx.createRadialGradient(lightX,lightY,0,lightX,lightY,r*.7);
-  lens.addColorStop(0,'rgba(255,255,255,.385)');
-  lens.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.fillStyle=lens;
-  ctx.fillRect(x-r,y-r,r*2,r*2);
-  ctx.restore();
+  // Small hard-edged catch-light — a plain solid dot, not a blurred
+  // gradient blob, standing in for a reflective glint.
+  ctx.beginPath();ctx.arc(x-r*.32,y-r*.34,r*.22,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,.6)';
+  ctx.fill();
 
   ctx.restore();
 }
@@ -1254,16 +1252,17 @@ function drawGlassCircle(ctx,x,y,r){
    with its own glass treatment (soft bloom, gradient fill, specular
    highlight) instead of a flat stroked ring or a filled sphere body.
    Ring and dot are both translucent so the curve/gridlines underneath
-   still show through. */
+   still show through. All alphas here are ×0.8 (20% more translucent)
+   versus the previous pass, on top of the caller now drawing it 30%
+   bigger (see the drawGlassBullseye call site). */
 function drawGlassBullseye(ctx,x,y,r,rgb){
   const [cr,cg,cb]=rgb;
   const lightX=x-r*0.35,lightY=y-r*0.4;
   ctx.save();
 
-  /* tight, dim bloom — just enough to lift the ring off the chart.
-     Alphas throughout this function are +5% over the previous pass. */
+  /* tight, dim bloom — just enough to lift the ring off the chart. */
   const bloom=ctx.createRadialGradient(x,y,0,x,y,r*1.7);
-  bloom.addColorStop(0,`rgba(${cr},${cg},${cb},.13)`);
+  bloom.addColorStop(0,`rgba(${cr},${cg},${cb},.104)`);
   bloom.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=bloom;
   ctx.beginPath();ctx.arc(x,y,r*1.7,0,Math.PI*2);ctx.fill();
@@ -1277,24 +1276,24 @@ function drawGlassBullseye(ctx,x,y,r,rgb){
   ctx.arc(x,y,ringInner,0,Math.PI*2,true);
   ctx.clip('evenodd');
   const ringFill=ctx.createRadialGradient(lightX,lightY,0,x,y,ringOuter*1.15);
-  ringFill.addColorStop(0,`rgba(${Math.min(255,cr+100)},${Math.min(255,cg+100)},${Math.min(255,cb+100)},.53)`);
-  ringFill.addColorStop(.6,`rgba(${cr},${cg},${cb},.32)`);
-  ringFill.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.27)`);
+  ringFill.addColorStop(0,`rgba(${Math.min(255,cr+100)},${Math.min(255,cg+100)},${Math.min(255,cb+100)},.424)`);
+  ringFill.addColorStop(.6,`rgba(${cr},${cg},${cb},.256)`);
+  ringFill.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.216)`);
   ctx.fillStyle=ringFill;
   ctx.fillRect(x-ringOuter-2,y-ringOuter-2,(ringOuter+2)*2,(ringOuter+2)*2);
   ctx.restore();
   ctx.lineWidth=.8;
-  ctx.strokeStyle=`rgba(${cr},${cg},${cb},.53)`;
+  ctx.strokeStyle=`rgba(${cr},${cg},${cb},.424)`;
   ctx.beginPath();ctx.arc(x,y,ringOuter,0,Math.PI*2);ctx.stroke();
-  ctx.strokeStyle=`rgba(${cr},${cg},${cb},.34)`;
+  ctx.strokeStyle=`rgba(${cr},${cg},${cb},.272)`;
   ctx.beginPath();ctx.arc(x,y,ringInner,0,Math.PI*2);ctx.stroke();
 
   /* center dot: a small glass sphere, not a flat fill */
   const dotR=r*.34;
   const body=ctx.createRadialGradient(lightX,lightY,dotR*.1,x,y,dotR*1.05);
-  body.addColorStop(0,`rgba(${Math.min(255,cr+130)},${Math.min(255,cg+130)},${Math.min(255,cb+130)},.89)`);
-  body.addColorStop(.5,`rgba(${cr},${cg},${cb},.74)`);
-  body.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.63)`);
+  body.addColorStop(0,`rgba(${Math.min(255,cr+130)},${Math.min(255,cg+130)},${Math.min(255,cb+130)},.712)`);
+  body.addColorStop(.5,`rgba(${cr},${cg},${cb},.592)`);
+  body.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.504)`);
   ctx.beginPath();ctx.arc(x,y,dotR,0,Math.PI*2);
   ctx.fillStyle=body;ctx.fill();
 
@@ -1957,21 +1956,33 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     ctx.beginPath();ctx.moveTo(mx,pd.t+ph);ctx.lineTo(mx,my);ctx.stroke();
     ctx.setLineDash([]);
     ctx.restore();
-    drawGlassBullseye(ctx,mx,my,10.92,[255,255,255]);
+    const RG_MK_R=14.2; // 10.92 × 1.3 — 30% bigger
+    drawGlassBullseye(ctx,mx,my,RG_MK_R,[255,255,255]);
 
-    // "Fastest path" annotation — names what this marker is for. Floated
-    // just above the marker; clamped on both axes so it can't run off
-    // the top edge (marker sitting high on the chart) or either side
-    // (marker sitting near the start/end of the timeline).
+    // "Fastest path" annotation — moved from floating above the marker to
+    // sitting beside it (left, by default) with a short leader line
+    // connecting the two, like a map-pin callout. Flips to the right
+    // instead when the marker sits too close to the plot's left edge for
+    // the label to fit.
     ctx.save();
     ctx.font='700 7px IBM Plex Mono';
-    ctx.textAlign='center';
     ctx.fillStyle='rgba(255,255,255,.7)';
+    ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=.8;
     const rgLblTxt='FASTEST PATH';
-    const rgLblHalfW=ctx.measureText(rgLblTxt).width/2;
-    const rgLblX=Math.min(Math.max(mx,pd.l+rgLblHalfW+2),pd.l+pw-rgLblHalfW-2);
-    const rgLblY=Math.max(pd.t+9,my-10.92-8);
-    ctx.fillText(rgLblTxt,rgLblX,rgLblY);
+    const rgLblW=ctx.measureText(rgLblTxt).width;
+    const leaderGap=4,leaderLen=14,textGap=5;
+    const fitsLeft=(mx-RG_MK_R-leaderGap-leaderLen-textGap-rgLblW)>=pd.l;
+    if(fitsLeft){
+      ctx.textAlign='right';
+      const leaderStartX=mx-RG_MK_R-leaderGap,leaderEndX=leaderStartX-leaderLen;
+      ctx.beginPath();ctx.moveTo(leaderStartX,my);ctx.lineTo(leaderEndX,my);ctx.stroke();
+      ctx.fillText(rgLblTxt,leaderEndX-textGap,my+2.5);
+    }else{
+      ctx.textAlign='left';
+      const leaderStartX=mx+RG_MK_R+leaderGap,leaderEndX=leaderStartX+leaderLen;
+      ctx.beginPath();ctx.moveTo(leaderStartX,my);ctx.lineTo(leaderEndX,my);ctx.stroke();
+      ctx.fillText(rgLblTxt,leaderEndX+textGap,my+2.5);
+    }
     ctx.restore();
   }
 
