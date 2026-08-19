@@ -3274,7 +3274,15 @@ function renderStratComparison(){
     metrics.forEach(m=>{
       const vals=active.map(i=>({i,v:m.get(simResults[i])}));
       const best=m.better==='higher'?Math.max(...vals.map(r=>r.v)):Math.min(...vals.map(r=>r.v));
-      html+=`<div style="background:#161b26;border-radius:3px;padding:7px 10px;margin-bottom:5px;">`;
+      // Was a solid opaque #161b26 row background — same issue as the
+      // .diag-body/.vs-hd fix the round before, just built as an inline
+      // style in JS instead of a CSS rule since this whole comparison
+      // table is generated as raw HTML strings: a flat opaque fill
+      // sitting inside the already-translucent .vs-card, reading as a
+      // stack of solid dark rectangles rather than glass. Dropped to
+      // transparent so the card's own blur/gloss shows through each row
+      // the same way it now does everywhere else on this card.
+      html+=`<div style="background:transparent;border-radius:3px;padding:7px 10px;margin-bottom:5px;">`;
       html+=`<div style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;margin-bottom:5px;">${m.lbl}</div>`;
       html+=`<div style="display:flex;gap:6px;">`;
       vals.forEach(({i,v})=>{
