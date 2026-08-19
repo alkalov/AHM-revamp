@@ -275,7 +275,9 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    blocks hover/touch on the canvas beneath it. Fades in via JS toggling
    .show (see dvUpdateRapidOverlay) rather than drawing on every redraw. */
 .rg-overlay{
-  position:absolute;top:0;left:0;width:65%;height:65%; /* box scaled 30% bigger (linear) over the prior 50%/50% */
+  /* Golden-ratio box: 76% : 47% ≈ φ : 1 (1.617), bigger than the prior
+     65%/65% square and shaped as a landscape golden rectangle. */
+  position:absolute;top:0;left:0;width:76%;height:47%;
   padding:8px 10px;box-sizing:border-box;
   display:flex;flex-direction:column;justify-content:center;
   pointer-events:none;opacity:0;transition:opacity 7s ease;z-index:2;
@@ -283,16 +285,16 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .rg-overlay.show{opacity:1;}
 /* Time value and the big word text stack together in normal flow — "1y
    6mo" directly above "TO RAPID GROWTH" — rather than layered on top of
-   one another; same colour/opacity so the two read as one callout. Sizes
-   are 30% bigger than the previous pass (26px/32px -> 34px/42px). */
+   one another; same colour/opacity, now at a flat 90%. Font sizes are
+   also in golden-ratio proportion to each other (36 * φ ≈ 58). */
 .rg-time{
-  font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:34px;
-  color:rgba(226,230,237,.42);white-space:nowrap;line-height:1;
+  font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:36px;
+  color:rgba(226,230,237,.9);white-space:nowrap;line-height:1;
 }
 .rg-bottom{
-  font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:42px;
+  font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:58px;
   line-height:.86;letter-spacing:-.01em;text-transform:uppercase;
-  color:rgba(226,230,237,.42);margin-top:5px;
+  color:rgba(226,230,237,.9);margin-top:6px;
 }
 .rg-row-badge{vertical-align:-1px;margin-right:2px;}
 .chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #232b3d;}
@@ -1300,6 +1302,15 @@ function drawGlassTriangle(ctx,x,y,r,rgb){
 
   ctx.beginPath();
   ctx.moveTo(leftX,topY);ctx.lineTo(rightX,topY);ctx.lineTo(x,y);ctx.closePath();
+
+  // Soft glow along the border only — this used to run the full length
+  // of the equity curves; it now marks just the endpoint instead. Wide,
+  // low-alpha strokes centred on the path so half bleeds outward as a
+  // halo (the fill below covers the inward half).
+  ctx.lineJoin='round';
+  ctx.lineWidth=5;ctx.strokeStyle=`rgba(${cr},${cg},${cb},.14)`;ctx.stroke();
+  ctx.lineWidth=3;ctx.strokeStyle=`rgba(${cr},${cg},${cb},.22)`;ctx.stroke();
+
   // Neutral panel base (matches .chart-panel's rgba(18,23,33,.42)) with
   // just a low-alpha wash of the strategy's colour over it.
   ctx.fillStyle='rgba(18,23,33,.82)';ctx.fill();
@@ -1831,13 +1842,13 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
 
   // Draw the real line first, beneath the strategy lines — EXPERIMENT:
   // each curve now gets a restrained "glass tube" treatment instead of a
-  // flat solid stroke: a couple of soft, low-alpha under-glow passes, a
-  // vertical gradient main stroke (lighter near the top of the frame,
-  // truer colour lower down, for a sense of depth), and a thin bright
-  // specular highlight along the top edge — the same layered-bloom
-  // approach used for the glass sphere/bullseye markers, just applied to
-  // a line instead of a circle, and kept well under the app's usual
-  // glow ceiling.
+  // flat solid stroke: a vertical gradient main stroke (lighter near the
+  // top of the frame, truer colour lower down, for a sense of depth) and
+  // a thin bright specular highlight along the top edge. The soft glow
+  // that used to run the full length of every line has been moved off
+  // the lines entirely and now lives only on the endpoint triangles'
+  // borders (see drawGlassTriangle), so it marks the finish point
+  // instead of glowing everywhere.
   function dvBuildCurvePath(getX,pts){
     const path=new Path2D();
     path.moveTo(getX(0),yS(pts[0].cap));
@@ -1849,12 +1860,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   }
   function dvStrokeGlassCurve(path,rgb){
     const [r,g,b]=rgb;
-    ctx.save();
-    ctx.lineJoin='round';ctx.lineCap='round';
-    ctx.lineWidth=7;ctx.strokeStyle=`rgba(${r},${g},${b},.056)`;ctx.stroke(path);
-    ctx.lineWidth=4.5;ctx.strokeStyle=`rgba(${r},${g},${b},.093)`;ctx.stroke(path);
-    ctx.restore();
-
     ctx.save();
     ctx.lineJoin='round';ctx.lineCap='round';
     const grad=ctx.createLinearGradient(0,pd.t,0,pd.t+ph);
@@ -1908,16 +1913,17 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   // from sitting on top of (or getting crossed by) a DIFFERENT line that
   // is still rising through that point in time.
   const TRI_R=6.5,TRI_H=TRI_R*2.1;
+  const TRI_LBL_GAP=9; // breathing room between the triangle's top edge and the label stack above it (was 4 — too tight)
   const LBL_SIZE=7.2,LBL_GAP=8.8;
   const endpoints=[];
   if(hasReal){
     const lastR=realPts[realPts.length-1];
     const realAsPts=realPts.map((p,i)=>({day:i,cap:p.cap}));
-    endpoints.push({x:Math.min(Math.max(xS(realPts.length-1),pd.l+24),pd.l+pw-24),y:yS(lastR.cap)-TRI_H-4,color:'#e2e6ed',cap:lastR.cap,mo:dvPlateauMoRate(realAsPts)});
+    endpoints.push({x:Math.min(Math.max(xS(realPts.length-1),pd.l+24),pd.l+pw-24),y:yS(lastR.cap)-TRI_H-TRI_LBL_GAP,color:'#e2e6ed',cap:lastR.cap,mo:dvPlateauMoRate(realAsPts)});
   }
   for(const s of series){
     const last=s.pts[s.pts.length-1];
-    endpoints.push({x:Math.min(Math.max(xS(last.day),pd.l+24),pd.l+pw-24),y:yS(last.cap)-TRI_H-4,color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts)});
+    endpoints.push({x:Math.min(Math.max(xS(last.day),pd.l+24),pd.l+pw-24),y:yS(last.cap)-TRI_H-TRI_LBL_GAP,color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts)});
   }
   // Measure each stack's footprint up front (same font used to draw it
   // below) so both anti-overlap passes can reason about actual width,
