@@ -63,7 +63,7 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
 .fc,.chart-panel,.diag,.grade-card,.jsec,.vs-card,.gauge-row,.wrc,
 .circ-panel-inner,.stats-inp,.stats-grid .sg,.log-info,.inp-grp,
 .spark-cell,.jhist,.friction-breakdown,.sbar,.tbl-controls,.dv-half,
-.disc,.mbox,.ibox,.global-capital,.sc-s,.mode-row,.sim-row{
+.disc,.mbox,.ibox,.global-capital,.sc-s,.mode-row,.sim-row,.tb-card{
   background-color:rgba(18,23,33,.42) !important;
   background-image:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,0) 55%) !important;
   -webkit-backdrop-filter:blur(26px) saturate(1.7);
@@ -284,7 +284,7 @@ tr.sel-day{transition:background .5s ease;}
 .mode-row{padding:5px 16px 7px;border-bottom:1px solid #232b3d;display:flex;align-items:center;gap:8px;background:#10141c;}
 .mode-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;white-space:nowrap;}
 .mode-sel{flex:1;background:#161b26;border:1px solid #232b3d;color:#8892a4;font-family:'IBM Plex Mono',monospace;font-size:11px !important;height:28px;padding:0 7px;outline:none;border-radius:3px;}
-.chart-panel{margin:8px 16px;background:#10141c;border:1px solid #232b3d;border-radius:3px;overflow:hidden;}
+.chart-panel{margin:8px 0;background:#10141c;border:1px solid #232b3d;border-radius:3px;overflow:hidden;}
 .chart-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 12px 3px;}
 .chart-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;}
 .chart-tt{font-size:10px;color:#34d399;min-height:14px;text-align:right;font-weight:500;}
@@ -384,7 +384,7 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .cmv{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
 .cms{font-size:8px;color:#4d5a6e;margin-top:2px;}
 .cmv.go{color:#34d399;}.cmv.stop{color:#f87171;}.cmv.amb{color:#fbbf24;}.cmv.steel{color:#60a5fa;}
-.diag{margin:8px 16px;border-radius:3px;overflow:hidden;display:none;border:1px solid #232b3d;}
+.diag{margin:8px 0;border-radius:3px;overflow:hidden;display:none;border:1px solid #232b3d;}
 .diag.show{display:block;}
 .diag-hd{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #232b3d;}
 .diag-title{font-family:'Cabinet Grotesk',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
@@ -460,7 +460,8 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 .tbl-empty{padding:32px;text-align:center;font-size:10px;color:#4d5a6e;}
 .log-body{padding:8px 16px;}
 .log-info{font-size:9px;color:#4d5a6e;text-align:center;margin-bottom:6px;letter-spacing:.07em;}
-.inp-grp{background:#10141c;border-radius:3px;margin-bottom:7px;overflow:hidden;border:1px solid #232b3d;}
+.inp-grp{background:#10141c;border-radius:3px;margin:0 -16px 7px;overflow:hidden;border:1px solid #232b3d;}
+.tb-card{border:1px solid #232b3d;border-radius:3px;padding:7px 10px;margin:0 -16px 7px;}
 .inp-row{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-bottom:1px solid #1c2333;}
 .inp-row:last-child{border:none;}
 .inp-row label{font-size:10px;color:#8892a4;}
@@ -474,14 +475,14 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 .sess-btn{flex:1;height:36px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:3px;border:1px solid;touch-action:manipulation;}
 .sess-btn.log{background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.3);color:var(--accent-solid);}
 .sess-btn.clr{background:transparent;border-color:#232b3d;color:#4d5a6e;}
-.grade-card{background:#10141c;border:1px solid #232b3d;border-radius:3px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.grade-card{background:#10141c;border:1px solid #232b3d;border-radius:3px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;margin:0 -16px 10px;}
 .grade-info .gt{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;margin-bottom:3px;}
 .grade-info .gs{font-size:10px;color:#8892a4;}
 .grade-big{font-family:'Cabinet Grotesk',sans-serif;font-size:40px;font-weight:800;line-height:1;color:#e2e6ed;}
 .log-divider{border-top:1px solid #232b3d;margin:4px 0 8px;}
 .jdate{font-size:9px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;text-align:center;margin-bottom:7px;}
 .jsec{background:#10141c;border-radius:3px;margin-bottom:6px;overflow:hidden;border:1px solid #232b3d;}
-.jsec-hd{padding:5px 12px;font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.15em;border-bottom:1px solid #232b3d;background:#161b26;}
+.jsec-hd{padding:5px 12px;font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.15em;border-bottom:1px solid #232b3d;background:transparent;}
 .jrow{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-bottom:1px solid #1c2333;}
 .jrow:last-child{border:none;}
 .jrow label{font-size:10px;color:#8892a4;}
@@ -498,8 +499,8 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 .spark-cell{background:#10141c;padding:7px 9px;border-radius:3px;border:1px solid #232b3d;}
 .spark-lbl{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
 canvas.spark{width:100%;height:34px;display:block;}
-.jhist{background:#10141c;border-radius:3px;overflow:hidden;border:1px solid #232b3d;}
-.jhist-hd{padding:5px 12px;font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.15em;border-bottom:1px solid #232b3d;background:#161b26;}
+.jhist{background:#10141c;border-radius:3px;overflow:hidden;border:1px solid #232b3d;margin:0 -16px;}
+.jhist-hd{padding:5px 12px;font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.15em;border-bottom:1px solid #232b3d;background:transparent;}
 .jentry{padding:7px 12px;border-bottom:1px solid #1c2333;}
 .jentry:last-child{border:none;}
 .jentry-date{font-size:8px;color:#4d5a6e;margin-bottom:3px;}
@@ -509,16 +510,18 @@ canvas.spark{width:100%;height:34px;display:block;}
 .jentry-note{font-size:9px;color:#4d5a6e;margin-top:4px;border-left:1px solid #232b3d;padding-left:8px;font-style:italic;}
 .stats-body{padding:8px 16px;}
 .vs-card{background:#10141c;border-radius:3px;margin-bottom:7px;overflow:hidden;border:1px solid #232b3d;}
-.vs-hd{padding:7px 12px;border-bottom:1px solid #232b3d;display:flex;align-items:center;justify-content:space-between;background:#161b26;}
-/* Sim tab only: .vs-card/.vs-hd are shared with the Stats tab's own
-   "Real vs Sim" card, which wasn't part of this ask, so this is scoped
-   rather than editing the shared rule above. .vs-card itself is already
-   in the app's shared card-glass list (translucent/blurred/glossed) —
-   the header bar was the one piece still painting a solid #161b26 over
-   that, so dropping it to transparent here lets the Strategy Comparison
-   card's header and body read as one continuous glass surface, same
-   fix/reasoning as .diag-body above. */
-#scr-sim .vs-hd{background:transparent;}
+/* .vs-hd used to paint a solid #161b26 bar over its parent .vs-card,
+   which is already in the shared card-glass list (translucent/blurred/
+   glossed) — same fix/reasoning as .diag-body above, now applied to
+   BOTH tabs that use this card (Sim's Strategy Comparison, Stats' Real
+   vs Sim), so the base rule is edited directly instead of scoping. */
+.vs-hd{padding:7px 12px;border-bottom:1px solid #232b3d;display:flex;align-items:center;justify-content:space-between;background:transparent;}
+/* Stats tab only: .vs-card is shared with the Sim tab's Strategy
+   Comparison card, which already sits flush against .screen's own
+   zero horizontal padding there. .stats-body DOES have 16px horizontal
+   padding, so full-bleed here needs the negative-margin trick instead
+   of just removing margin. */
+#scr-stats .vs-card{margin:0 -16px 7px;}
 .vs-title{font-family:'Cabinet Grotesk',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#8892a4;}
 .vs-badge{font-size:8px;padding:2px 8px;border-radius:2px;font-weight:600;letter-spacing:.08em;}
 .vs-badge.on-track{background:rgba(52,211,153,.1);color:#34d399;}
@@ -544,9 +547,9 @@ canvas.spark{width:100%;height:34px;display:block;}
 .sg{background:#10141c;padding:7px 9px;border-radius:3px;border:1px solid #232b3d;}
 .sgl{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;}
 .sgv{font-size:13px;font-weight:600;color:#e2e6ed;}
-.gauge-row{background:#10141c;border:1px solid #232b3d;border-radius:3px;padding:8px 10px;margin-bottom:6px;}
-.wrc{background:#10141c;border:1px solid #232b3d;border-radius:3px;overflow:hidden;margin-bottom:5px;}
-.wrc-hd{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #232b3d;background:#161b26;}
+.gauge-row{background:#10141c;border:1px solid #232b3d;border-radius:3px;padding:8px 10px;margin:0 -16px 6px;}
+.wrc{background:#10141c;border:1px solid #232b3d;border-radius:3px;overflow:hidden;margin:0 -16px 5px;}
+.wrc-hd{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #232b3d;background:transparent;}
 .wrc-title{font-family:'Cabinet Grotesk',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#e2e6ed;}
 .wrc-grade{font-family:'Cabinet Grotesk',sans-serif;font-size:24px;font-weight:800;line-height:1;}
 .wrc-body{padding:8px 12px;}
@@ -686,7 +689,7 @@ canvas.spark{width:100%;height:34px;display:block;}
         <div class="inp-row"><label>Net P&amp;L $</label><input class="ni" id="dPnl" type="number" step="0.01" placeholder="0.00" oninput="onDaily()" style="width:86px;"></div>
         <div class="inp-row"><label>Shares held</label><input class="ni" id="dShares" type="number" min="1" placeholder="100" oninput="onDaily()"></div>
       </div>
-      <div style="background:#10141c;border:1px solid #232b3d;border-radius:3px;padding:7px 10px;margin-bottom:7px;">
+      <div class="tb-card">
         <div style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;">Trade Breakdown</div>
         <div class="inp-row" style="border-bottom:1px solid #1c2333;padding:5px 0;"><label style="font-size:9px;color:#34d399;">Profitable</label><div style="display:flex;gap:5px;"><input class="ni" id="dTotW" type="number" min="0" placeholder="0" oninput="onDaily()" style="width:50px;" title="Count"><input class="ni" id="dCapW" type="number" min="0" max="100" step="0.1" placeholder="%" oninput="onDaily()" style="width:56px;" title="% capture"></div></div>
         <div class="inp-row" style="border-bottom:1px solid #1c2333;padding:5px 0;"><label style="font-size:9px;color:#60a5fa;">Breakeven</label><div style="display:flex;gap:5px;"><input class="ni" id="dTotBE" type="number" min="0" placeholder="0" oninput="onDaily()" style="width:50px;" title="Count"><input class="ni" id="dCapBE" type="number" min="0" max="100" step="0.1" placeholder="%" oninput="onDaily()" style="width:56px;" title="% capture"></div></div>
@@ -737,17 +740,17 @@ canvas.spark{width:100%;height:34px;display:block;}
       <div id="gauge-wrap" style="padding-top:8px;"></div>
 
       <div class="slbl" style="margin:8px -16px 0;padding-left:16px;">Real Equity — All Time</div>
-      <div class="chart-panel" style="margin:8px 0;">
+      <div class="chart-panel" style="margin:8px -16px;">
         <div class="chart-hd"><span class="chart-lbl">Cumulative P&amp;L (Real)</span><span class="chart-tt" id="real-ct-all"></span></div>
         <div class="chart-wrap"><canvas class="eqcv" id="real-cv-all"></canvas></div>
       </div>
       <div class="slbl" style="margin:8px -16px 0;padding-left:16px;">Real Equity — Weekly Rollup</div>
-      <div class="chart-panel" style="margin:8px 0;">
+      <div class="chart-panel" style="margin:8px -16px;">
         <div class="chart-hd"><span class="chart-lbl">P&amp;L by Week</span><span class="chart-tt" id="real-ct-week"></span></div>
         <div class="chart-wrap"><canvas class="eqcv" id="real-cv-week"></canvas></div>
       </div>
       <div class="slbl" style="margin:8px -16px 0;padding-left:16px;">Real Equity — Monthly Rollup</div>
-      <div class="chart-panel" style="margin:8px 0;">
+      <div class="chart-panel" style="margin:8px -16px;">
         <div class="chart-hd"><span class="chart-lbl">P&amp;L by Month</span><span class="chart-tt" id="real-ct-month"></span></div>
         <div class="chart-wrap"><canvas class="eqcv" id="real-cv-month"></canvas></div>
       </div>
