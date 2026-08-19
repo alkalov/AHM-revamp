@@ -277,23 +277,21 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .rg-overlay{
   position:absolute;top:0;left:0;width:50%;height:50%; /* exactly 25% of the chart's area */
   padding:8px 10px;box-sizing:border-box;
-  display:flex;align-items:center;justify-content:flex-start;
+  display:flex;flex-direction:column;justify-content:center;
   pointer-events:none;opacity:0;transition:opacity 7s ease;z-index:2;
 }
 .rg-overlay.show{opacity:1;}
-/* Time value is absolutely positioned so it lands directly over the big
-   word text below rather than in a separate row above it — a number
-   layered onto the title graphic, not a header next to it. Same colour
-   and opacity as .rg-bottom so the two read as one composited callout. */
+/* Time value and the big word text stack together in normal flow — "1y
+   6mo" directly above "TO RAPID GROWTH" — rather than layered on top of
+   one another; same colour/opacity so the two read as one callout. */
 .rg-time{
-  position:absolute;left:10px;top:50%;transform:translateY(-50%);
   font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:26px;
-  color:rgba(226,230,237,.38);white-space:nowrap;z-index:1;
+  color:rgba(226,230,237,.42);white-space:nowrap;line-height:1;
 }
 .rg-bottom{
   font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:32px;
   line-height:.86;letter-spacing:-.01em;text-transform:uppercase;
-  color:rgba(226,230,237,.38);
+  color:rgba(226,230,237,.42);margin-top:4px;
 }
 .rg-row-badge{vertical-align:-1px;margin-right:2px;}
 .chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #232b3d;}
@@ -528,8 +526,8 @@ canvas.spark{width:100%;height:34px;display:block;}
       <div class="chart-wrap" style="height:100%;">
         <canvas class="eqcv" id="dv-cv"></canvas>
         <div class="rg-overlay" id="rg-overlay">
-          <div class="rg-bottom">to rapid growth</div>
           <span class="rg-time" id="rg-time">—</span>
+          <div class="rg-bottom">to rapid growth</div>
         </div>
       </div>
     </div>
@@ -1830,22 +1828,55 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   const rapid=dvFindRapidGrowth(series);
   dvUpdateRapidOverlay(rapid,dayToCal,series);
 
-  // Draw the real line first, beneath the strategy lines, in white.
-  if(hasReal){
-    ctx.beginPath();ctx.moveTo(xS(0),yS(realPts[0].cap));
-    for(let i=1;i<realPts.length;i++){
-      const cpx=(xS(i-1)+xS(i))/2;
-      ctx.bezierCurveTo(cpx,yS(realPts[i-1].cap),cpx,yS(realPts[i].cap),xS(i),yS(realPts[i].cap));
+  // Draw the real line first, beneath the strategy lines — EXPERIMENT:
+  // each curve now gets a restrained "glass tube" treatment instead of a
+  // flat solid stroke: a couple of soft, low-alpha under-glow passes, a
+  // vertical gradient main stroke (lighter near the top of the frame,
+  // truer colour lower down, for a sense of depth), and a thin bright
+  // specular highlight along the top edge — the same layered-bloom
+  // approach used for the glass sphere/bullseye markers, just applied to
+  // a line instead of a circle, and kept well under the app's usual
+  // glow ceiling.
+  function dvBuildCurvePath(getX,pts){
+    const path=new Path2D();
+    path.moveTo(getX(0),yS(pts[0].cap));
+    for(let i=1;i<pts.length;i++){
+      const cpx=(getX(i-1)+getX(i))/2;
+      path.bezierCurveTo(cpx,yS(pts[i-1].cap),cpx,yS(pts[i].cap),getX(i),yS(pts[i].cap));
     }
-    ctx.strokeStyle='#e2e6ed';ctx.lineWidth=2;ctx.stroke();
+    return path;
+  }
+  function dvStrokeGlassCurve(path,rgb){
+    const [r,g,b]=rgb;
+    ctx.save();
+    ctx.lineJoin='round';ctx.lineCap='round';
+    ctx.lineWidth=7;ctx.strokeStyle=`rgba(${r},${g},${b},.06)`;ctx.stroke(path);
+    ctx.lineWidth=4.5;ctx.strokeStyle=`rgba(${r},${g},${b},.1)`;ctx.stroke(path);
+    ctx.restore();
+
+    ctx.save();
+    ctx.lineJoin='round';ctx.lineCap='round';
+    const grad=ctx.createLinearGradient(0,pd.t,0,pd.t+ph);
+    grad.addColorStop(0,`rgba(${Math.min(255,r+70)},${Math.min(255,g+70)},${Math.min(255,b+70)},.92)`);
+    grad.addColorStop(1,`rgba(${r},${g},${b},.85)`);
+    ctx.strokeStyle=grad;ctx.lineWidth=2;
+    ctx.stroke(path);
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(0,-1.1);
+    ctx.lineJoin='round';ctx.lineCap='round';
+    ctx.strokeStyle='rgba(255,255,255,.16)';ctx.lineWidth=.7;
+    ctx.stroke(path);
+    ctx.restore();
+  }
+  if(hasReal){
+    const path=dvBuildCurvePath(i=>xS(i),realPts);
+    dvStrokeGlassCurve(path,hexToRgb('#e2e6ed'));
   }
   for(const s of series){
-    ctx.beginPath();ctx.moveTo(xS(s.pts[0].day),yS(s.pts[0].cap));
-    for(let i=1;i<s.pts.length;i++){
-      const cpx=(xS(s.pts[i-1].day)+xS(s.pts[i].day))/2;
-      ctx.bezierCurveTo(cpx,yS(s.pts[i-1].cap),cpx,yS(s.pts[i].cap),xS(s.pts[i].day),yS(s.pts[i].cap));
-    }
-    ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.stroke();
+    const path=dvBuildCurvePath(i=>xS(s.pts[i].day),s.pts);
+    dvStrokeGlassCurve(path,hexToRgb(s.color));
   }
 
   // On-chart marker for the rapid-growth point found above, drawn after
