@@ -1328,9 +1328,12 @@ function drawGlassCircle(ctx,x,y,r){
   ctx.fillRect(x-r,y-r,r*2,r*2);
 
   // Diffused catch-light — a soft blurred glint (still clipped to the
-  // disc) rather than a hard-edged dot.
+  // disc) rather than a hard-edged dot. This is the flare-like hotspot on
+  // this marker, cut 90% ("reduce...flare on...the highlights by 90%") —
+  // the frosted body gradient above is the base glass material, not a
+  // highlight, so it's untouched.
   const glint=ctx.createRadialGradient(x-r*.32,y-r*.34,0,x-r*.32,y-r*.34,r*.55);
-  glint.addColorStop(0,'rgba(255,255,255,.65)');
+  glint.addColorStop(0,'rgba(255,255,255,.065)');
   glint.addColorStop(1,'rgba(255,255,255,0)');
   ctx.fillStyle=glint;
   ctx.fillRect(x-r,y-r,r*2,r*2);
@@ -1351,9 +1354,13 @@ function drawGlassBullseye(ctx,x,y,r,rgb){
   const lightX=x-r*0.35,lightY=y-r*0.4;
   ctx.save();
 
-  /* tight, dim bloom — just enough to lift the ring off the chart. */
+  /* tight, dim bloom — just enough to lift the ring off the chart. Alpha
+     cut 90% this round ("reduce glow... by 90%") on top of the already-
+     tight .104 from the earlier "dim bloom" pass — this is the one true
+     external glow on this marker (bleeds past its own silhouette), so it
+     takes the full cut. */
   const bloom=ctx.createRadialGradient(x,y,0,x,y,r*1.7);
-  bloom.addColorStop(0,`rgba(${cr},${cg},${cb},.104)`);
+  bloom.addColorStop(0,`rgba(${cr},${cg},${cb},.0104)`);
   bloom.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=bloom;
   ctx.beginPath();ctx.arc(x,y,r*1.7,0,Math.PI*2);ctx.fill();
@@ -1366,8 +1373,11 @@ function drawGlassBullseye(ctx,x,y,r,rgb){
   ctx.arc(x,y,ringOuter,0,Math.PI*2);
   ctx.arc(x,y,ringInner,0,Math.PI*2,true);
   ctx.clip('evenodd');
+  // Bright top-left highlight stop cut 90% too (the "flare" hotspot on
+  // the ring) — the mid/edge stops below are the ring's actual base
+  // colour, not a highlight, so they're untouched.
   const ringFill=ctx.createRadialGradient(lightX,lightY,0,x,y,ringOuter*1.15);
-  ringFill.addColorStop(0,`rgba(${Math.min(255,cr+100)},${Math.min(255,cg+100)},${Math.min(255,cb+100)},.424)`);
+  ringFill.addColorStop(0,`rgba(${Math.min(255,cr+100)},${Math.min(255,cg+100)},${Math.min(255,cb+100)},.0424)`);
   ringFill.addColorStop(.6,`rgba(${cr},${cg},${cb},.256)`);
   ringFill.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.216)`);
   ctx.fillStyle=ringFill;
@@ -1381,8 +1391,9 @@ function drawGlassBullseye(ctx,x,y,r,rgb){
 
   /* center dot: a small glass sphere, not a flat fill */
   const dotR=r*.34;
+  // Same 90% cut on the dot's own bright flare hotspot.
   const body=ctx.createRadialGradient(lightX,lightY,dotR*.1,x,y,dotR*1.05);
-  body.addColorStop(0,`rgba(${Math.min(255,cr+130)},${Math.min(255,cg+130)},${Math.min(255,cb+130)},.712)`);
+  body.addColorStop(0,`rgba(${Math.min(255,cr+130)},${Math.min(255,cg+130)},${Math.min(255,cb+130)},.0712)`);
   body.addColorStop(.5,`rgba(${cr},${cg},${cb},.592)`);
   body.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.504)`);
   ctx.beginPath();ctx.arc(x,y,dotR,0,Math.PI*2);
