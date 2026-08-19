@@ -1179,70 +1179,94 @@ function hexToRgb(hex){
 // Table row badge for a strategy's own rapid-growth day — same ring +
 // dot design as the chart's on-curve marker, just as an inline SVG.
 const RG_BADGE_SVG='<svg class="rg-row-badge" viewBox="0 0 16 16" width="10" height="10"><circle cx="8" cy="8" r="6" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" fill="#fff"/></svg> ';
-/* Frosted glass chip — open redesign for the running-tally readout
-   ("redesign for me" brief). Every earlier pass tried to communicate
-   strategy colour by tinting the whole pill, and kept reading as too
-   bold/too solid no matter how far the alpha or the black backing was
-   dialled back. This version stops tinting the body at all: the chip is
-   a near-clear frosted surface (a faint upper-left catch-light, the same
-   kind of soft glass highlight the day-tally circle and hover lenses
-   use), and the strategy colour is concentrated into a slim rounded
-   accent bar on the left edge plus the value text itself — colour still
-   reads at a glance, but the body of the chip stays genuinely
-   see-through instead of colour-washed. No shadow, no full border, no
-   black. Positioning (static bottom-right dock, 5% from the chart's true
-   right edge, shared left edge so A/B/C line up) is unchanged — all set
-   by the caller, not this function. */
-function dvGlassTally(ctx,x,y,w,h,rgb){
-  const [cr,cg,cb]=rgb;
+/* Running-tally chip, body matched to the day-tally circle's own glass
+   treatment (same base tone, same white sheen entering from the top,
+   same hairline border) — canvas can't reproduce the day-tally's
+   backdrop-filter blur/refraction (that only works on a real HTML
+   layer, which is why the day-tally itself is one), so this reproduces
+   its gradient and border look as closely as canvas drawing allows.
+   Colour no longer lives in the chip's body or an accent bar, and the
+   value text is a neutral tone rather than the strategy's own colour —
+   colour identity now comes entirely from the accumulation bar flush
+   against the bottom edge, drawn here so it's clipped to the same
+   rounded shape as the body. Its length (left-to-right, relative to the
+   chip's own width) is this strategy's capital relative to whichever of
+   the active strategies is furthest ahead at this exact hover moment —
+   since all three are read at the same elapsed day, the relative bar
+   lengths double as an at-a-glance pace comparison, not just a capital
+   readout. Positioning (static bottom-right dock, 5% from the chart's
+   true right edge, shared left edge so the pills line up) is set by the
+   caller, unchanged here. */
+function dvGlassTally(ctx,x,y,w,h,barFrac,barRgb){
   const r=Math.min(6,h/2);
   ctx.save();
   ctx.beginPath();
   ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
   ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+  ctx.save();
   ctx.clip();
 
-  const frost=ctx.createRadialGradient(x+w*.18,y,0,x+w*.18,y+h,w*.95);
-  frost.addColorStop(0,'rgba(255,255,255,.13)');
-  frost.addColorStop(.6,'rgba(226,230,237,.05)');
-  frost.addColorStop(1,'rgba(226,230,237,.02)');
-  ctx.fillStyle=frost;
+  ctx.fillStyle='rgba(18,23,33,.32)';
+  ctx.fillRect(x,y,w,h);
+  const sheen=ctx.createLinearGradient(0,y,0,y+h);
+  sheen.addColorStop(0,'rgba(255,255,255,.28)');
+  sheen.addColorStop(.55,'rgba(255,255,255,.04)');
+  sheen.addColorStop(.85,'rgba(255,255,255,0)');
+  ctx.fillStyle=sheen;
   ctx.fillRect(x,y,w,h);
 
-  ctx.fillStyle=`rgba(${cr},${cg},${cb},.85)`;
-  ctx.fillRect(x,y,2.5,h);
+  const [br,bg,bb]=barRgb;
+  const barH=2.5;
+  ctx.fillStyle=`rgba(${br},${bg},${bb},.85)`;
+  ctx.fillRect(x,y+h-barH,w*Math.max(0,Math.min(1,barFrac)),barH);
 
+  ctx.restore();
+  ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(255,255,255,.12)';
+  ctx.stroke();
   ctx.restore();
 }
 /* ══════════════════════════════════════════════════════════════
-   GLASS CIRCLE — hover/highlight points render through this. Redesigned
-   again this round on an open brief ("new design, doesn't have to be
-   totally different in essence") specifically to move away from glow:
-   every earlier pass built the highlight out of soft radial gradients,
-   and even after dialling that "glow" down hard last round it still read
-   as glow-ish, because a gradient blob is what a glow *is*. This version
-   drops radial gradients entirely — no blur, no soft-edged spread. It's
-   two flat, hard-edged fills instead: a plain translucent disc for the
-   body (no gradient falloff, so no glow) and one small solid dot offset
-   toward the upper-left standing in for a catch-light. Still the same
-   basic idea as before — a small glass lens marking a point on the
-   curve — just executed without anything that blurs outward. Endpoint/
-   "finished" points use drawGlassTriangle instead, see below.
+   GLASS CIRCLE — hover/highlight points render through this. Last round
+   dropped every gradient in favour of flat hard-edged fills to get away
+   from "glow" — that solved the glow complaint but lost the glass
+   quality along with it (a plain flat disc doesn't read as frosted
+   glass, it reads as a sticker). This round reintroduces softness, but
+   the key distinction from "glow" is containment: everything here is
+   clipped strictly to the circle's own silhouette, so nothing bleeds
+   past its edge into a halo the way the old glow passes did (those
+   extended a soft radial bloom OUTSIDE the shape, e.g. the bullseye's
+   1.7×-radius bloom). What's inside the circle can be as soft as it
+   likes — that's diffusion/frost, not glow — as long as the shape's own
+   edge stays crisp. So: a gently varying internal gradient for a frosted
+   texture on the body, and the catch-light is now a soft diffused blob
+   instead of last round's hard-edged dot — both confined to the disc.
+   Still the same basic idea — a small glass lens marking a point on the
+   curve. Endpoint/"finished" points use drawGlassTriangle instead, see
+   below.
    ══════════════════════════════════════════════════════════════ */
 function drawGlassCircle(ctx,x,y,r){
   ctx.save();
-
-  // Flat glass body — a single translucent fill, no gradient, so there's
-  // no soft glow-style falloff at all.
   ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
-  ctx.fillStyle='rgba(226,230,237,.22)';
-  ctx.fill();
+  ctx.clip();
 
-  // Small hard-edged catch-light — a plain solid dot, not a blurred
-  // gradient blob, standing in for a reflective glint.
-  ctx.beginPath();ctx.arc(x-r*.32,y-r*.34,r*.22,0,Math.PI*2);
-  ctx.fillStyle='rgba(255,255,255,.6)';
-  ctx.fill();
+  // Frosted body — a soft internal gradient (contained by the clip
+  // above, so it can't spread into a halo) for a diffused, milky glass
+  // texture rather than one flat tone.
+  const frost=ctx.createRadialGradient(x-r*.15,y-r*.15,0,x,y,r*1.05);
+  frost.addColorStop(0,'rgba(255,255,255,.3)');
+  frost.addColorStop(.55,'rgba(226,230,237,.2)');
+  frost.addColorStop(1,'rgba(226,230,237,.14)');
+  ctx.fillStyle=frost;
+  ctx.fillRect(x-r,y-r,r*2,r*2);
+
+  // Diffused catch-light — a soft blurred glint (still clipped to the
+  // disc) rather than a hard-edged dot.
+  const glint=ctx.createRadialGradient(x-r*.32,y-r*.34,0,x-r*.32,y-r*.34,r*.55);
+  glint.addColorStop(0,'rgba(255,255,255,.65)');
+  glint.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=glint;
+  ctx.fillRect(x-r,y-r,r*2,r*2);
 
   ctx.restore();
 }
@@ -1959,29 +1983,41 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const RG_MK_R=14.2; // 10.92 × 1.3 — 30% bigger
     drawGlassBullseye(ctx,mx,my,RG_MK_R,[255,255,255]);
 
-    // "Fastest path" annotation — moved from floating above the marker to
-    // sitting beside it (left, by default) with a short leader line
-    // connecting the two, like a map-pin callout. Flips to the right
-    // instead when the marker sits too close to the plot's left edge for
-    // the label to fit.
+    // "Fastest path" annotation — a map-pin-style callout with an elbow:
+    // the leader starts at the marker's own 10-o'clock point (up and to
+    // the left) and runs at that angle for a short stretch, then bends
+    // to run flat/horizontal the rest of the way, with the text sitting
+    // at that horizontal end. Mirrors to the marker's 2-o'clock point
+    // (up and to the right) instead when there isn't room on the left.
     ctx.save();
     ctx.font='700 7px IBM Plex Mono';
     ctx.fillStyle='rgba(255,255,255,.7)';
     ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=.8;
     const rgLblTxt='FASTEST PATH';
     const rgLblW=ctx.measureText(rgLblTxt).width;
-    const leaderGap=4,leaderLen=14,textGap=5;
-    const fitsLeft=(mx-RG_MK_R-leaderGap-leaderLen-textGap-rgLblW)>=pd.l;
+    const diagLen=9,horizLen=12,textGap=5;
+    // 10 o'clock: 150° in standard math convention (0°=east,90°=north);
+    // screen y grows downward, so the y component is negated.
+    const ang10=150*Math.PI/180;
+    const dx10=Math.cos(ang10),dy10=-Math.sin(ang10);
+    const edgeX=mx+RG_MK_R*dx10,edgeY=my+RG_MK_R*dy10;
+    const elbowX=edgeX+diagLen*dx10,elbowY=edgeY+diagLen*dy10;
+    const fitsLeft=(elbowX-horizLen-textGap-rgLblW)>=pd.l;
     if(fitsLeft){
       ctx.textAlign='right';
-      const leaderStartX=mx-RG_MK_R-leaderGap,leaderEndX=leaderStartX-leaderLen;
-      ctx.beginPath();ctx.moveTo(leaderStartX,my);ctx.lineTo(leaderEndX,my);ctx.stroke();
-      ctx.fillText(rgLblTxt,leaderEndX-textGap,my+2.5);
+      const hEndX=elbowX-horizLen;
+      ctx.beginPath();ctx.moveTo(edgeX,edgeY);ctx.lineTo(elbowX,elbowY);ctx.lineTo(hEndX,elbowY);ctx.stroke();
+      ctx.fillText(rgLblTxt,hEndX-textGap,elbowY+2.5);
     }else{
+      // 2 o'clock: mirror of 10 o'clock across the vertical axis (30°).
+      const ang2=30*Math.PI/180;
+      const dx2=Math.cos(ang2),dy2=-Math.sin(ang2);
+      const edgeX2=mx+RG_MK_R*dx2,edgeY2=my+RG_MK_R*dy2;
+      const elbowX2=edgeX2+diagLen*dx2,elbowY2=edgeY2+diagLen*dy2;
       ctx.textAlign='left';
-      const leaderStartX=mx+RG_MK_R+leaderGap,leaderEndX=leaderStartX+leaderLen;
-      ctx.beginPath();ctx.moveTo(leaderStartX,my);ctx.lineTo(leaderEndX,my);ctx.stroke();
-      ctx.fillText(rgLblTxt,leaderEndX+textGap,my+2.5);
+      const hEndX2=elbowX2+horizLen;
+      ctx.beginPath();ctx.moveTo(edgeX2,edgeY2);ctx.lineTo(elbowX2,elbowY2);ctx.lineTo(hEndX2,elbowY2);ctx.stroke();
+      ctx.fillText(rgLblTxt,hEndX2+textGap,elbowY2+2.5);
     }
     ctx.restore();
   }
@@ -2146,40 +2182,41 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       const clampedDay=Math.min(hoverDay,ownFinalDay);
       let pt=null;
       for(const p of s.pts){if(p.day<=clampedDay)pt=p;else break;}
-      if(pt)hoverPts.push({color:s.color,text:`${s.label} $${fmt(pt.cap,0)} · ${pt.sh.toLocaleString()}sh`,dotX:st.xS(clampedDay),dotY:st.yS(pt.cap)});
+      if(pt)hoverPts.push({color:s.color,cap:pt.cap,text:`$${fmt(pt.cap,0)} · ${pt.sh.toLocaleString()}sh`,dotX:st.xS(clampedDay),dotY:st.yS(pt.cap)});
     }
     for(const hp of hoverPts){
       drawGlassCircle(ctx,hp.dotX,hp.dotY,7.15);
     }
     // Running tallies dock in a fixed bottom-right stack instead of
     // chasing the cursor around the chart — a static spot reads calmer
-    // than three labels jostling for space near a busy hover point.
-    // Left edges are shared across all rows (sized to the widest label)
-    // so the A/B/C strategy letters line up in a column instead of each
-    // pill being individually right-aligned; that left alignment holds
-    // regardless of where the group's right edge sits. Right margin is a
-    // percentage (5%) of the FULL canvas width — not just the inner plot
-    // width — since "5% from the right side" reads as measured from the
-    // chart's actual visible edge, not from the data-plot boundary that
-    // sits pd.r (30px) further in. That also means the pills now sit
-    // closer to the true edge than the old fixed 6px-from-plot-boundary
-    // gap did (6px from the plot boundary was ~36px, ~8-9%, from the
-    // canvas's real edge once that reserved padding is included).
+    // than three labels jostling for space near a busy hover point. No
+    // strategy-letter prefix any more — colour identity is carried by
+    // the bottom accumulation bar (see dvGlassTally) instead of a text
+    // label, so the value text can stay a plain neutral tone. Left edges
+    // are still shared across all rows (sized to the widest label) so
+    // the pills line up in a column instead of each being individually
+    // right-aligned; that left alignment holds regardless of where the
+    // group's right edge sits. Right margin is a percentage (5%) of the
+    // FULL canvas width — not just the inner plot width — since "5% from
+    // the right side" reads as measured from the chart's actual visible
+    // edge, not from the data-plot boundary that sits pd.r (30px)
+    // further in.
     ctx.font='9px IBM Plex Mono';ctx.textAlign='left';
     const chartW=st.pd.l+st.pw+st.pd.r;
     const rowH=15,rowGap=3,marginR=chartW*.05,marginB=6;
     const stackH=hoverPts.length*rowH+Math.max(0,hoverPts.length-1)*rowGap;
     let rowY=st.pd.t+st.ph-marginB-stackH;
-    let maxBoxW=0;
+    let maxBoxW=0,maxCap=0;
     for(const hp of hoverPts){
       hp.boxW=ctx.measureText(hp.text).width+16;
       if(hp.boxW>maxBoxW)maxBoxW=hp.boxW;
+      if(hp.cap>maxCap)maxCap=hp.cap;
     }
     const boxX=chartW-marginR-maxBoxW;
     for(const hp of hoverPts){
-      const [r,g,b]=hexToRgb(hp.color);
-      dvGlassTally(ctx,boxX,rowY,hp.boxW,rowH,[r,g,b]);
-      ctx.fillStyle=hp.color;
+      const barFrac=maxCap>0?hp.cap/maxCap:0;
+      dvGlassTally(ctx,boxX,rowY,hp.boxW,rowH,barFrac,hexToRgb(hp.color));
+      ctx.fillStyle='rgba(226,230,237,.85)';
       ctx.fillText(hp.text,boxX+8,rowY+rowH/2+3);
       rowY+=rowH+rowGap;
     }
