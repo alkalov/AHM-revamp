@@ -2351,17 +2351,21 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       drawGlassCircle(ctx,hp.dotX,hp.dotY,7.15);
     }
 
-    // Share-count gauges: docked bottom-right in a fixed horizontal row,
-    // independent of the hover day. Bottom margin widened this round (was
-    // tight against the plot's own bottom edge) to leave clean room for
-    // the capital numbers now docked flush underneath, so the gauge row
-    // and the tally row below it read as one fixed stat block rather than
-    // crowding each other.
+    // Share-count gauges + capital tallies: one fixed stat block, docked
+    // bottom-right, independent of the hover day. The capital number's
+    // baseline is pinned FIRST — flush with the lowest $ gridline (the
+    // plot's own bottom edge, pd.t+ph — the same line the date labels sit
+    // just below), and the gauge's base (gY) is derived backward from that
+    // with a small fixed gap, so the gauge and its number sit close enough
+    // to read as one cohesive widget rather than a gauge with a separate
+    // tally floating underneath it.
     const gR=22,gGap=10;
     const gRowW=hoverPts.length*gR*2+Math.max(0,hoverPts.length-1)*gGap;
-    const gMarginR=(pd.l+pw+pd.r)*.05,gMarginB=26;
+    const gMarginR=(pd.l+pw+pd.r)*.05;
+    const tallyGap=8;
+    const tallyY=pd.t+ph;
+    const gY=tallyY-tallyGap;
     const gXStart=(pd.l+pw+pd.r)-gMarginR-gRowW+gR;
-    const gY=pd.t+ph-gMarginB;
     const gX=hoverPts.map((hp,i)=>gXStart+i*(gR*2+gGap));
     for(let i=0;i<hoverPts.length;i++){
       const hp=hoverPts[i];
@@ -2389,7 +2393,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     // reads as one consistent stat block with the gauges above it instead
     // of the capital line stepping up in prominence over the share count.
     ctx.font='700 7.2px IBM Plex Mono';
-    const tallyY=gY+16;
     for(let i=0;i<hoverPts.length;i++){
       const hp=hoverPts[i];
       const [tr,tg,tb]=hexToRgb(hp.color);
