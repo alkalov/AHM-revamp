@@ -321,10 +321,20 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    light entering the top of the panel, plus the blur for a frosted feel.
    Reshaped from a pill into a circle this round, stacking three short
    lines (the "Day" label, the day count, then the calendar value)
-   instead of one line of text. */
+   instead of one line of text.
+   Sized down again this round: asked for 50% smaller, capped at the
+   point the smallest text matches the endpoint labels above the
+   triangles (LBL_SIZE, 7.2px). The "DAY" eyebrow label is deliberately
+   excluded from that floor check — it's a decorative caption, not a
+   value someone needs to read precisely, same convention as small-caps
+   overlines running smaller than body text elsewhere. Checked against
+   the two actual values instead (day count, calendar readout); the
+   smaller of the two (the 8px calendar line) hits the 7.2px floor at a
+   0.9 scale factor — reached well before the 50% target, so that's the
+   binding constraint and the actual result is a ~10% reduction, not 50%. */
 .dv-daytally{
   position:absolute;left:0;top:0;transform:translate(-50%,-50%);
-  width:62px;height:62px;border-radius:50%;box-sizing:border-box;
+  width:55.8px;height:55.8px;border-radius:50%;box-sizing:border-box;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:1px;
   font-family:'IBM Plex Mono',monospace;
@@ -338,9 +348,9 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
   pointer-events:none;opacity:0;transition:opacity .12s ease;z-index:3;
 }
 .dv-daytally.show{opacity:1;}
-.dv-dt-label{font-size:6.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(226,230,237,.55);line-height:1;}
-.dv-dt-num{font-size:16px;font-weight:700;line-height:1.05;}
-.dv-dt-cal{font-size:8px;font-weight:500;color:rgba(226,230,237,.72);line-height:1;}
+.dv-dt-label{font-size:5.85px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(226,230,237,.55);line-height:1;}
+.dv-dt-num{font-size:14.4px;font-weight:700;line-height:1.05;}
+.dv-dt-cal{font-size:7.2px;font-weight:500;color:rgba(226,230,237,.72);line-height:1;}
 .chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #232b3d;}
 .cm{padding:7px 10px;border-right:1px solid #232b3d;border-bottom:1px solid #232b3d;}
 .cm:nth-child(even){border-right:none;}
@@ -1173,9 +1183,9 @@ const RG_BADGE_SVG='<svg class="rg-row-badge" viewBox="0 0 16 16" width="10" hei
    base with the strategy's colour living at the TOP and draining down
    into black at the bottom. No border/outline; colour indication is
    carried entirely by the fill gradient, no glow or flare involved.
-   Base + gradient alphas dropped this round to bring it in line with the
-   day-tally's transparency (that one sits at a .32 base) — more of the
-   chart now reads through the pill instead of it sitting near-opaque. */
+   Base + gradient alphas dropped again this round for more see-through
+   glass — asked for "more translucency" a second time, so pushed further
+   past the day-tally's own .32 base rather than just matching it. */
 function dvGlassTally(ctx,x,y,w,h,rgb){
   const [cr,cg,cb]=rgb;
   const r=Math.min(6,h/2);
@@ -1184,15 +1194,15 @@ function dvGlassTally(ctx,x,y,w,h,rgb){
   ctx.beginPath();
   ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
   ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
-  ctx.fillStyle='rgba(14,18,26,.42)';ctx.fill();
+  ctx.fillStyle='rgba(14,18,26,.26)';ctx.fill();
   ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
 
   ctx.save();
   ctx.clip();
   const pool=ctx.createLinearGradient(0,y,0,y+h);
-  pool.addColorStop(0,`rgba(${cr},${cg},${cb},.38)`);
-  pool.addColorStop(.55,`rgba(${Math.round(cr*.3)},${Math.round(cg*.3)},${Math.round(cb*.3)},.22)`);
-  pool.addColorStop(1,'rgba(0,0,0,.3)');
+  pool.addColorStop(0,`rgba(${cr},${cg},${cb},.25)`);
+  pool.addColorStop(.55,`rgba(${Math.round(cr*.3)},${Math.round(cg*.3)},${Math.round(cb*.3)},.13)`);
+  pool.addColorStop(1,'rgba(0,0,0,.18)');
   ctx.fillStyle=pool;ctx.fillRect(x,y,w,h);
   ctx.restore();
 
@@ -1215,24 +1225,27 @@ function drawGlassCircle(ctx,x,y,r){
   const lightX=x-r*.22,lightY=y-r*.28;
   ctx.save();
 
-  // Base lens body — translucent throughout, no flat opaque disc. Bright
-  // near the highlight, cooling toward a dim, soft-edged rim with no hard
-  // stroke to define the boundary.
+  // Base lens body, tuned in three separately-named ways this round:
+  // "opacity" (the solid near-centre presence of the disc, stops 0/.45)
+  // is up 15%; "glow" (the soft outer haze the same gradient trails off
+  // into, stops .8/1) is down 90%, so the rim reads crisp instead of
+  // hazy; "glare" is the separate refractive highlight below, down 30%.
   ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
   const base=ctx.createRadialGradient(lightX,lightY,0,x,y,r*1.08);
-  base.addColorStop(0,'rgba(255,255,255,.24)');
-  base.addColorStop(.45,'rgba(219,228,240,.13)');
-  base.addColorStop(.8,'rgba(160,178,201,.08)');
-  base.addColorStop(1,'rgba(120,138,163,.03)');
+  base.addColorStop(0,'rgba(255,255,255,.28)');
+  base.addColorStop(.45,'rgba(219,228,240,.15)');
+  base.addColorStop(.8,'rgba(160,178,201,.01)');
+  base.addColorStop(1,'rgba(120,138,163,.003)');
   ctx.fillStyle=base;
   ctx.fill();
 
-  // Refractive core — the bright "magnifying" highlight, offset like
-  // light catching a curved lens surface.
+  // Refractive core — the bright "magnifying" highlight ("glare"),
+  // offset like light catching a curved lens surface. Toned down 30%
+  // from last pass so it reads as a gentler glint, less blown-out.
   ctx.save();
   ctx.clip();
   const lens=ctx.createRadialGradient(lightX,lightY,0,lightX,lightY,r*.7);
-  lens.addColorStop(0,'rgba(255,255,255,.55)');
+  lens.addColorStop(0,'rgba(255,255,255,.385)');
   lens.addColorStop(1,'rgba(255,255,255,0)');
   ctx.fillStyle=lens;
   ctx.fillRect(x-r,y-r,r*2,r*2);
@@ -1967,15 +1980,21 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   const TRI_R=6.5,TRI_H=TRI_R*2.1;
   const TRI_LBL_GAP=9; // breathing room between the triangle's top edge and the label stack above it (was 4 — too tight)
   const LBL_SIZE=7.2,LBL_GAP=8.8;
+  // Third line added under the $/mo value: the same calendar ("1y 6mo")
+  // formatting used by the rapid-growth callout and the hover day-tally,
+  // applied to each strategy's own endpoint day. Smaller and dimmer than
+  // the two lines above it since it's supplementary context, not a
+  // headline figure.
+  const CAL_SIZE=6.4,CAL_GAP=7.4;
   const endpoints=[];
   if(hasReal){
     const lastR=realPts[realPts.length-1];
     const realAsPts=realPts.map((p,i)=>({day:i,cap:p.cap}));
-    endpoints.push({x:Math.min(Math.max(xS(realPts.length-1),pd.l+24),pd.l+pw-24),y:yS(lastR.cap)-TRI_H-TRI_LBL_GAP,color:'#e2e6ed',cap:lastR.cap,mo:dvPlateauMoRate(realAsPts)});
+    endpoints.push({x:Math.min(Math.max(xS(realPts.length-1),pd.l+24),pd.l+pw-24),y:yS(lastR.cap)-TRI_H-TRI_LBL_GAP-CAL_GAP,color:'#e2e6ed',cap:lastR.cap,mo:dvPlateauMoRate(realAsPts),day:realPts.length-1});
   }
   for(const s of series){
     const last=s.pts[s.pts.length-1];
-    endpoints.push({x:Math.min(Math.max(xS(last.day),pd.l+24),pd.l+pw-24),y:yS(last.cap)-TRI_H-TRI_LBL_GAP,color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts)});
+    endpoints.push({x:Math.min(Math.max(xS(last.day),pd.l+24),pd.l+pw-24),y:yS(last.cap)-TRI_H-TRI_LBL_GAP-CAL_GAP,color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts),day:last.day});
   }
   // Measure each stack's footprint up front (same font used to draw it
   // below) so both anti-overlap passes can reason about actual width,
@@ -1985,6 +2004,10 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const capTxt='$'+fmt(ep.cap,0);
     const moTxt=(ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo';
     ep.lw=Math.max(ctx.measureText(capTxt).width,ctx.measureText(moTxt).width);
+    ctx.font=`${CAL_SIZE}px IBM Plex Mono`;
+    ep.calTxt=cal(dayToCal(ep.day));
+    ep.lw=Math.max(ep.lw,ctx.measureText(ep.calTxt).width);
+    ctx.font=`bold ${LBL_SIZE}px IBM Plex Mono`;
   }
   // Every plotted line, in day-domain points, so a label can be checked
   // against lines OTHER than the one it belongs to.
@@ -2004,7 +2027,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   function dvAvoidCurves(){
     let moved=false;
     for(const ep of endpoints){
-      const blockBot=ep.labelY+3,blockTop=ep.labelY-LBL_GAP-LBL_SIZE-2;
+      const blockBot=ep.labelY+CAL_GAP+CAL_SIZE+2,blockTop=ep.labelY-LBL_GAP-LBL_SIZE-2;
       const halfW=ep.lw/2+3;
       for(const pts of avoidCurves){
         for(const sx of[ep.x-halfW,ep.x,ep.x+halfW]){
@@ -2021,14 +2044,16 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     }
     return moved;
   }
-  // minGap of 19 (scaled down with the smaller font, from the original
-  // 24) since each point here anchors a two-line stack, not a single
-  // line — neighbors need room for both. Alternate the two anti-overlap
-  // passes a couple of times so a stack pushed up to clear a curve, or
-  // to clear another label, doesn't quietly reintroduce the other kind
-  // of collision.
+  // minGap raised from 19 to 30 now that each point anchors a three-line
+  // stack ($ value, $/mo, calendar value) instead of two — the extra
+  // line adds roughly CAL_GAP+CAL_SIZE (~14px) of footprint per stack, so
+  // the old two-line-tuned gap let neighbouring three-line stacks visibly
+  // overlap even though their anchors were technically far enough apart
+  // under the old rule. Alternate the two anti-overlap passes a couple of
+  // times so a stack pushed up to clear a curve, or to clear another
+  // label, doesn't quietly reintroduce the other kind of collision.
   for(let round=0;round<3;round++){
-    dvResolveLabelCollisions(endpoints,19);
+    dvResolveLabelCollisions(endpoints,30);
     if(!dvAvoidCurves())break;
   }
   for(const s of series){
@@ -2045,6 +2070,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   for(const ep of endpoints){
     const moLy=ep.labelY!==undefined?ep.labelY:ep.y;
     const capLy=moLy-LBL_GAP;
+    const calLy=moLy+CAL_GAP;
     const [cr,cg,cb]=hexToRgb(ep.color);
     ctx.font=`${LBL_SIZE}px IBM Plex Mono`;
     ctx.fillStyle=`rgba(${cr},${cg},${cb},.8)`;
@@ -2052,6 +2078,9 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     ctx.font=`bold ${LBL_SIZE}px IBM Plex Mono`;
     ctx.fillStyle='rgba(255,255,255,.8)';
     ctx.fillText((ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo',ep.x,moLy);
+    ctx.font=`${CAL_SIZE}px IBM Plex Mono`;
+    ctx.fillStyle=`rgba(${cr},${cg},${cb},.55)`;
+    ctx.fillText(ep.calTxt,ep.x,calLy);
   }
 
   cv._race={series,realPts,hasReal,pd,pw,ph,xS,yS,maxDay,dayToCal};
@@ -2106,11 +2135,18 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     // than three labels jostling for space near a busy hover point.
     // Left edges are shared across all rows (sized to the widest label)
     // so the A/B/C strategy letters line up in a column instead of each
-    // pill being individually right-aligned; the group's own right edge —
-    // driven by the widest pill — keeps the same bottom-right anchor as
-    // before, so the block as a whole doesn't move.
+    // pill being individually right-aligned; that left alignment holds
+    // regardless of where the group's right edge sits. Right margin is a
+    // percentage (5%) of the FULL canvas width — not just the inner plot
+    // width — since "5% from the right side" reads as measured from the
+    // chart's actual visible edge, not from the data-plot boundary that
+    // sits pd.r (30px) further in. That also means the pills now sit
+    // closer to the true edge than the old fixed 6px-from-plot-boundary
+    // gap did (6px from the plot boundary was ~36px, ~8-9%, from the
+    // canvas's real edge once that reserved padding is included).
     ctx.font='9px IBM Plex Mono';ctx.textAlign='left';
-    const rowH=15,rowGap=3,marginR=6,marginB=6;
+    const chartW=st.pd.l+st.pw+st.pd.r;
+    const rowH=15,rowGap=3,marginR=chartW*.05,marginB=6;
     const stackH=hoverPts.length*rowH+Math.max(0,hoverPts.length-1)*rowGap;
     let rowY=st.pd.t+st.ph-marginB-stackH;
     let maxBoxW=0;
@@ -2118,7 +2154,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       hp.boxW=ctx.measureText(hp.text).width+16;
       if(hp.boxW>maxBoxW)maxBoxW=hp.boxW;
     }
-    const boxX=st.pd.l+st.pw-marginR-maxBoxW;
+    const boxX=chartW-marginR-maxBoxW;
     for(const hp of hoverPts){
       const [r,g,b]=hexToRgb(hp.color);
       dvGlassTally(ctx,boxX,rowY,hp.boxW,rowH,[r,g,b]);
