@@ -278,11 +278,11 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
   position:absolute;top:0;left:0;width:52%;height:52%;
   padding:10px 12px;box-sizing:border-box;
   display:flex;flex-direction:column;justify-content:space-between;
-  pointer-events:none;opacity:0;transition:opacity 1.1s ease;z-index:2;
+  pointer-events:none;opacity:0;transition:opacity 4s ease;z-index:2;
 }
 .rg-overlay.show{opacity:1;}
-.rg-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
-.rg-num,.rg-time{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;color:#e2e6ed;white-space:nowrap;}
+.rg-top{display:flex;justify-content:flex-end;align-items:flex-start;gap:8px;}
+.rg-time{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;color:#e2e6ed;white-space:nowrap;}
 .rg-bottom{
   font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:22px;
   line-height:.92;letter-spacing:-.01em;text-transform:uppercase;
@@ -518,11 +518,10 @@ canvas.spark{width:100%;height:34px;display:block;}
 
   <div class="screen" id="scr-tbl">
     <div class="dv-half">
-      <div class="chart-hd" style="padding:8px 12px 4px;"><span class="chart-lbl">Race to Goal · Capital vs Time</span></div>
       <div class="chart-wrap" style="height:100%;">
         <canvas class="eqcv" id="dv-cv"></canvas>
         <div class="rg-overlay" id="rg-overlay">
-          <div class="rg-top"><span class="rg-num" id="rg-num">—</span><span class="rg-time" id="rg-time">—</span></div>
+          <div class="rg-top"><span class="rg-time" id="rg-time">—</span></div>
           <div class="rg-bottom">to rapid growth</div>
         </div>
       </div>
@@ -1221,6 +1220,57 @@ function drawGlassSphere(ctx,x,y,r,rgb){
   ctx.restore();
 }
 
+/* Rapid-growth marker — a bullseye (outer ring + center dot), the same
+   silhouette used for the small badge in the table rows, but rendered
+   with the same glass treatment as drawGlassSphere (soft bloom, gradient
+   fill, specular highlight) instead of a flat stroked ring or a filled
+   sphere body. Ring and dot are both translucent so the curve/gridlines
+   underneath still show through. */
+function drawGlassBullseye(ctx,x,y,r,rgb){
+  const [cr,cg,cb]=rgb;
+  const lightX=x-r*0.35,lightY=y-r*0.4;
+  ctx.save();
+
+  /* tight, dim bloom — just enough to lift the ring off the chart */
+  const bloom=ctx.createRadialGradient(x,y,0,x,y,r*1.7);
+  bloom.addColorStop(0,`rgba(${cr},${cg},${cb},.12)`);
+  bloom.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=bloom;
+  ctx.beginPath();ctx.arc(x,y,r*1.7,0,Math.PI*2);ctx.fill();
+
+  /* outer ring: frosted glass annulus (gradient fill between two radii)
+     plus a soft gradient-toned edge stroke on each boundary circle */
+  const ringOuter=r,ringInner=r*.6;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x,y,ringOuter,0,Math.PI*2);
+  ctx.arc(x,y,ringInner,0,Math.PI*2,true);
+  ctx.clip('evenodd');
+  const ringFill=ctx.createRadialGradient(lightX,lightY,0,x,y,ringOuter*1.15);
+  ringFill.addColorStop(0,`rgba(${Math.min(255,cr+100)},${Math.min(255,cg+100)},${Math.min(255,cb+100)},.5)`);
+  ringFill.addColorStop(.6,`rgba(${cr},${cg},${cb},.3)`);
+  ringFill.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.26)`);
+  ctx.fillStyle=ringFill;
+  ctx.fillRect(x-ringOuter-2,y-ringOuter-2,(ringOuter+2)*2,(ringOuter+2)*2);
+  ctx.restore();
+  ctx.lineWidth=.8;
+  ctx.strokeStyle=`rgba(${cr},${cg},${cb},.5)`;
+  ctx.beginPath();ctx.arc(x,y,ringOuter,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle=`rgba(${cr},${cg},${cb},.32)`;
+  ctx.beginPath();ctx.arc(x,y,ringInner,0,Math.PI*2);ctx.stroke();
+
+  /* center dot: a small glass sphere, not a flat fill */
+  const dotR=r*.34;
+  const body=ctx.createRadialGradient(lightX,lightY,dotR*.1,x,y,dotR*1.05);
+  body.addColorStop(0,`rgba(${Math.min(255,cr+130)},${Math.min(255,cg+130)},${Math.min(255,cb+130)},.85)`);
+  body.addColorStop(.5,`rgba(${cr},${cg},${cb},.7)`);
+  body.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.6)`);
+  ctx.beginPath();ctx.arc(x,y,dotR,0,Math.PI*2);
+  ctx.fillStyle=body;ctx.fill();
+
+  ctx.restore();
+}
+
 /* Endpoint marker for a "finished" curve — an upside-down (point-down)
    glass triangle instead of a sphere, so a finished point reads
    visually distinct from the live hover/highlight orbs. Point sits
@@ -1672,10 +1722,7 @@ function dvUpdateRapidOverlay(rapid,dayToCal,series){
   const key=rapid.idx+'_'+rapid.day;
   if(key===_rgLastKey)return;
   _rgLastKey=key;
-  const winStrat=series.find(s=>s.idx===rapid.idx);
-  const mo=winStrat?dvPlateauMoRate(winStrat.pts):0;
-  const numEl=$('rg-num'),timeEl=$('rg-time');
-  if(numEl)numEl.textContent=(mo>=0?'+$':'−$')+fmt(Math.abs(mo),0)+'/mo';
+  const timeEl=$('rg-time');
   if(timeEl)timeEl.textContent=cal(dayToCal(rapid.day));
   el.classList.remove('show');
   void el.offsetWidth; // force reflow so the opacity transition re-triggers
@@ -1702,9 +1749,12 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     cv._race=null;
     return;
   }
-  // Extra padding on every edge: left for $ axis labels, bottom for date
-  // labels, right for endpoint value labels, top for breathing room.
-  const pd={t:14,b:22,l:44,r:66};
+  // Minimal padding on every edge — the $ axis labels are drawn inside
+  // the plot itself (not in a dedicated left gutter) so the curves can
+  // run almost to the borders of the available space. Bottom keeps just
+  // enough room for the calendar date row; right keeps just enough for
+  // the endpoint value-label stacks; top is a sliver of breathing room.
+  const pd={t:10,b:18,l:10,r:30};
   const pw=W-pd.l-pd.r,ph=H-pd.t-pd.b;
   const series=active.map(i=>{
     const rows=simResults[i].rows;
@@ -1723,27 +1773,34 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   // the curves fill the available frame instead of leaving most of it
   // empty — a fixed $1M ceiling looked "correct" but left a run that
   // topped out at $20-30k stranded in the bottom sliver of the chart. X
-  // gets ~12% headroom past the longest curve's last day so endpoint
-  // markers/labels never sit flush against the right edge. A small floor
-  // keeps a near-flat/near-zero run from being scaled up into noise.
+  // gets ~17% headroom past the longest curve's last day — both within
+  // the 15-20% target range — so endpoint markers/labels never sit flush
+  // against the right edge. A small floor keeps a near-flat/near-zero
+  // run from being scaled up into noise.
   const maxCap=Math.max(dataMaxCap*1.2,1000);
   const minCap=dataMinCap;
   const capRng=(maxCap-minCap)||1;
-  const maxDay=Math.max(1,dataMaxDay*1.12);
+  const maxDay=Math.max(1,dataMaxDay*1.17);
   const xS=day=>pd.l+(Math.min(day,maxDay)/maxDay)*pw;
   const yS=cap=>pd.t+ph-((cap-minCap)/capRng)*ph;
   const dayToCal=day=>(day/252)*12; // trading days -> calendar months, same conversion used app-wide
 
   // ── Gridlines + axis labels ──
   // Horizontal: 4 evenly-spaced $ levels including the zero/start line.
+  // Labels now sit just inside the plot's left edge (over the chart
+  // itself) instead of in a dedicated left-margin gutter, so the plot
+  // doesn't have to give up real estate for them. The topmost label
+  // drops below its line instead of above so it isn't clipped by the
+  // canvas edge.
   const gridN=4;
-  ctx.font='8px IBM Plex Mono';ctx.textAlign='right';
+  ctx.font='8px IBM Plex Mono';ctx.textAlign='left';
   for(let i=0;i<=gridN;i++){
     const cap=minCap+(capRng*i/gridN);
     const gy=yS(cap);
     ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(pd.l,gy);ctx.lineTo(pd.l+pw,gy);ctx.stroke();
-    ctx.fillStyle='#4d5a6e';ctx.fillText('$'+fmt(cap,0),pd.l-6,gy+3);
+    const ly=(i===gridN)?gy+11:gy-3;
+    ctx.fillStyle='rgba(163,173,190,.85)';ctx.fillText('$'+fmt(cap,0),pd.l+4,ly);
   }
   // Vertical: time gridlines at roughly-even day intervals, labeled in
   // calendar terms so a first-time viewer reads "2mo" not "day 42".
@@ -1756,12 +1813,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     ctx.beginPath();ctx.moveTo(gx,pd.t);ctx.lineTo(gx,pd.t+ph);ctx.stroke();
     ctx.fillStyle='#4d5a6e';ctx.fillText(cal(dayToCal(day)),gx,pd.t+ph+13);
   }
-  // Axis titles
-  ctx.save();
-  ctx.fillStyle='#4d5a6e';ctx.font='7px IBM Plex Mono';
-  ctx.textAlign='left';ctx.fillText('CAPITAL',pd.l-38,pd.t-4);
-  ctx.textAlign='right';ctx.fillText('TIME →',pd.l+pw,H-4);
-  ctx.restore();
 
   // ── "Time to rapid growth" diagnostic ──
   // No longer a canvas-drawn panel — it's a fading-in HTML overlay (see
@@ -1790,9 +1841,10 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   }
 
   // On-chart marker for the rapid-growth point found above, drawn after
-  // the lines so it visibly sits on top of the curve it belongs to. Now
-  // rendered as a (white) glass sphere, matching the hover orbs, instead
-  // of a plain stroked ring.
+  // the lines so it visibly sits on top of the curve it belongs to.
+  // Bullseye silhouette (ring + center dot, same shape as the table row
+  // badge) rendered with a glass treatment rather than a flat stroke or
+  // a solid sphere body.
   if(rapid){
     const mx=xS(rapid.day),my=yS(rapid.cap);
     ctx.save();
@@ -1800,7 +1852,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     ctx.beginPath();ctx.moveTo(mx,pd.t+ph);ctx.lineTo(mx,my);ctx.stroke();
     ctx.setLineDash([]);
     ctx.restore();
-    drawGlassSphere(ctx,mx,my,6,[255,255,255]);
+    drawGlassBullseye(ctx,mx,my,7,[255,255,255]);
   }
 
   // ── Endpoints: upside-down glass triangles marking the final point of
