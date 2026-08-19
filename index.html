@@ -135,6 +135,21 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
 .circ-btn.sel{
   box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(var(--glow-rgb),.15);
 }
+/* Sim tab only: the selected circle's glow (and its label) pick up
+   THIS strategy's own identity colour instead of the app's generic
+   blue/cyan accent — every other surface in a strategy's own pane
+   already carries that colour (tab underline, Simulate button, now the
+   equity curve itself), so the one neutral-blue circle glow read as a
+   mismatch sitting in the middle of an otherwise green/red/amber
+   context. Scoped to #sp0/#sp1/#sp2 specifically so the Log and Stats
+   tabs' own circle navs (same shared classes, no strategy concept) are
+   completely unaffected. */
+#sp0 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(52,211,153,.18);}
+#sp1 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(248,113,113,.18);}
+#sp2 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(251,191,36,.18);}
+#sp0 .circ-btn.sel+.circ-label{color:#34d399;}
+#sp1 .circ-btn.sel+.circ-label{color:#f87171;}
+#sp2 .circ-btn.sel+.circ-label{color:#fbbf24;}
 
 /* Press bloom: fast "hot" glow the instant a control is pressed, eased
    back to resting state on release. Trigger is a JS-added .pressed
@@ -243,6 +258,12 @@ tr.sel-day{transition:background .5s ease;}
 .stp-btn:active{background:#1c2333;color:var(--accent-solid);}
 .stp-val{flex:1;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:16px !important;color:#e2e6ed;background:#161b26;border:none;outline:none;height:32px;padding:0 4px;min-width:0;}
 .stp-unit{font-size:8px;color:#4d5a6e;padding-right:7px;flex-shrink:0;background:#161b26;}
+/* Sim tab only (this same .stp component is reused for the Table tab's
+   interval stepper too) — bumps every hand-entered number to the same
+   700-weight tabular mono as .cmv/.dval above, so a value the user typed
+   in and a value the app computed back read as one consistent "number"
+   language throughout this tab. */
+#scr-sim .stp-val{font-weight:700;font-variant-numeric:tabular-nums;}
 .fc-sel{width:100%;background:#161b26;border:1px solid #232b3d;color:#e2e6ed;font-family:'IBM Plex Mono',monospace;font-size:11px !important;height:32px;padding:0 8px;outline:none;border-radius:3px;margin-top:4px;}
 .ro-pill{display:inline-flex;align-items:center;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:2px;padding:2px 8px;margin-top:4px;}
 .ro-pill span{font-size:11px;color:#f87171;}
@@ -351,12 +372,16 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .dv-dt-label{font-size:5.85px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(226,230,237,.55);line-height:1;}
 .dv-dt-num{font-size:14.4px;font-weight:700;line-height:1.05;}
 .dv-dt-cal{font-size:7.2px;font-weight:500;color:rgba(226,230,237,.72);line-height:1;}
-.chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #232b3d;}
-.cm{padding:7px 10px;border-right:1px solid #232b3d;border-bottom:1px solid #232b3d;}
+.chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,.08);}
+.cm{padding:7px 10px;border-right:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);}
 .cm:nth-child(even){border-right:none;}
 .cm:nth-last-child(-n+2){border-bottom:none;}
 .cml{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;}
-.cmv{font-size:13px;font-weight:600;}
+/* Bumped to the same 700-weight IBM Plex Mono + tabular figures used on
+   the Table tab's share gauges/capital tallies, so this tab's own summary
+   numbers read as the same "material" instead of a plain lighter-weight
+   readout. */
+.cmv{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
 .cms{font-size:8px;color:#4d5a6e;margin-top:2px;}
 .cmv.go{color:#34d399;}.cmv.stop{color:#f87171;}.cmv.amb{color:#fbbf24;}.cmv.steel{color:#60a5fa;}
 .diag{margin:8px 16px;border-radius:3px;overflow:hidden;display:none;border:1px solid #232b3d;}
@@ -376,10 +401,13 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .diag-body{padding:4px 12px 6px;background:#10141c;}
 .diag-row{font-size:11px;color:#8892a4;line-height:1.8;padding:1px 0;border-bottom:1px solid #1c2333;}
 .diag-row:last-child{border:none;}
-.dpos{color:#34d399;font-weight:600;}
-.dneg{color:#f87171;font-weight:600;}
-.dneu{color:#fbbf24;font-weight:600;}
-.dval{color:#e2e6ed;font-weight:600;}
+/* Same 700-weight tabular mono bump as .cmv above — these rows are the
+   other place this tab states a hard number back to you, so they share
+   the one "answer" typography instead of their own lighter 600 weight. */
+.dpos{color:#34d399;font-weight:700;font-variant-numeric:tabular-nums;}
+.dneg{color:#f87171;font-weight:700;font-variant-numeric:tabular-nums;}
+.dneu{color:#fbbf24;font-weight:700;font-variant-numeric:tabular-nums;}
+.dval{color:#e2e6ed;font-weight:700;font-variant-numeric:tabular-nums;}
 .dnote{font-size:9px;color:#4d5a6e;}
 .disc{margin:8px 16px 16px;padding:7px 10px;background:#10141c;border:1px solid #232b3d;border-radius:3px;}
 .disc p{font-size:9px;color:#4d5a6e;line-height:1.6;}
@@ -1462,9 +1490,17 @@ function drawGlassTriangle(ctx,x,y,r,rgb,gradTop,gradBottom){
 
 function drawChart(equity,acct0,tab){
   const s=tab===0?'':'_'+tab;const cv=$('cv'+s);if(!cv)return;
-  _drawChart(cv,equity,acct0);
+  // Sim tab's own equity chart now renders with the same "glass tube"
+  // material as the Table tab's combined Race to Goal chart, in this
+  // strategy's own identity colour, instead of the plain pnl-sign
+  // flat stroke — see _drawChart's optional trailing rgb arg. Stashed on
+  // the canvas itself (cv._simRgb) so the hover-redraw path in wireChart
+  // and the window-resize redraw loop both pick it back up without
+  // needing to be told the tab/strategy again.
+  cv._simRgb=hexToRgb(STRAT_COLORS[tab]);
+  _drawChart(cv,equity,acct0,cv._simRgb);
 }
-function _drawChart(cv,equity,acct0){
+function _drawChart(cv,equity,acct0,rgb){
   if(!cv||!cv.getContext||!equity||equity.length<2)return;
   const dpr=window.devicePixelRatio||1;
   const W=cv.offsetWidth,H=cv.offsetHeight;if(!W||!H)return;
@@ -1491,9 +1527,19 @@ function _drawChart(cv,equity,acct0){
   ctx.fillStyle=gr;ctx.fill();
   ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;ctx.setLineDash([3,4]);
   ctx.beginPath();ctx.moveTo(pd.l,zy);ctx.lineTo(pd.l+pw,zy);ctx.stroke();ctx.setLineDash([]);
-  ctx.beginPath();ctx.moveTo(xS(0),yS(pnls[0]));
-  for(let i=1;i<pnls.length;i++){const cpx=(xS(i-1)+xS(i))/2;ctx.bezierCurveTo(cpx,yS(pnls[i-1]),cpx,yS(pnls[i]),xS(i),yS(pnls[i]));}
-  ctx.strokeStyle=pnls[pnls.length-1]>=0?'#34d399':'#f87171';ctx.lineWidth=2;ctx.stroke();
+  if(rgb){
+    // Glass-tube stroke — same shared material (dvBuildCurvePath +
+    // dvStrokeGlassCurve) as the Table tab's combined equity chart, just
+    // in this canvas's own strategy colour. Real-equity charts on the
+    // Stats tab never pass rgb, so they fall through to the original
+    // flat pnl-sign stroke below, untouched.
+    const path=dvBuildCurvePath(xS,i=>yS(pnls[i]),pnls.length);
+    dvStrokeGlassCurve(ctx,path,rgb,pd.t,pd.t+ph);
+  }else{
+    ctx.beginPath();ctx.moveTo(xS(0),yS(pnls[0]));
+    for(let i=1;i<pnls.length;i++){const cpx=(xS(i-1)+xS(i))/2;ctx.bezierCurveTo(cpx,yS(pnls[i-1]),cpx,yS(pnls[i]),xS(i),yS(pnls[i]));}
+    ctx.strokeStyle=pnls[pnls.length-1]>=0?'#34d399':'#f87171';ctx.lineWidth=2;ctx.stroke();
+  }
   cv._cs={equity,acct0,pd,pw,ph,W,H,pnls,mn,rng,xS,yS};
 }
 /* Combined multi-strategy comparison overlay — shared y-scale so magnitude
@@ -1557,7 +1603,7 @@ function wireChart(cv,tt){
     tt.textContent=`Day ${pt.day} · ${time} · ${pnl>=0?'+$':'−$'}${fmt(Math.abs(pnl))}`;
     tt.style.color=pnl>=0?'#34d399':'#f87171';
     const dpr=window.devicePixelRatio||1;cv.width=cv.offsetWidth*dpr;cv.height=cv.offsetHeight*dpr;
-    const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);_drawChart(cv,st.equity,st.acct0);
+    const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);_drawChart(cv,st.equity,st.acct0,cv._simRgb);
     const cx2=st.xS(idx),cy2=st.yS(st.pnls[idx]);
     ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1;ctx.setLineDash([2,3]);
     ctx.beginPath();ctx.moveTo(cx2,st.pd.t);ctx.lineTo(cx2,st.pd.t+st.ph);ctx.stroke();
@@ -1566,9 +1612,9 @@ function wireChart(cv,tt){
     drawGlassCircle(ctx,cx2,cy2,8.25);
   }
   cv.addEventListener('mousemove',e=>onX(e.clientX));
-  cv.addEventListener('mouseleave',()=>{tt.textContent='';_drawChart(cv,cv._cs?.equity,cv._cs?.acct0);});
+  cv.addEventListener('mouseleave',()=>{tt.textContent='';_drawChart(cv,cv._cs?.equity,cv._cs?.acct0,cv._simRgb);});
   cv.addEventListener('touchmove',e=>{e.preventDefault();onX(e.touches[0].clientX);},{passive:false});
-  cv.addEventListener('touchend',()=>{tt.textContent='';_drawChart(cv,cv._cs?.equity,cv._cs?.acct0);});
+  cv.addEventListener('touchend',()=>{tt.textContent='';_drawChart(cv,cv._cs?.equity,cv._cs?.acct0,cv._simRgb);});
 }
 
 function buildDiag(c,cumPnl,days,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,tab){
@@ -1877,6 +1923,55 @@ function dvUpdateRapidOverlay(rapid,dayToCal,series){
   requestAnimationFrame(()=>el.classList.add('show'));
 }
 
+/* Shared "glass tube" curve material — path builder + stroke renderer.
+   Originally built as a closure inside dvDrawRaceChart for the Race to
+   Goal chart; pulled out to global scope (same reasoning as drawGlassRing
+   above) so the Sim tab's own per-strategy equity chart (_drawChart, see
+   drawChart()) can render with the exact same material in that
+   strategy's own colour, instead of the separate flat stroke it used to
+   draw. getX/getY are plain (i)=>x / (i)=>y accessors so each caller can
+   feed in whatever point shape it already has (the race chart's {cap}
+   points vs. the sim chart's raw cumulative-P&L numbers) without this
+   caring; gradTopY/gradBottomY are the caller's own plot-area vertical
+   extent for the main stroke's lighter-at-top gradient. */
+function dvBuildCurvePath(getX,getY,n){
+  const path=new Path2D();
+  path.moveTo(getX(0),getY(0));
+  for(let i=1;i<n;i++){
+    const cpx=(getX(i-1)+getX(i))/2;
+    path.bezierCurveTo(cpx,getY(i-1),cpx,getY(i),getX(i),getY(i));
+  }
+  return path;
+}
+function dvStrokeGlassCurve(ctx,path,rgb,gradTopY,gradBottomY){
+  const [r,g,b]=rgb;
+  // Glow (the two soft under-strokes) and flare (the thin top specular
+  // highlight below) both cut 30% from their original alphas (see the
+  // round that tuned these on the race chart). The main gradient stroke
+  // in between is the curve's own visible line, not glow/flare, so its
+  // alpha is untouched.
+  ctx.save();
+  ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.lineWidth=7;ctx.strokeStyle=`rgba(${r},${g},${b},.0392)`;ctx.stroke(path);
+  ctx.lineWidth=4.5;ctx.strokeStyle=`rgba(${r},${g},${b},.0651)`;ctx.stroke(path);
+  ctx.restore();
+
+  ctx.save();
+  ctx.lineJoin='round';ctx.lineCap='round';
+  const grad=ctx.createLinearGradient(0,gradTopY,0,gradBottomY);
+  grad.addColorStop(0,`rgba(${Math.min(255,r+70)},${Math.min(255,g+70)},${Math.min(255,b+70)},.92)`);
+  grad.addColorStop(1,`rgba(${r},${g},${b},.85)`);
+  ctx.strokeStyle=grad;ctx.lineWidth=2;
+  ctx.stroke(path);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(0,-1.1);
+  ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.strokeStyle='rgba(255,255,255,.112)';ctx.lineWidth=.7;
+  ctx.stroke(path);
+  ctx.restore();
+}
 function dvDrawRaceChart(cv,legendEl,hoverDay){
   if(!cv||!cv.getContext)return;
   const active=[0,1,2].filter(i=>simResults[i]&&simResults[i].rows&&simResults[i].rows.length>1);
@@ -1985,50 +2080,13 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   // along the top edge. This is the reference treatment — the endpoint
   // triangles' borders below reuse the same three-part recipe (glow,
   // gradient stroke, highlight) rather than a separate style of their own.
-  function dvBuildCurvePath(getX,pts){
-    const path=new Path2D();
-    path.moveTo(getX(0),yS(pts[0].cap));
-    for(let i=1;i<pts.length;i++){
-      const cpx=(getX(i-1)+getX(i))/2;
-      path.bezierCurveTo(cpx,yS(pts[i-1].cap),cpx,yS(pts[i].cap),getX(i),yS(pts[i].cap));
-    }
-    return path;
-  }
-  function dvStrokeGlassCurve(path,rgb){
-    const [r,g,b]=rgb;
-    // Glow (the two soft under-strokes) and flare (the thin top specular
-    // highlight below) both cut 30% this round. The main gradient stroke
-    // in between is the curve's own visible line, not glow/flare, so its
-    // alpha is untouched.
-    ctx.save();
-    ctx.lineJoin='round';ctx.lineCap='round';
-    ctx.lineWidth=7;ctx.strokeStyle=`rgba(${r},${g},${b},.0392)`;ctx.stroke(path);
-    ctx.lineWidth=4.5;ctx.strokeStyle=`rgba(${r},${g},${b},.0651)`;ctx.stroke(path);
-    ctx.restore();
-
-    ctx.save();
-    ctx.lineJoin='round';ctx.lineCap='round';
-    const grad=ctx.createLinearGradient(0,pd.t,0,pd.t+ph);
-    grad.addColorStop(0,`rgba(${Math.min(255,r+70)},${Math.min(255,g+70)},${Math.min(255,b+70)},.92)`);
-    grad.addColorStop(1,`rgba(${r},${g},${b},.85)`);
-    ctx.strokeStyle=grad;ctx.lineWidth=2;
-    ctx.stroke(path);
-    ctx.restore();
-
-    ctx.save();
-    ctx.translate(0,-1.1);
-    ctx.lineJoin='round';ctx.lineCap='round';
-    ctx.strokeStyle='rgba(255,255,255,.112)';ctx.lineWidth=.7;
-    ctx.stroke(path);
-    ctx.restore();
-  }
   if(hasReal){
-    const path=dvBuildCurvePath(i=>xS(i),realPts);
-    dvStrokeGlassCurve(path,hexToRgb('#e2e6ed'));
+    const path=dvBuildCurvePath(i=>xS(i),i=>yS(realPts[i].cap),realPts.length);
+    dvStrokeGlassCurve(ctx,path,hexToRgb('#e2e6ed'),pd.t,pd.t+ph);
   }
   for(const s of series){
-    const path=dvBuildCurvePath(i=>xS(s.pts[i].day),s.pts);
-    dvStrokeGlassCurve(path,hexToRgb(s.color));
+    const path=dvBuildCurvePath(i=>xS(s.pts[i].day),i=>yS(s.pts[i].cap),s.pts.length);
+    dvStrokeGlassCurve(ctx,path,hexToRgb(s.color),pd.t,pd.t+ph);
   }
 
   // On-chart marker for the rapid-growth point found above, drawn after
@@ -3657,7 +3715,7 @@ function wireGlobalResize(){
       // all driven by _drawChart, all cache their state on cv._cs.
       ['cv','cv_1','cv_2','real-cv-all','real-cv-week','real-cv-month'].forEach(id=>{
         const cv=$(id);
-        if(cv&&cv._cs)_drawChart(cv,cv._cs.equity,cv._cs.acct0);
+        if(cv&&cv._cs)_drawChart(cv,cv._cs.equity,cv._cs.acct0,cv._simRgb);
       });
       // Table tab combined race chart
       const dvCv=$('dv-cv');
