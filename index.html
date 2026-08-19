@@ -1179,21 +1179,19 @@ function hexToRgb(hex){
 // Table row badge for a strategy's own rapid-growth day — same ring +
 // dot design as the chart's on-curve marker, just as an inline SVG.
 const RG_BADGE_SVG='<svg class="rg-row-badge" viewBox="0 0 16 16" width="10" height="10"><circle cx="8" cy="8" r="6" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" fill="#fff"/></svg> ';
-/* Running-tally chip. Dropped the day-tally's own top-down radial
-   highlight — at this shape's long, low proportions it wasn't reading
-   as anything, just dead flat space — in favour of the SAME 135°
-   diagonal gloss the app's shared card material uses everywhere else
-   (.chart-panel, .disc, etc — see the shared-frost-treatment rule near
-   the top of the stylesheet, and drawGlassTriangle's own gloss pass,
-   which this now matches). Kept faint (half that shared recipe's own
-   peak alpha) and the base fill/border lightened too, per "less
-   overstated" — this chip should read as a quiet backing plate, not a
-   card competing with the chart itself.
-   Colour lives only in the accumulation bar flush against the bottom
-   edge (clipped to the same rounded shape as the body); the value text
-   stays a neutral tone. Width/height/position are the caller's call —
-   this only draws within whatever box it's given. */
-function dvGlassTally(ctx,x,y,w,h,barFrac,barRgb){
+/* Running-tally chip. Simplified back down from a proportional bottom
+   accumulation bar to a plain colour-coded border — once width is fixed
+   and comparable and the number itself is legible, the bar's own length
+   wasn't earning its keep as a second thing to read, so a single
+   coloured outline carries "which strategy" now. Body still keeps the
+   same base fill + 135° diagonal gloss (the app's shared "card" gloss
+   direction — see .chart-panel and drawGlassTriangle's own gloss pass —
+   used in place of the day-tally's top-down radial highlight, which
+   read as dead space at this shape's proportions). Value text stays
+   neutral; the border is the only coloured element. Width/height/
+   position are the caller's call — this only draws within whatever box
+   it's given. */
+function dvGlassTally(ctx,x,y,w,h,rgb){
   const r=Math.min(6,h/2);
   ctx.save();
   ctx.beginPath();
@@ -1210,76 +1208,11 @@ function dvGlassTally(ctx,x,y,w,h,barFrac,barRgb){
   ctx.fillStyle=gloss;
   ctx.fillRect(x,y,w,h);
 
-  const [br,bg,bb]=barRgb;
-  const barH=2;
-  ctx.fillStyle=`rgba(${br},${bg},${bb},.62)`;
-  ctx.fillRect(x,y+h-barH,w*Math.max(0,Math.min(1,barFrac)),barH);
-
   ctx.restore();
-  ctx.lineWidth=1;
-  ctx.strokeStyle='rgba(255,255,255,.08)';
+  const [br,bg,bb]=rgb;
+  ctx.lineWidth=1.2;
+  ctx.strokeStyle=`rgba(${br},${bg},${bb},.6)`;
   ctx.stroke();
-  ctx.restore();
-}
-/* Share-count gauge — a half-circle dial, split out of the capital tally
-   entirely now that shares and capital are two different measurements
-   (one a pace/quantity readout, the other a $ amount) and were
-   confusing to read mashed into one chip. Same glass material as
-   dvGlassTally right above (translucent body, faint 135° gloss,
-   hairline border) so the two read as one family, just domed instead of
-   pill-shaped — flat edge down, curve up, share count centred in the
-   dome with a small "SHARES" caption under it. Colour still lives in
-   exactly one place, same rule as the capital bar: a single strategy-
-   coloured stroke, proportional fill against a range, number/caption
-   both neutral. Here that coloured element arcs across the TOP of the
-   dome (there's no straight bottom edge on a half-circle to run a bar
-   along, so the equivalent gesture becomes a gauge sweep instead of a
-   fill bar) rather than sitting flush along a bottom edge.
-   cx = centre x; cyBase = y of the flat/diameter edge; r = radius;
-   frac = 0..1 arc fill; rgb = this strategy's colour; shareVal = the
-   number drawn in the centre. */
-function dvGlassGauge(ctx,cx,cyBase,r,frac,rgb,shareVal){
-  ctx.save();
-  const tracePath=()=>{
-    ctx.beginPath();
-    ctx.moveTo(cx-r,cyBase);
-    ctx.arc(cx,cyBase,r,Math.PI,2*Math.PI,false);
-    ctx.closePath();
-  };
-  ctx.save();
-  tracePath();
-  ctx.clip();
-  ctx.fillStyle='rgba(18,23,33,.28)';
-  ctx.fillRect(cx-r,cyBase-r,r*2,r);
-  const gloss=ctx.createLinearGradient(cx-r,cyBase-r,cx+r,cyBase);
-  gloss.addColorStop(0,'rgba(255,255,255,.05)');
-  gloss.addColorStop(.55,'rgba(255,255,255,0)');
-  ctx.fillStyle=gloss;
-  ctx.fillRect(cx-r,cyBase-r,r*2,r);
-  ctx.restore();
-  tracePath();
-  ctx.lineWidth=1;ctx.strokeStyle='rgba(255,255,255,.08)';ctx.stroke();
-
-  const [gr,gg,gb]=rgb;
-  ctx.beginPath();
-  ctx.arc(cx,cyBase,r-3,Math.PI,Math.PI+Math.max(0,Math.min(1,frac))*Math.PI,false);
-  ctx.lineCap='round';ctx.lineWidth=2;
-  ctx.strokeStyle=`rgba(${gr},${gg},${gb},.68)`;
-  ctx.stroke();
-
-  // Number + caption sit low in the dome (close to the flat base, where
-  // a half-circle is at its widest) rather than centred on the dome's
-  // full height — keeps them clear of the arc above even when the arc
-  // sweeps most of the way round at a near-full fraction.
-  ctx.textAlign='center';
-  ctx.fillStyle='rgba(226,230,237,.78)';
-  ctx.font='700 9px IBM Plex Mono';
-  ctx.fillText(Math.round(shareVal).toLocaleString(),cx,cyBase-9);
-  ctx.fillStyle='rgba(163,173,190,.5)';
-  ctx.font='6px IBM Plex Mono';
-  ctx.textBaseline='alphabetic';
-  ctx.fillText('SHARES',cx,cyBase-1);
-
   ctx.restore();
 }
 /* ══════════════════════════════════════════════════════════════
@@ -1918,13 +1851,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   if(hasReal)allCaps=allCaps.concat(realPts.map(p=>p.cap));
   const dataMaxCap=allCaps.length?Math.max(...allCaps):0;
   const dataMinCap=allCaps.length?Math.min(0,...allCaps):0;
-  // Same 20%-headroom convention as the capital range below, applied to
-  // share counts for the share gauges further down — a stable ceiling
-  // across the whole batch rather than whatever's active at a given
-  // hover moment.
-  const allShares=series.flatMap(s=>s.pts.map(p=>p.sh));
-  const dataMaxSh=allShares.length?Math.max(...allShares):0;
-  const shRange=Math.max(dataMaxSh*1.2,1);
   const dataMaxDay=active.length?Math.max(...series.map(s=>s.pts[s.pts.length-1].day)):(hasReal?realPts.length:1);
 
   // ── Scale ──
@@ -2087,11 +2013,14 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   // ── Endpoints: upside-down glass triangles marking the final point of
   // each curve, muted to match the app's own frosted panels (see
   // drawGlassTriangle) rather than a saturated colour shape. Each gets a
-  // single boxless two-line label stacked above it — capital on top,
-  // near-plateau monthly estimate below — no shares (redundant with the
-  // table), no dark outline stroke (the panels behind are dark enough
-  // without it), both lines at 80% opacity. Text is 20% smaller than the
-  // original pass (9px/11px line-gap -> 7.2px/8.8px). One shared
+  // boxless label stack above it — share count (neutral) on top, capital
+  // (strategy colour) under it, near-plateau monthly estimate under
+  // that, calendar duration at the bottom. Shares moved here from a
+  // dedicated on-chart gauge — position sizing already determines share
+  // count, so it only really matters relative to capital, which this
+  // stack already shows right below it; no dark outline stroke (the
+  // panels behind are dark enough without it). Text is 20% smaller than
+  // the original pass (9px/11px line-gap -> 7.2px/8.8px). One shared
   // collision pool keeps stacks that finish close together from
   // overlapping each other; a second curve-avoidance pass keeps a stack
   // from sitting on top of (or getting crossed by) a DIFFERENT line that
@@ -2099,6 +2028,10 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   const TRI_R=6.5,TRI_H=TRI_R*2.1;
   const TRI_LBL_GAP=9; // breathing room between the triangle's top edge and the label stack above it (was 4 — too tight)
   const LBL_SIZE=7.2,LBL_GAP=8.8;
+  // Share-count line: same size/weight as the capital line just below it
+  // (it's a peer numeric fact, not a footnote) but neutral-coloured, and
+  // real-log points never get one (no share concept there).
+  const SHR_GAP=8.8;
   // Third line added under the $/mo value: the same calendar ("1y 6mo")
   // formatting used by the rapid-growth callout and the hover day-tally,
   // applied to each strategy's own endpoint day. Smaller and dimmer than
@@ -2113,7 +2046,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   }
   for(const s of series){
     const last=s.pts[s.pts.length-1];
-    endpoints.push({x:Math.min(Math.max(xS(last.day),pd.l+24),pd.l+pw-24),y:yS(last.cap)-TRI_H-TRI_LBL_GAP-CAL_GAP,color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts),day:last.day});
+    endpoints.push({x:Math.min(Math.max(xS(last.day),pd.l+24),pd.l+pw-24),y:yS(last.cap)-TRI_H-TRI_LBL_GAP-CAL_GAP,color:s.color,cap:last.cap,sh:last.sh,mo:dvPlateauMoRate(s.pts),day:last.day});
   }
   // Measure each stack's footprint up front (same font used to draw it
   // below) so both anti-overlap passes can reason about actual width,
@@ -2123,6 +2056,11 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const capTxt='$'+fmt(ep.cap,0);
     const moTxt=(ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo';
     ep.lw=Math.max(ctx.measureText(capTxt).width,ctx.measureText(moTxt).width);
+    if(ep.sh!=null){
+      ctx.font=`${LBL_SIZE}px IBM Plex Mono`;
+      ep.shTxt=ep.sh.toLocaleString()+' sh';
+      ep.lw=Math.max(ep.lw,ctx.measureText(ep.shTxt).width);
+    }
     ctx.font=`${CAL_SIZE}px IBM Plex Mono`;
     ep.calTxt=cal(dayToCal(ep.day));
     ep.lw=Math.max(ep.lw,ctx.measureText(ep.calTxt).width);
@@ -2132,6 +2070,13 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   // against lines OTHER than the one it belongs to.
   const avoidCurves=series.map(s=>s.pts);
   if(hasReal)avoidCurves.push(realPts.map((p,i)=>({day:i,cap:p.cap})));
+  // Each endpoint's TRUE (unclamped) triangle position, for a separate
+  // obstacle check below — a curve's sampled path stops at its own last
+  // day (dvCapAtDay returns null past it), so a strategy that finishes
+  // EARLY wouldn't otherwise register as an obstacle for a label stack
+  // anchored further right at a still-running strategy's endpoint, even
+  // though that early-finisher's triangle marker is sitting right there.
+  const triObstacles=endpoints.map(e=>({x:xS(e.day),y:yS(e.cap)}));
   function dvCapAtDay(pts,day){
     if(!pts.length||day<pts[0].day||day>pts[pts.length-1].day)return null;
     for(let i=1;i<pts.length;i++){
@@ -2145,8 +2090,9 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   }
   function dvAvoidCurves(){
     let moved=false;
-    for(const ep of endpoints){
-      const blockBot=ep.labelY+CAL_GAP+CAL_SIZE+2,blockTop=ep.labelY-LBL_GAP-LBL_SIZE-2;
+    endpoints.forEach((ep,epI)=>{
+      const topGap=ep.sh!=null?(LBL_GAP+SHR_GAP):LBL_GAP;
+      const blockBot=ep.labelY+CAL_GAP+CAL_SIZE+2,blockTop=ep.labelY-topGap-LBL_SIZE-2;
       const halfW=ep.lw/2+3;
       for(const pts of avoidCurves){
         for(const sx of[ep.x-halfW,ep.x,ep.x+halfW]){
@@ -2160,20 +2106,78 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
           }
         }
       }
-    }
+      // A finished strategy's triangle sits at a fixed point past where
+      // its own curve stops being sampled above, so it needs its own
+      // direct box-vs-box check against every OTHER label's box — using
+      // the triangle's own full vertical span (its flat top edge sits
+      // TRI_H above the actual data point, per drawGlassTriangle) and
+      // horizontal half-width, not just its single apex coordinate,
+      // since the apex can clear a label's box while the wider top edge
+      // above it still pokes into it.
+      triObstacles.forEach((ob,obI)=>{
+        if(obI===epI)return;
+        if(ob.x<ep.x-halfW-TRI_R||ob.x>ep.x+halfW+TRI_R)return;
+        const obTop=ob.y-TRI_H,obBot=ob.y;
+        if(obBot>blockTop&&obTop<blockBot+4){
+          const req=obTop-7;
+          if(req<ep.labelY){ep.labelY=req;moved=true;}
+        }
+      });
+    });
     return moved;
   }
-  // minGap raised from 19 to 30 now that each point anchors a three-line
-  // stack ($ value, $/mo, calendar value) instead of two — the extra
-  // line adds roughly CAL_GAP+CAL_SIZE (~14px) of footprint per stack, so
-  // the old two-line-tuned gap let neighbouring three-line stacks visibly
-  // overlap even though their anchors were technically far enough apart
-  // under the old rule. Alternate the two anti-overlap passes a couple of
-  // times so a stack pushed up to clear a curve, or to clear another
-  // label, doesn't quietly reintroduce the other kind of collision.
-  for(let round=0;round<3;round++){
-    dvResolveLabelCollisions(endpoints,30);
+  // minGap raised again, 30 -> 39, now that simulated points anchor a
+  // four-line stack (shares, $ value, $/mo, calendar value) instead of
+  // three — the extra shares line adds roughly SHR_GAP+LBL_SIZE (~16px)
+  // of footprint, so the three-line-tuned gap would let neighbouring
+  // four-line stacks visibly overlap even though their anchors were
+  // technically far enough apart under the old rule. Alternate the two
+  // anti-overlap passes a couple of times so a stack pushed up to clear a
+  // curve, or to clear another label, doesn't quietly reintroduce the
+  // other kind of collision.
+  for(let round=0;round<6;round++){
+    dvResolveLabelCollisions(endpoints,39);
     if(!dvAvoidCurves())break;
+  }
+  // Hard floor at the canvas's own top edge: with several curves finishing
+  // close together right near the top of the frame, dvAvoidCurves can run
+  // out of room and keep pushing a stack up past pd.t entirely off-canvas
+  // (invisible, which is worse than a little crowding). Never let a
+  // stack's topmost line clear the visible top edge.
+  for(const ep of endpoints){
+    const topGap=ep.sh!=null?(LBL_GAP+SHR_GAP):LBL_GAP;
+    const minLabelY=pd.t+4+topGap+LBL_SIZE+2;
+    if(ep.labelY<minLabelY)ep.labelY=minLabelY;
+  }
+  // Last resort, horizontal: when several curves finish close together
+  // near the top of the frame, vertical room can run out entirely even
+  // with the floor above in place — several stacks end up pinned to
+  // (near) the same row with nowhere left to go vertically. Spread only
+  // the ones that are genuinely box-overlapping (both axes) apart along
+  // x instead; two stacks at a similar row height but already clear of
+  // each other horizontally are left alone.
+  endpoints.forEach(ep=>{if(ep.labelX===undefined)ep.labelX=ep.x;});
+  for(let pass=0;pass<6;pass++){
+    let moved=false;
+    for(let i=0;i<endpoints.length;i++){
+      for(let j=i+1;j<endpoints.length;j++){
+        const a=endpoints[i],b=endpoints[j];
+        const aTopGap=a.sh!=null?(LBL_GAP+SHR_GAP):LBL_GAP;
+        const bTopGap=b.sh!=null?(LBL_GAP+SHR_GAP):LBL_GAP;
+        const aTop=a.labelY-aTopGap-LBL_SIZE-2,aBot=a.labelY+CAL_GAP+CAL_SIZE+2;
+        const bTop=b.labelY-bTopGap-LBL_SIZE-2,bBot=b.labelY+CAL_GAP+CAL_SIZE+2;
+        if(aBot<bTop||bBot<aTop)continue;
+        const minSep=a.lw/2+b.lw/2+6;
+        const dx=b.labelX-a.labelX;
+        const sep=Math.abs(dx);
+        if(sep<minSep){
+          const push=(minSep-sep)/2,dir=dx>=0?1:-1;
+          a.labelX-=push*dir;b.labelX+=push*dir;
+          moved=true;
+        }
+      }
+    }
+    if(!moved)break;
   }
   for(const s of series){
     const last=s.pts[s.pts.length-1];
@@ -2191,15 +2195,22 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const capLy=moLy-LBL_GAP;
     const calLy=moLy+CAL_GAP;
     const [cr,cg,cb]=hexToRgb(ep.color);
+    const lx=ep.labelX!==undefined?ep.labelX:ep.x;
+    if(ep.sh!=null){
+      const shrLy=capLy-SHR_GAP;
+      ctx.font=`${LBL_SIZE}px IBM Plex Mono`;
+      ctx.fillStyle='rgba(226,230,237,.7)';
+      ctx.fillText(ep.shTxt,lx,shrLy);
+    }
     ctx.font=`${LBL_SIZE}px IBM Plex Mono`;
     ctx.fillStyle=`rgba(${cr},${cg},${cb},.8)`;
-    ctx.fillText('$'+fmt(ep.cap,0),ep.x,capLy);
+    ctx.fillText('$'+fmt(ep.cap,0),lx,capLy);
     ctx.font=`bold ${LBL_SIZE}px IBM Plex Mono`;
     ctx.fillStyle='rgba(255,255,255,.8)';
-    ctx.fillText((ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo',ep.x,moLy);
+    ctx.fillText((ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo',lx,moLy);
     ctx.font=`${CAL_SIZE}px IBM Plex Mono`;
     ctx.fillStyle=`rgba(${cr},${cg},${cb},.55)`;
-    ctx.fillText(ep.calTxt,ep.x,calLy);
+    ctx.fillText(ep.calTxt,lx,calLy);
   }
 
   cv._race={series,realPts,hasReal,pd,pw,ph,xS,yS,maxDay,dayToCal};
@@ -2244,59 +2255,41 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       const clampedDay=Math.min(hoverDay,ownFinalDay);
       let pt=null;
       for(const p of s.pts){if(p.day<=clampedDay)pt=p;else break;}
-      if(pt)hoverPts.push({color:s.color,cap:pt.cap,sh:pt.sh,dotX:st.xS(clampedDay),dotY:st.yS(pt.cap)});
+      if(pt)hoverPts.push({color:s.color,cap:pt.cap,dotX:st.xS(clampedDay),dotY:st.yS(pt.cap)});
     }
     for(const hp of hoverPts){
       drawGlassCircle(ctx,hp.dotX,hp.dotY,7.15);
     }
-    const chartW=st.pd.l+st.pw+st.pd.r;
 
-    // Capital tallies: static dock on the LEFT now, directly under the
-    // "time to rapid growth" HTML overlay — that overlay's own box (see
-    // .rg-overlay) is defined as the top 47% of this same canvas, so its
-    // bottom edge in canvas-space is just H*.47. No strategy-letter
-    // prefix, no accent bar — colour lives only in the bottom
-    // accumulation bar (see dvGlassTally), value text stays neutral.
-    // Every row is drawn at one FIXED width, measured off the chart's
-    // own capital ceiling (`maxCap`, the same 20%-over-batch-max value
-    // already driving the Y axis) rather than off whatever's actually
-    // hovered — a row's width no longer changes as the hovered value's
-    // digit count changes, which was what made "who's ahead" unreadable.
-    // The bar's fraction reuses that same ceiling as its denominator too,
-    // so its length is a stable, absolute capital read — not relative to
-    // just whichever strategies happen to be active at this exact hover
-    // moment (that read like a race-to-finish-day indicator, not a
-    // capital gauge).
+    // Capital tallies: attached directly under the day-tally circle now
+    // instead of a separately-static dock, sharing its x position (`cx`,
+    // the same value the day-tally DOM element above is positioned at)
+    // so the two move together as one hover readout — with a gap below
+    // the circle's own footprint (55.8px diameter, see .dv-daytally) for
+    // "room to breathe" rather than butting up against it. Share counts
+    // moved out entirely (see the endpoint-triangle labels above, where
+    // they now live instead) since a per-strategy share number only
+    // really mattered relative to capital, which this stack already
+    // shows. Colour coding simplified back down to a single border per
+    // pill (see dvGlassTally) — no accent bar, no bottom bar, no letter
+    // prefix; value text stays neutral. Width still fixed off the
+    // chart's own capital ceiling (`maxCap`, the same 20%-over-batch-max
+    // value driving the Y axis) so pills never resize as the hovered
+    // value's digit count changes. Horizontal centre is clamped to stay
+    // fully on-canvas near the chart's left/right edges, same defensive
+    // pattern the endpoint labels already use.
     ctx.font='8px IBM Plex Mono';ctx.textAlign='left';
     const tallyRowH=14,tallyGap=3;
     const tallyBoxW=ctx.measureText('$'+fmt(maxCap,0)).width+16;
-    const tallyX=st.pd.l;
-    let tallyY=H*0.47+8;
+    const DT_R=27.9,tallyGapBelowCircle=14; // DT_R = half of .dv-daytally's 55.8px diameter
+    const tallyCX=Math.min(Math.max(cx,st.pd.l+tallyBoxW/2),st.pd.l+st.pw-tallyBoxW/2);
+    const tallyX=tallyCX-tallyBoxW/2;
+    let tallyY=dayLabelY+DT_R+tallyGapBelowCircle;
     for(const hp of hoverPts){
-      const barFrac=hp.cap/maxCap;
-      dvGlassTally(ctx,tallyX,tallyY,tallyBoxW,tallyRowH,barFrac,hexToRgb(hp.color));
+      dvGlassTally(ctx,tallyX,tallyY,tallyBoxW,tallyRowH,hexToRgb(hp.color));
       ctx.fillStyle='rgba(226,230,237,.75)';
       ctx.fillText('$'+fmt(hp.cap,0),tallyX+8,tallyY+tallyRowH/2+3);
       tallyY+=tallyRowH+tallyGap;
-    }
-
-    // Share-count gauges: split out into their own half-circle dial (see
-    // dvGlassGauge) and docked where the old combined capital+shares
-    // tally used to sit — bottom-right, 5% off the chart's true right
-    // edge (full canvas width, not just the inner plot width, same "5%
-    // from the right side" reading as before). Same range convention as
-    // the capital bars (20% headroom over the batch's highest share
-    // count) and the same "colour lives only in the line" rule, just
-    // arced across the top of the dome instead of run along a rectangle's
-    // bottom edge.
-    const gR=22,gGap=10;
-    const gRowW=hoverPts.length*gR*2+Math.max(0,hoverPts.length-1)*gGap;
-    const gMarginR=chartW*.05,gMarginB=8;
-    let gX=chartW-gMarginR-gRowW+gR;
-    const gY=st.pd.t+st.ph-gMarginB;
-    for(const hp of hoverPts){
-      dvGlassGauge(ctx,gX,gY,gR,hp.sh/shRange,hexToRgb(hp.color),hp.sh);
-      gX+=gR*2+gGap;
     }
   }else if(dtEl){
     dtEl.classList.remove('show');
@@ -2321,6 +2314,15 @@ function dvResolveLabelCollisions(points,minGap){
         a.labelY-=shift;b.labelY+=shift;
         moved=true;
       }
+    }
+    // Re-clamped every pass (not just once at the end) so this floor and
+    // the mutual-spacing pass above converge together instead of one
+    // undoing the other: never let a point drift down past its own
+    // untouched default (`y`, already tuned to clear ITS OWN triangle by
+    // TRI_LBL_GAP) just to make room for a neighbour above it — that
+    // trade was landing a label back on top of its own marker.
+    for(const p of points){
+      if(p.labelY>p.y){p.labelY=p.y;moved=true;}
     }
     if(!moved)break;
   }
