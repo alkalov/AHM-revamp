@@ -1119,13 +1119,27 @@ function hexToRgb(hex){
    out of that reach — e.g. an endpoint label near the right edge of a
    chart — gets flat glass with no highlight, since nothing would
    realistically be lighting it from that corner. */
-// Neutral background used for label boxes that should blend into the
-// chart panel behind the canvas rather than announce themselves in a
-// strategy's colour — only the text should carry that.
-const BG_PANEL_RGB=[16,20,29];
 // Table row badge for a strategy's own rapid-growth day — same ring +
 // dot design as the chart's on-curve marker, just as an inline SVG.
 const RG_BADGE_SVG='<svg class="rg-row-badge" viewBox="0 0 16 16" width="10" height="10"><circle cx="8" cy="8" r="6" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="8" cy="8" r="2.2" fill="#fff"/></svg> ';
+// The "running tally" hover-value chips — deliberately styled to match
+// the table's own <thead> (rgba(18,23,33,.48-ish), a soft drop shadow,
+// a faint bottom highlight) rather than the glassLabelBox treatment, so
+// a value scrubbed on the chart reads as the same kind of surface as the
+// column headers in the table right below it.
+function dvGlassTally(ctx,x,y,w,h){
+  const r=Math.min(5,h/2);
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,.5)';ctx.shadowBlur=6;ctx.shadowOffsetY=2;
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+  ctx.fillStyle='rgba(18,23,33,.62)';ctx.fill();
+  ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x+r*.5,y+h-.5);ctx.lineTo(x+w-r*.5,y+h-.5);ctx.stroke();
+  ctx.restore();
+}
 function glassLabelBox(ctx,x,y,w,h,rgb,litZone){
   const r=Math.min(5,h/2);
   ctx.save();
@@ -1215,40 +1229,32 @@ function drawGlassSphere(ctx,x,y,r,rgb){
    without covering the point itself. Same restrained glass treatment
    as the sphere (bloom, shadow, gradient body, small highlight) with
    no prism, kept simple since a triangle reads clearly at small size. */
+// Muted to match the app's own frosted-glass panels (the same treatment
+// as the .chart-panel card on the SIM tab: a mostly-neutral dark surface,
+// a faint diagonal gloss, a thin border) instead of a saturated colour
+// gem — still identifiable as "this strategy" via a low-key colour tint
+// and its border, just not shouting for attention the way a solid-colour
+// shape would.
 function drawGlassTriangle(ctx,x,y,r,rgb){
   const [cr,cg,cb]=rgb;
   const w=r*1.9,h=r*2.1;
   const topY=y-h,leftX=x-w/2,rightX=x+w/2;
   ctx.save();
 
-  const bloom=ctx.createRadialGradient(x,y-h*.4,0,x,y-h*.4,r*1.7);
-  bloom.addColorStop(0,`rgba(${cr},${cg},${cb},.14)`);
-  bloom.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=bloom;
-  ctx.beginPath();ctx.arc(x,y-h*.4,r*1.7,0,Math.PI*2);ctx.fill();
-
-  ctx.save();
-  ctx.translate(x,y+r*.3);ctx.scale(1,.3);
-  const shadow=ctx.createRadialGradient(0,0,0,0,0,r*.9);
-  shadow.addColorStop(0,'rgba(0,0,0,.3)');shadow.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=shadow;
-  ctx.beginPath();ctx.arc(0,0,r*.9,0,Math.PI*2);ctx.fill();
-  ctx.restore();
-
   ctx.beginPath();
   ctx.moveTo(leftX,topY);ctx.lineTo(rightX,topY);ctx.lineTo(x,y);ctx.closePath();
-  const body=ctx.createLinearGradient(x,topY,x,y);
-  body.addColorStop(0,`rgba(${Math.min(255,cr+120)},${Math.min(255,cg+120)},${Math.min(255,cb+120)},.8)`);
-  body.addColorStop(.45,`rgba(${cr},${cg},${cb},.76)`);
-  body.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.68)`);
-  ctx.fillStyle=body;ctx.fill();
-  ctx.lineWidth=.8;ctx.strokeStyle=`rgba(${cr},${cg},${cb},.35)`;ctx.stroke();
+  // Neutral panel base (matches .chart-panel's rgba(18,23,33,.42)) with
+  // just a low-alpha wash of the strategy's colour over it.
+  ctx.fillStyle='rgba(18,23,33,.82)';ctx.fill();
+  ctx.fillStyle=`rgba(${cr},${cg},${cb},.22)`;ctx.fill();
+  ctx.lineWidth=.8;ctx.strokeStyle=`rgba(${cr},${cg},${cb},.4)`;ctx.stroke();
 
   ctx.save();
   ctx.clip();
-  const hi=ctx.createLinearGradient(leftX,topY,leftX+w*.5,topY+h*.5);
-  hi.addColorStop(0,'rgba(255,255,255,.4)');hi.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.fillStyle=hi;ctx.fillRect(leftX,topY,w,h);
+  // Faint diagonal gloss, same 135deg white sheen the panels use.
+  const gloss=ctx.createLinearGradient(leftX,topY,rightX,y);
+  gloss.addColorStop(0,'rgba(255,255,255,.1)');gloss.addColorStop(.55,'rgba(255,255,255,0)');
+  ctx.fillStyle=gloss;ctx.fillRect(leftX,topY,w,h);
   ctx.restore();
 
   ctx.restore();
@@ -1374,7 +1380,12 @@ function buildDiag(c,cumPnl,days,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,
   const frPct=Math.abs(cumPnl+frTot)>0?(frTot/Math.abs(cumPnl+frTot))*100:0;
   const minWR=(c.avgL*(1-c.be))/(c.avgP+c.avgL);const wrB=((c.wr-minWR)*100).toFixed(1);
   const actRR=c.avgL>0?c.avgP/c.avgL:0;
-  const mo=c.evNet*21,evTr=c.evDol-c.frTr;
+  // Near-plateau rate (last ~15% of the run), not the whole-run EV/day
+  // average — matches the chart's "$/mo" figures rather than diluting
+  // the number with the strategy's early ramp-up days.
+  const _res=simResults[tab];
+  const mo=_res&&_res.rows&&_res.rows.length>1?dvPlateauMoRate(_res.rows.map(r=>({day:r.day,cap:acct0+r.cumPnl}))):c.evNet*21;
+  const evTr=c.evDol-c.frTr;
   const dts=c.evNet>0?Math.ceil(c.avgPr/c.evNet):null;const wrOk=c.wr>=minWR;
   const rCapS=+$('rCapS').value||0;
 
@@ -1779,58 +1790,41 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   }
 
   // On-chart marker for the rapid-growth point found above, drawn after
-  // the lines so it visibly sits on top of the curve it belongs to.
+  // the lines so it visibly sits on top of the curve it belongs to. Now
+  // rendered as a (white) glass sphere, matching the hover orbs, instead
+  // of a plain stroked ring.
   if(rapid){
     const mx=xS(rapid.day),my=yS(rapid.cap);
     ctx.save();
     ctx.strokeStyle='rgba(255,255,255,.45)';ctx.setLineDash([2,3]);ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(mx,pd.t+ph);ctx.lineTo(mx,my);ctx.stroke();
     ctx.setLineDash([]);
-    ctx.beginPath();ctx.arc(mx,my,7,0,Math.PI*2);
-    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
-    ctx.beginPath();ctx.arc(mx,my,2.5,0,Math.PI*2);
-    ctx.fillStyle='#fff';ctx.fill();
     ctx.restore();
+    drawGlassSphere(ctx,mx,my,6,[255,255,255]);
   }
 
   // ── Endpoints: upside-down glass triangles marking the final point of
-  // each curve. Two labels per endpoint, both boxless text (a dark
-  // outline stroke keeps them legible without a background panel):
-  //   1. "$cap · shares" — magnetically stacked against its neighbors so
-  //      two similar finishes never overlap (dvResolveLabelCollisions).
-  //   2. "$X/mo" in opaque white, sitting just above the triangle's flat
-  //      top edge as a simple closure marker for the calculation.
-  // Both label groups (cap/share below+beside each triangle, $/mo above
-  // it) go into ONE shared collision-resolution pool. Resolving them
-  // separately let a crowded "$/mo" stack drift down into the cap/share
-  // stack below it (and vice versa) when several strategies finish at
-  // nearly the same point — pooling them keeps every label at least
-  // minGap from every OTHER label, of either kind.
-  const endpoints=[],moPoints=[];
+  // each curve, muted to match the app's own frosted panels (see
+  // drawGlassTriangle) rather than a saturated colour shape. Each gets a
+  // single boxless two-line label stacked above it — capital on top,
+  // near-plateau monthly estimate below — no shares (redundant with the
+  // table), no dark outline stroke (the panels behind are dark enough
+  // without it), both lines at 80% opacity. One shared collision pool
+  // keeps stacks that finish close together from overlapping.
+  const TRI_R=6.5,TRI_H=TRI_R*2.1;
+  const endpoints=[];
   if(hasReal){
     const lastR=realPts[realPts.length-1];
-    endpoints.push({x:xS(realPts.length-1),y:yS(lastR.cap),color:'#e2e6ed',text:'$'+fmt(lastR.cap,0)+' real'});
-  }
-  for(const s of series){
-    const last=s.pts[s.pts.length-1];
-    const ex=xS(last.day),ey=yS(last.cap);
-    endpoints.push({x:ex,y:ey,color:s.color,text:'$'+fmt(last.cap,0)+' · '+last.sh.toLocaleString()+'sh'});
-  }
-  const TRI_R=6.5,TRI_H=TRI_R*2.1;
-  // Near-plateau rate (last ~15% of the run), not the whole-history
-  // average — the early ramp-up days otherwise drag the figure down
-  // below what the strategy is actually doing by the end of the table.
-  for(const s of series){
-    const last=s.pts[s.pts.length-1];
-    moPoints.push({x:Math.min(Math.max(xS(last.day),pd.l+24),pd.l+pw-24),y:yS(last.cap)-TRI_H-4,mo:dvPlateauMoRate(s.pts)});
-  }
-  if(hasReal&&realPts.length>1){
-    const lastR=realPts[realPts.length-1];
     const realAsPts=realPts.map((p,i)=>({day:i,cap:p.cap}));
-    const moReal=dvPlateauMoRate(realAsPts);
-    moPoints.push({x:Math.min(Math.max(xS(realPts.length-1),pd.l+24),pd.l+pw-24),y:yS(lastR.cap)-TRI_H-4,mo:moReal});
+    endpoints.push({x:Math.min(Math.max(xS(realPts.length-1),pd.l+24),pd.l+pw-24),y:yS(lastR.cap)-TRI_H-4,color:'#e2e6ed',cap:lastR.cap,mo:dvPlateauMoRate(realAsPts)});
   }
-  dvResolveLabelCollisions([...endpoints,...moPoints],12);
+  for(const s of series){
+    const last=s.pts[s.pts.length-1];
+    endpoints.push({x:Math.min(Math.max(xS(last.day),pd.l+24),pd.l+pw-24),y:yS(last.cap)-TRI_H-4,color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts)});
+  }
+  // minGap of 24 (not the usual 11-12) since each point here anchors a
+  // two-line stack, not a single line — neighbors need room for both.
+  dvResolveLabelCollisions(endpoints,24);
   for(const s of series){
     const last=s.pts[s.pts.length-1];
     const [r,g,b]=hexToRgb(s.color);
@@ -1841,18 +1835,17 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const [r,g,b]=hexToRgb('#e2e6ed');
     drawGlassTriangle(ctx,xS(realPts.length-1),yS(lastR.cap),TRI_R,[r,g,b]);
   }
-  ctx.font='9px IBM Plex Mono';ctx.textAlign='left';ctx.lineJoin='round';
+  ctx.textAlign='center';
   for(const ep of endpoints){
-    const ly=ep.labelY!==undefined?ep.labelY:ep.y+3;
-    ctx.lineWidth=3;ctx.strokeStyle='rgba(10,12,18,.65)';ctx.strokeText(ep.text,ep.x+8,ly);
-    ctx.fillStyle=ep.color;ctx.fillText(ep.text,ep.x+8,ly);
-  }
-  ctx.font='bold 9px IBM Plex Mono';ctx.textAlign='center';
-  for(const mp of moPoints){
-    const ly=mp.labelY!==undefined?mp.labelY:mp.y;
-    const moText=(mp.mo>=0?'+$':'−$')+fmt(Math.abs(mp.mo),0)+'/mo';
-    ctx.lineWidth=3;ctx.strokeStyle='rgba(10,12,18,.7)';ctx.strokeText(moText,mp.x,ly);
-    ctx.fillStyle='#fff';ctx.fillText(moText,mp.x,ly);
+    const moLy=ep.labelY!==undefined?ep.labelY:ep.y;
+    const capLy=moLy-11;
+    const [cr,cg,cb]=hexToRgb(ep.color);
+    ctx.font='9px IBM Plex Mono';
+    ctx.fillStyle=`rgba(${cr},${cg},${cb},.8)`;
+    ctx.fillText('$'+fmt(ep.cap,0),ep.x,capLy);
+    ctx.font='bold 9px IBM Plex Mono';
+    ctx.fillStyle='rgba(255,255,255,.8)';
+    ctx.fillText((ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo',ep.x,moLy);
   }
 
   cv._race={series,realPts,hasReal,pd,pw,ph,xS,yS,maxDay,dayToCal};
@@ -1900,7 +1893,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       const ly=hp.labelY!==undefined?hp.labelY:hp.y-6;
       const lw=ctx.measureText(hp.text).width;
       const labelX=Math.min(hp.x+10,st.pd.l+st.pw-lw-4);
-      glassLabelBox(ctx,labelX-4,ly-9,lw+8,13,BG_PANEL_RGB,labelX<st.pd.l+st.pw*.5&&ly<st.pd.t+st.ph*.5);
+      dvGlassTally(ctx,labelX-4,ly-9,lw+8,13);
       ctx.fillStyle=hp.color;ctx.fillText(hp.text,labelX,ly);
     }
   }
@@ -2681,7 +2674,7 @@ function renderStratComparison(){
     badgeText=active.length+' Strategies';badgeCls='vs-badge ahead';
     const metrics=[
       {lbl:'EV / Day',get:r=>r.c.evNet,fmt:v=>sgn(v),better:'higher'},
-      {lbl:'Monthly Est',get:r=>r.c.evNet*21,fmt:v=>sgn(v),better:'higher'},
+      {lbl:'Monthly Est',get:r=>dvPlateauMoRate(r.rows.map(x=>({day:x.day,cap:r.acct0+x.cumPnl}))),fmt:v=>sgn(v),better:'higher'},
       {lbl:'Time to Goal',get:r=>(r.rows.length/252)*12,fmt:v=>cal(v),better:'lower'},
       {lbl:'Win Rate',get:r=>r.c.wr*100,fmt:v=>v.toFixed(1)+'%',better:'higher'},
       {lbl:'R:R Ratio',get:r=>r.c.avgL>0?r.c.avgP/r.c.avgL:0,fmt:v=>v.toFixed(2)+':1',better:'higher'},
