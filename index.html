@@ -275,18 +275,25 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    blocks hover/touch on the canvas beneath it. Fades in via JS toggling
    .show (see dvUpdateRapidOverlay) rather than drawing on every redraw. */
 .rg-overlay{
-  position:absolute;top:0;left:0;width:52%;height:52%;
-  padding:10px 12px;box-sizing:border-box;
-  display:flex;flex-direction:column;justify-content:space-between;
-  pointer-events:none;opacity:0;transition:opacity 4s ease;z-index:2;
+  position:absolute;top:0;left:0;width:50%;height:50%; /* exactly 25% of the chart's area */
+  padding:8px 10px;box-sizing:border-box;
+  display:flex;align-items:center;justify-content:flex-start;
+  pointer-events:none;opacity:0;transition:opacity 7s ease;z-index:2;
 }
 .rg-overlay.show{opacity:1;}
-.rg-top{display:flex;justify-content:flex-end;align-items:flex-start;gap:8px;}
-.rg-time{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;color:#e2e6ed;white-space:nowrap;}
+/* Time value is absolutely positioned so it lands directly over the big
+   word text below rather than in a separate row above it — a number
+   layered onto the title graphic, not a header next to it. Same colour
+   and opacity as .rg-bottom so the two read as one composited callout. */
+.rg-time{
+  position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:26px;
+  color:rgba(226,230,237,.38);white-space:nowrap;z-index:1;
+}
 .rg-bottom{
-  font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:22px;
-  line-height:.92;letter-spacing:-.01em;text-transform:uppercase;
-  color:rgba(226,230,237,.38);align-self:flex-start;
+  font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:32px;
+  line-height:.86;letter-spacing:-.01em;text-transform:uppercase;
+  color:rgba(226,230,237,.38);
 }
 .rg-row-badge{vertical-align:-1px;margin-right:2px;}
 .chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #232b3d;}
@@ -521,8 +528,8 @@ canvas.spark{width:100%;height:34px;display:block;}
       <div class="chart-wrap" style="height:100%;">
         <canvas class="eqcv" id="dv-cv"></canvas>
         <div class="rg-overlay" id="rg-overlay">
-          <div class="rg-top"><span class="rg-time" id="rg-time">—</span></div>
           <div class="rg-bottom">to rapid growth</div>
+          <span class="rg-time" id="rg-time">—</span>
         </div>
       </div>
     </div>
@@ -1231,9 +1238,10 @@ function drawGlassBullseye(ctx,x,y,r,rgb){
   const lightX=x-r*0.35,lightY=y-r*0.4;
   ctx.save();
 
-  /* tight, dim bloom — just enough to lift the ring off the chart */
+  /* tight, dim bloom — just enough to lift the ring off the chart.
+     Alphas throughout this function are +5% over the previous pass. */
   const bloom=ctx.createRadialGradient(x,y,0,x,y,r*1.7);
-  bloom.addColorStop(0,`rgba(${cr},${cg},${cb},.12)`);
+  bloom.addColorStop(0,`rgba(${cr},${cg},${cb},.13)`);
   bloom.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=bloom;
   ctx.beginPath();ctx.arc(x,y,r*1.7,0,Math.PI*2);ctx.fill();
@@ -1247,24 +1255,24 @@ function drawGlassBullseye(ctx,x,y,r,rgb){
   ctx.arc(x,y,ringInner,0,Math.PI*2,true);
   ctx.clip('evenodd');
   const ringFill=ctx.createRadialGradient(lightX,lightY,0,x,y,ringOuter*1.15);
-  ringFill.addColorStop(0,`rgba(${Math.min(255,cr+100)},${Math.min(255,cg+100)},${Math.min(255,cb+100)},.5)`);
-  ringFill.addColorStop(.6,`rgba(${cr},${cg},${cb},.3)`);
-  ringFill.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.26)`);
+  ringFill.addColorStop(0,`rgba(${Math.min(255,cr+100)},${Math.min(255,cg+100)},${Math.min(255,cb+100)},.53)`);
+  ringFill.addColorStop(.6,`rgba(${cr},${cg},${cb},.32)`);
+  ringFill.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.27)`);
   ctx.fillStyle=ringFill;
   ctx.fillRect(x-ringOuter-2,y-ringOuter-2,(ringOuter+2)*2,(ringOuter+2)*2);
   ctx.restore();
   ctx.lineWidth=.8;
-  ctx.strokeStyle=`rgba(${cr},${cg},${cb},.5)`;
+  ctx.strokeStyle=`rgba(${cr},${cg},${cb},.53)`;
   ctx.beginPath();ctx.arc(x,y,ringOuter,0,Math.PI*2);ctx.stroke();
-  ctx.strokeStyle=`rgba(${cr},${cg},${cb},.32)`;
+  ctx.strokeStyle=`rgba(${cr},${cg},${cb},.34)`;
   ctx.beginPath();ctx.arc(x,y,ringInner,0,Math.PI*2);ctx.stroke();
 
   /* center dot: a small glass sphere, not a flat fill */
   const dotR=r*.34;
   const body=ctx.createRadialGradient(lightX,lightY,dotR*.1,x,y,dotR*1.05);
-  body.addColorStop(0,`rgba(${Math.min(255,cr+130)},${Math.min(255,cg+130)},${Math.min(255,cb+130)},.85)`);
-  body.addColorStop(.5,`rgba(${cr},${cg},${cb},.7)`);
-  body.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.6)`);
+  body.addColorStop(0,`rgba(${Math.min(255,cr+130)},${Math.min(255,cg+130)},${Math.min(255,cb+130)},.89)`);
+  body.addColorStop(.5,`rgba(${cr},${cg},${cb},.74)`);
+  body.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.63)`);
   ctx.beginPath();ctx.arc(x,y,dotR,0,Math.PI*2);
   ctx.fillStyle=body;ctx.fill();
 
@@ -1852,7 +1860,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     ctx.beginPath();ctx.moveTo(mx,pd.t+ph);ctx.lineTo(mx,my);ctx.stroke();
     ctx.setLineDash([]);
     ctx.restore();
-    drawGlassBullseye(ctx,mx,my,7,[255,255,255]);
+    drawGlassBullseye(ctx,mx,my,9.1,[255,255,255]);
   }
 
   // ── Endpoints: upside-down glass triangles marking the final point of
@@ -1861,9 +1869,14 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   // single boxless two-line label stacked above it — capital on top,
   // near-plateau monthly estimate below — no shares (redundant with the
   // table), no dark outline stroke (the panels behind are dark enough
-  // without it), both lines at 80% opacity. One shared collision pool
-  // keeps stacks that finish close together from overlapping.
+  // without it), both lines at 80% opacity. Text is 20% smaller than the
+  // original pass (9px/11px line-gap -> 7.2px/8.8px). One shared
+  // collision pool keeps stacks that finish close together from
+  // overlapping each other; a second curve-avoidance pass keeps a stack
+  // from sitting on top of (or getting crossed by) a DIFFERENT line that
+  // is still rising through that point in time.
   const TRI_R=6.5,TRI_H=TRI_R*2.1;
+  const LBL_SIZE=7.2,LBL_GAP=8.8;
   const endpoints=[];
   if(hasReal){
     const lastR=realPts[realPts.length-1];
@@ -1874,9 +1887,60 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const last=s.pts[s.pts.length-1];
     endpoints.push({x:Math.min(Math.max(xS(last.day),pd.l+24),pd.l+pw-24),y:yS(last.cap)-TRI_H-4,color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts)});
   }
-  // minGap of 24 (not the usual 11-12) since each point here anchors a
-  // two-line stack, not a single line — neighbors need room for both.
-  dvResolveLabelCollisions(endpoints,24);
+  // Measure each stack's footprint up front (same font used to draw it
+  // below) so both anti-overlap passes can reason about actual width,
+  // not just a point.
+  ctx.font=`bold ${LBL_SIZE}px IBM Plex Mono`;
+  for(const ep of endpoints){
+    const capTxt='$'+fmt(ep.cap,0);
+    const moTxt=(ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo';
+    ep.lw=Math.max(ctx.measureText(capTxt).width,ctx.measureText(moTxt).width);
+  }
+  // Every plotted line, in day-domain points, so a label can be checked
+  // against lines OTHER than the one it belongs to.
+  const avoidCurves=series.map(s=>s.pts);
+  if(hasReal)avoidCurves.push(realPts.map((p,i)=>({day:i,cap:p.cap})));
+  function dvCapAtDay(pts,day){
+    if(!pts.length||day<pts[0].day||day>pts[pts.length-1].day)return null;
+    for(let i=1;i<pts.length;i++){
+      if(pts[i].day>=day){
+        const p0=pts[i-1],p1=pts[i];
+        const t=(day-p0.day)/((p1.day-p0.day)||1);
+        return p0.cap+(p1.cap-p0.cap)*t;
+      }
+    }
+    return pts[pts.length-1].cap;
+  }
+  function dvAvoidCurves(){
+    let moved=false;
+    for(const ep of endpoints){
+      const blockBot=ep.labelY+3,blockTop=ep.labelY-LBL_GAP-LBL_SIZE-2;
+      const halfW=ep.lw/2+3;
+      for(const pts of avoidCurves){
+        for(const sx of[ep.x-halfW,ep.x,ep.x+halfW]){
+          const day=Math.max(0,Math.min(maxDay,((sx-pd.l)/pw)*maxDay));
+          const cap=dvCapAtDay(pts,day);
+          if(cap==null)continue;
+          const cy=yS(cap);
+          if(cy>blockTop&&cy<blockBot+4){
+            const req=cy-7;
+            if(req<ep.labelY){ep.labelY=req;moved=true;}
+          }
+        }
+      }
+    }
+    return moved;
+  }
+  // minGap of 19 (scaled down with the smaller font, from the original
+  // 24) since each point here anchors a two-line stack, not a single
+  // line — neighbors need room for both. Alternate the two anti-overlap
+  // passes a couple of times so a stack pushed up to clear a curve, or
+  // to clear another label, doesn't quietly reintroduce the other kind
+  // of collision.
+  for(let round=0;round<3;round++){
+    dvResolveLabelCollisions(endpoints,19);
+    if(!dvAvoidCurves())break;
+  }
   for(const s of series){
     const last=s.pts[s.pts.length-1];
     const [r,g,b]=hexToRgb(s.color);
@@ -1890,12 +1954,12 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   ctx.textAlign='center';
   for(const ep of endpoints){
     const moLy=ep.labelY!==undefined?ep.labelY:ep.y;
-    const capLy=moLy-11;
+    const capLy=moLy-LBL_GAP;
     const [cr,cg,cb]=hexToRgb(ep.color);
-    ctx.font='9px IBM Plex Mono';
+    ctx.font=`${LBL_SIZE}px IBM Plex Mono`;
     ctx.fillStyle=`rgba(${cr},${cg},${cb},.8)`;
     ctx.fillText('$'+fmt(ep.cap,0),ep.x,capLy);
-    ctx.font='bold 9px IBM Plex Mono';
+    ctx.font=`bold ${LBL_SIZE}px IBM Plex Mono`;
     ctx.fillStyle='rgba(255,255,255,.8)';
     ctx.fillText((ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo',ep.x,moLy);
   }
