@@ -147,15 +147,15 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
 #sp0 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(56,189,248,.18);}
 #sp1 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(251,146,60,.18);}
 #sp2 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(167,139,250,.18);}
-#sp3 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(129,140,248,.18);}
-#sp4 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(232,121,249,.18);}
-#sp5 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(244,114,182,.18);}
+#sp3 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(132,204,22,.18);}
+#sp4 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(239,68,68,.18);}
+#sp5 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(236,72,153,.18);}
 #sp0 .circ-btn.sel+.circ-label{color:#38bdf8;}
 #sp1 .circ-btn.sel+.circ-label{color:#fb923c;}
 #sp2 .circ-btn.sel+.circ-label{color:#a78bfa;}
-#sp3 .circ-btn.sel+.circ-label{color:#818cf8;}
-#sp4 .circ-btn.sel+.circ-label{color:#e879f9;}
-#sp5 .circ-btn.sel+.circ-label{color:#f472b6;}
+#sp3 .circ-btn.sel+.circ-label{color:#84cc16;}
+#sp4 .circ-btn.sel+.circ-label{color:#ef4444;}
+#sp5 .circ-btn.sel+.circ-label{color:#ec4899;}
 
 /* Press bloom: fast "hot" glow the instant a control is pressed, eased
    back to resting state on release. Trigger is a JS-added .pressed
@@ -209,14 +209,14 @@ tr.sel-day{transition:background .5s ease;}
 .nb-pip{position:absolute;top:4px;right:calc(50% - 13px);width:5px;height:5px;border-radius:50%;background:var(--accent);display:none;}
 .nb-pip.on{display:block;}
 .slbl{padding:5px 16px 4px;font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.2em;border-bottom:1px solid #232b3d;background:#0a0d13;position:sticky;top:0;z-index:20;}
-.sbar{display:flex;border-bottom:1px solid #232b3d;background:#10141c;}
+.sbar{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #232b3d;background:#10141c;}
 .sbtn{flex:1;height:34px;background:none;border:none;border-bottom:1px solid transparent;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#4d5a6e;cursor:pointer;transition:color .12s,border-color .12s;}
 .sbtn.on{color:#38bdf8;border-color:#38bdf8;}
 .sbtn.on.sc-b{color:#fb923c;border-color:#fb923c;}
 .sbtn.on.sc-c{color:#a78bfa;border-color:#a78bfa;}
-.sbtn.on.sc-d{color:#818cf8;border-color:#818cf8;}
-.sbtn.on.sc-e{color:#e879f9;border-color:#e879f9;}
-.sbtn.on.sc-f{color:#f472b6;border-color:#f472b6;}
+.sbtn.on.sc-d{color:#84cc16;border-color:#84cc16;}
+.sbtn.on.sc-e{color:#ef4444;border-color:#ef4444;}
+.sbtn.on.sc-f{color:#ec4899;border-color:#ec4899;}
 .ovr-badge{font-size:7px;background:rgba(251,191,36,.1);color:#fbbf24;padding:1px 6px;border-radius:2px;letter-spacing:.1em;text-transform:uppercase;display:none;border:1px solid rgba(251,191,36,.2);}
 .ovr-badge.on{display:block;}
 
@@ -288,9 +288,9 @@ tr.sel-day{transition:background .5s ease;}
 .sim-btn:active{opacity:.82;}
 .sim-btn.sc-b{background:#fb923c;color:#0a0d13;}
 .sim-btn.sc-c{background:#a78bfa;color:#0a0d13;}
-.sim-btn.sc-d{background:#818cf8;color:#0a0d13;}
-.sim-btn.sc-e{background:#e879f9;color:#0a0d13;}
-.sim-btn.sc-f{background:#f472b6;color:#0a0d13;}
+.sim-btn.sc-d{background:#84cc16;color:#0a0d13;}
+.sim-btn.sc-e{background:#ef4444;color:#0a0d13;}
+.sim-btn.sc-f{background:#ec4899;color:#0a0d13;}
 .exp-btn{height:42px;padding:0 12px;background:transparent;border:1px solid #232b3d;color:#4d5a6e;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:3px;touch-action:manipulation;}
 .exp-btn:active{border-color:var(--accent-solid);color:var(--accent-solid);}
 .mode-row{padding:5px 16px 7px;border-bottom:1px solid #232b3d;display:flex;align-items:center;gap:8px;background:#10141c;}
@@ -474,10 +474,23 @@ tr.sel-day{background:rgba(var(--glow-rgb),.08) !important;}tr.sel-day td{color:
 td{padding:5px 7px;text-align:right;font-size:10px;white-space:nowrap;color:#e2e6ed;}
 td:nth-child(1),td:nth-child(2){text-align:center;color:#4d5a6e;font-size:9px;}
 td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
-.global-capital{background:#10141c;border-bottom:2px solid #34d399;padding-top:2px;}
-.gc-hd{display:flex;align-items:center;gap:6px;padding:9px 12px 6px;}
-.gc-hd span{font-family:'Cabinet Grotesk',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#e2e6ed;}
-.gc-body{padding:0 12px 6px;}
+/* Capital used to read as just another settings row (same 32px stepper
+   every field elsewhere uses) despite being the one number every one of
+   the six strategies shares and compares against - given real card
+   treatment (margin/radius/border like the rest of the app's cards,
+   instead of a flush edge-to-edge strip) and its own oversized hero
+   stepper (scoped to #gc-stepper so every other stepper in the app is
+   untouched) so it reads as the first, most important thing on the tab. */
+.global-capital{margin:10px 16px 14px;padding:14px 16px 12px;border-radius:6px;border:1px solid rgba(52,211,153,.3);background:#10141c;position:relative;overflow:hidden;box-shadow:0 14px 32px -18px rgba(52,211,153,.35);}
+.global-capital::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#34d399,transparent);}
+.gc-hd{display:flex;align-items:center;gap:7px;padding:0 0 10px;}
+.gc-hd span{font-family:'Cabinet Grotesk',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#e2e6ed;}
+.gc-body{padding:0;}
+#gc-stepper .stp{height:58px;background:transparent;border:1px solid rgba(52,211,153,.22);border-radius:6px;overflow:hidden;}
+#gc-stepper .stp-btn{width:48px;height:58px;font-size:22px;background:rgba(52,211,153,.07);color:#34d399;border-right:1px solid rgba(52,211,153,.18);}
+#gc-stepper .stp-btn:last-child{border-right:none;border-left:1px solid rgba(52,211,153,.18);}
+#gc-stepper .stp-val{font-family:'IBM Plex Mono',monospace;font-size:28px !important;font-weight:800;color:#e2e6ed;background:transparent;}
+#gc-stepper .stp-unit{font-size:14px;font-weight:700;color:#34d399;background:transparent;padding-right:12px;}
 .tbl-empty{padding:32px;text-align:center;font-size:10px;color:#4d5a6e;}
 .log-body{padding:8px 16px;}
 .log-info{font-size:9px;color:#4d5a6e;text-align:center;margin-bottom:6px;letter-spacing:.07em;}
@@ -629,8 +642,8 @@ canvas.spark{width:100%;height:34px;display:block;}
   <div class="screen active" id="scr-sim">
     <div class="global-capital">
       <div class="gc-hd">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        <span>Capital</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Starting Capital</span>
         <button class="ib" onclick="openInfo('globalcap')" style="margin-left:4px;">?</button>
       </div>
       <div class="gc-body" id="gc-stepper"></div>
@@ -668,6 +681,9 @@ canvas.spark{width:100%;height:34px;display:block;}
       </div>
     </div>
     <div class="dv-half">
+      <div class="dv-gauge-row">
+        <canvas id="dv-gauge-cv"></canvas>
+      </div>
       <div class="sbar">
         <button class="sbtn on" id="tsb0" onclick="switchTblStrat(0)">A</button>
         <button class="sbtn sc-b" id="tsb1" onclick="switchTblStrat(1)">B</button>
@@ -685,9 +701,6 @@ canvas.spark{width:100%;height:34px;display:block;}
         <div class="tc-stp" id="intv-wrap-4" style="display:none;"></div>
         <div class="tc-stp" id="intv-wrap-5" style="display:none;"></div>
         <span class="tc-lbl">days</span>
-      </div>
-      <div class="dv-gauge-row">
-        <canvas id="dv-gauge-cv"></canvas>
       </div>
       <div class="tbl-scroll" id="tbl-scroll">
         <table>
@@ -1600,13 +1613,17 @@ function _drawChart(cv,equity,acct0,rgb){
 /* Combined multi-strategy comparison overlay — shared y-scale so magnitude
    is directly comparable; each series keeps its own true x-length, so a
    strategy that finishes faster visibly ends sooner on the chart. */
-/* Strategy identity colours: deliberately NOT drawn from the diagnostics
-   status palette (green=viable, amber=marginal, red=not-viable) so a
-   strategy's own identity colour never reads as a pass/fail verdict at
-   a glance. A stays the app's own theme blue (--accent-solid); B/C/D/E/F
-   fan out through orange/purple/indigo/fuchsia/pink - none of them red,
-   green, or amber. */
-const STRAT_COLORS=['#38bdf8','#fb923c','#a78bfa','#818cf8','#e879f9','#f472b6'];
+/* Strategy identity colours: spread across the full hue wheel for maximum
+   mutual distinctness (blue/orange/violet/lime/red/pink), rather than
+   clustering several in the same purple-to-pink family. Red and green ARE
+   used here (D=lime, E=red) but each is a visibly different SHADE from the
+   diagnostics status palette's own red/green (#f87171/#34d399) - lime
+   leans yellow where the diagnostic green leans cyan/emerald, and this red
+   is a deeper, more saturated true red rather than the diagnostic's light
+   pastel coral - so neither is mistakable for a pass/fail verdict color
+   even though both are technically "in the red/green family." A stays the
+   app's own theme blue (--accent-solid). */
+const STRAT_COLORS=['#38bdf8','#fb923c','#a78bfa','#84cc16','#ef4444','#ec4899'];
 const STRAT_LABELS=['A','B','C','D','E','F'];
 function drawCombinedChart(cv,legendEl){
   if(!cv||!cv.getContext)return;
@@ -2156,7 +2173,11 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     ctx.setLineDash([]);
     ctx.restore();
     const RG_MK_R=14.2; // 10.92 × 1.3 — 30% bigger
-    drawGlassBullseye(ctx,mx,my,RG_MK_R,[255,255,255]);
+    // Marker itself is tinted in the winning strategy's own identity
+    // colour (rapid.color, set in dvFindRapidGrowth) so it's identifiable
+    // at a glance — the dashed lead-in line and "FASTEST PATH" text below
+    // stay neutral white on purpose, unchanged.
+    drawGlassBullseye(ctx,mx,my,RG_MK_R,hexToRgb(rapid.color));
 
     // "Fastest path" annotation — a single straight leader at the
     // marker's own 10-o'clock angle running all the way out to the text,
