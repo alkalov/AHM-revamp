@@ -401,14 +401,14 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .diag-hd{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #232b3d;}
 .diag-title{font-family:'Cabinet Grotesk',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
 .diag-badge{font-size:8px;padding:2px 8px;border-radius:2px;font-weight:600;letter-spacing:.1em;}
-.diag.vi .diag-hd{background:rgba(52,211,153,.06);}
-.diag.vi .diag-title{color:#34d399;}
+/* Only the badge (the actual outcome - VIABLE/MARGINAL/FAILING) carries
+   status colour. The header itself (background + "Diagnostics" title)
+   stays neutral regardless of status - it used to pick up a faint status
+   tint too, which read as the whole card going green/amber/red and
+   muddying the app's grey + two-blues palette instead of just flagging
+   the one outcome word. */
 .diag.vi .diag-badge{background:rgba(52,211,153,.12);color:#34d399;}
-.diag.mg .diag-hd{background:rgba(251,191,36,.05);}
-.diag.mg .diag-title{color:#fbbf24;}
 .diag.mg .diag-badge{background:rgba(251,191,36,.1);color:#fbbf24;}
-.diag.ng .diag-hd{background:rgba(248,113,113,.06);}
-.diag.ng .diag-title{color:#f87171;}
 .diag.ng .diag-badge{background:rgba(248,113,113,.12);color:#f87171;}
 /* Was a solid opaque backing painted over the parent .diag's own glass
    background, so the header read as frosted glass but the body (most of
@@ -1406,7 +1406,7 @@ function dvGlassGauge(ctx,cx,cyBase,r,frac,rgb,shareVal){
    marker bleeds a glow past its own silhouette) plus a frosted-glass
    annulus between two radii with a bright-highlight-to-shadow gradient
    fill and a soft edge stroke on each boundary circle. */
-function drawGlassRing(ctx,x,y,r,rgb,boost){
+function drawGlassRing(ctx,x,y,r,rgb,boost,glowMul){
   // boost: optional intensity multiplier, default 1 (every existing call
   // site — hover dots, table endpoint triangles' shared recipe, the Sim
   // tab's own per-strategy growth markers — is untouched by this). Used
@@ -1414,15 +1414,21 @@ function drawGlassRing(ctx,x,y,r,rgb,boost){
   // needs to stay readable against up to six competing curves rather
   // than the one or two this material was originally tuned against.
   boost=boost||1;
+  // glowMul: separate multiplier that only touches the bloom (the halo
+  // escaping past the ring's own edge - "glow" in this app's own terms,
+  // see the design-system note distinguishing glow from contained
+  // diffusion) without dimming or shrinking the ring/dot themselves.
+  // Default 1 leaves every existing call site pixel-identical.
+  glowMul=glowMul==null?1:glowMul;
   const [cr,cg,cb]=rgb;
   const lightX=x-r*0.35,lightY=y-r*0.4;
 
   /* tight, dim bloom — just enough to lift the ring off the chart.
      Boosted requests get a wider, brighter bloom so the marker reads as
      a genuine glow rather than just a slightly stronger ring. */
-  const bloomR=r*(boost>1?1.7+boost*0.55:1.7);
+  const bloomR=r*(boost>1?1.7+boost*0.55:1.7)*glowMul;
   const bloom=ctx.createRadialGradient(x,y,0,x,y,bloomR);
-  bloom.addColorStop(0,`rgba(${cr},${cg},${cb},${Math.min(1,.0104*boost*boost)})`);
+  bloom.addColorStop(0,`rgba(${cr},${cg},${cb},${Math.min(1,.0104*boost*boost*glowMul)})`);
   bloom.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=bloom;
   ctx.beginPath();ctx.arc(x,y,bloomR,0,Math.PI*2);ctx.fill();
@@ -1465,13 +1471,13 @@ function drawGlassCircle(ctx,x,y,r){
    shared drawGlassRing above; only the centre dot below is unique to
    this marker. Ring and dot are both translucent so the curve/gridlines
    underneath still show through. */
-function drawGlassBullseye(ctx,x,y,r,rgb,boost,flatDot){
+function drawGlassBullseye(ctx,x,y,r,rgb,boost,flatDot,glowMul){
   boost=boost||1;
   const [cr,cg,cb]=rgb;
   const lightX=x-r*0.35,lightY=y-r*0.4;
   ctx.save();
 
-  drawGlassRing(ctx,x,y,r,rgb,boost);
+  drawGlassRing(ctx,x,y,r,rgb,boost,glowMul);
 
   /* centre dot: a small glass sphere by default (bright near the light
      source, dimming toward the true centre — the classic "3D bead"
@@ -1640,16 +1646,18 @@ function _drawChart(cv,equity,acct0,rgb){
     // is spelled out as "Rapid Growth Threshold" in this strategy's
     // Diagnostics card just below. Deliberately pronounced rather than
     // subtle: sized up well past the original r=5.2 (read as a barely-
-    // visible speck), boosted for a genuine glow, neutral white instead
-    // of the strategy's own colour (only one curve on this chart, so
-    // there's nothing to disambiguate), and flatDot so the centre reads
-    // as evenly bright instead of dimming toward the true centre the way
-    // the default "glass sphere" dot does.
+    // visible speck), boosted for a genuine glow (glow itself trimmed
+    // 15% off that boosted level — the ring/dot stay at full strength,
+    // only the halo escaping past the ring's edge backs off), neutral
+    // white instead of the strategy's own colour (only one curve on this
+    // chart, so there's nothing to disambiguate), and flatDot so the
+    // centre reads as evenly bright instead of dimming toward the true
+    // centre the way the default "glass sphere" dot does.
     const growthPts=equity.map(p=>({day:p.day,cap:acct0+p.cumPnl}));
     const growthHit=dvStrategyRapidGrowth(growthPts);
     if(growthHit){
       const gi=growthPts.findIndex(p=>p.day===growthHit.day);
-      if(gi>=0)drawGlassBullseye(ctx,xS(gi),yS(pnls[gi]),11,[255,255,255],3,true);
+      if(gi>=0)drawGlassBullseye(ctx,xS(gi),yS(pnls[gi]),11,[255,255,255],3,true,.85);
     }
   }else{
     ctx.beginPath();ctx.moveTo(xS(0),yS(pnls[0]));
@@ -2391,7 +2399,13 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const topGap=shTxt!=null?(LBL_GAP+SHR_GAP):LBL_GAP;
     const stackTop=moLyDefault-topGap-LBL_SIZE-2,stackBot=moLyDefault+CAL_GAP+CAL_SIZE+2;
     const halfW=44;
-    let obstructed=false;
+    // The "X TO RAPID GROWTH" kinetic-text overlay (rg-overlay) sits over
+    // the chart's own top-left 76%x47% whenever a rapid-growth point was
+    // found (dvUpdateRapidOverlay) - a label stack landing on top of that
+    // big text is exactly as unreadable as one sitting on another curve's
+    // line, so it counts as its own obstruction source alongside the
+    // per-curve sampling below rather than only reacting to lines.
+    let obstructed=!!rapid&&(anchorX-halfW)<W*.76&&stackTop<H*.47;
     for(let ci=0;ci<curveList.length&&!obstructed;ci++){
       if(grp.members.includes(ci))continue;
       const pts=curveList[ci];
