@@ -63,7 +63,7 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
 .fc,.chart-panel,.diag,.grade-card,.jsec,.vs-card,.gauge-row,.wrc,
 .circ-panel-inner,.stats-inp,.stats-grid .sg,.log-info,.inp-grp,
 .spark-cell,.jhist,.friction-breakdown,.sbar,.tbl-controls,.dv-half,
-.mbox,.ibox,.global-capital,.sc-s,.mode-row,.sim-row,.tb-card,.dv-gauge-row{
+.mbox,.ibox,.global-capital,.sc-s,.mode-row,.sim-row,.tb-card{
   background-color:rgba(18,23,33,.42) !important;
   background-image:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,0) 55%) !important;
   -webkit-backdrop-filter:blur(26px) saturate(1.7);
@@ -384,6 +384,28 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .dv-dt-label{font-size:5.85px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(226,230,237,.55);line-height:1;}
 .dv-dt-num{font-size:14.4px;font-weight:700;line-height:1.05;}
 .dv-dt-cal{font-size:7.2px;font-weight:500;color:rgba(226,230,237,.72);line-height:1;}
+/* Fixed cluster of per-line endpoint figures — $/mo, $ capital, calendar
+   time-to-goal — one compact row per active strategy (plus the real-log
+   line when present), colour-dotted instead of chasing each triangle
+   marker around the chart (see dvUpdateEndpointDock). Anchored top-right,
+   clear of the "time to rapid growth" overlay's 76%-wide footprint on
+   the left, so the two never have to fight for space no matter how many
+   strategies are running. Own small glass backing so it stays legible
+   over whatever curve happens to pass underneath. */
+.dv-endpoint-dock{
+  position:absolute;top:6px;right:6px;max-width:42%;
+  display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+  padding:5px 7px;border-radius:5px;
+  background:rgba(10,14,20,.5);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  border:1px solid rgba(255,255,255,.06);
+  pointer-events:none;z-index:2;
+}
+.dv-ep-row{display:flex;align-items:baseline;gap:4px;line-height:1.25;white-space:nowrap;font-family:'IBM Plex Mono',monospace;}
+.dv-ep-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-bottom:1px;}
+.dv-ep-mo{font-size:7.4px;font-weight:700;color:rgba(255,255,255,.85);}
+.dv-ep-cap{font-size:6.6px;font-weight:500;}
+.dv-ep-cal{font-size:6px;}
 .chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,.08);}
 .cm{padding:7px 10px;border-right:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);}
 .cm:nth-child(even){border-right:none;}
@@ -440,7 +462,7 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    above the data table. The table's own flex:1 sizing (see .tbl-scroll)
    absorbs the height this strip takes, which is what naturally condenses
    the table's visible row count. */
-.dv-gauge-row{height:64px;flex-shrink:0;padding:4px 10px;border-bottom:1px solid #232b3d;}
+.dv-gauge-row{height:64px;flex-shrink:0;padding:4px 10px;background:transparent;}
 #dv-gauge-cv{width:100%;height:100%;display:block;}
 /* ── Table tab: flat split-screen, no nested scroll chains ── */
 .dv-half{flex:1 1 0;min-height:0;display:flex;flex-direction:column;border-bottom:1px solid #232b3d;overflow:hidden;}
@@ -667,7 +689,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 
   <div class="screen" id="scr-tbl">
     <div class="dv-half">
-      <div class="chart-wrap" style="height:100%;">
+      <div class="chart-wrap" style="flex:1;min-height:0;">
         <canvas class="eqcv" id="dv-cv"></canvas>
         <div class="rg-overlay" id="rg-overlay">
           <span class="rg-time" id="rg-time">—</span>
@@ -678,12 +700,13 @@ canvas.spark{width:100%;height:34px;display:block;}
           <span class="dv-dt-num" id="dv-dt-num"></span>
           <span class="dv-dt-cal" id="dv-dt-cal"></span>
         </div>
+        <div class="dv-endpoint-dock" id="dv-endpoint-dock"></div>
       </div>
-    </div>
-    <div class="dv-half">
       <div class="dv-gauge-row">
         <canvas id="dv-gauge-cv"></canvas>
       </div>
+    </div>
+    <div class="dv-half">
       <div class="sbar">
         <button class="sbtn on" id="tsb0" onclick="switchTblStrat(0)">A</button>
         <button class="sbtn sc-b" id="tsb1" onclick="switchTblStrat(1)">B</button>
@@ -2001,6 +2024,33 @@ function dvUpdateRapidOverlay(rapid,dayToCal,series){
   requestAnimationFrame(()=>el.classList.add('show'));
 }
 
+// The per-line endpoint figures (capital, near-plateau $/mo, calendar
+// time-to-goal) used to float as their own label stack directly above
+// each triangle marker, with a collision-avoidance pass shoving
+// overlapping stacks apart. That worked at 3 strategies; at 6 it left the
+// stacks scattered across the whole top of the frame instead of reading
+// as a group. Fixed position instead: one small HTML dock
+// (#dv-endpoint-dock, see CSS) anchored to the same corner every time,
+// listing every active line's figures as a single tight cluster,
+// colour-dotted per row so it still reads back to the right triangle/
+// strategy without needing to physically sit next to it.
+function dvUpdateEndpointDock(endpoints,dayToCal){
+  const el=$('dv-endpoint-dock');
+  if(!el)return;
+  if(!endpoints.length){el.innerHTML='';return;}
+  el.innerHTML=endpoints.map(ep=>{
+    const [r,g,b]=hexToRgb(ep.color);
+    const moTxt=(ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo';
+    const calTxt=cal(dayToCal(ep.day));
+    return '<div class="dv-ep-row">'
+      +'<span class="dv-ep-dot" style="background:'+ep.color+';box-shadow:0 0 4px rgba('+r+','+g+','+b+',.85);"></span>'
+      +'<span class="dv-ep-mo">'+moTxt+'</span>'
+      +'<span class="dv-ep-cap" style="color:rgba('+r+','+g+','+b+',.85);">$'+fmt(ep.cap,0)+'</span>'
+      +'<span class="dv-ep-cal" style="color:rgba('+r+','+g+','+b+',.55);">'+calTxt+'</span>'
+      +'</div>';
+  }).join('');
+}
+
 /* Shared "glass tube" curve material — path builder + stroke renderer.
    Originally built as a closure inside dvDrawRaceChart for the Race to
    Goal chart; pulled out to global scope (same reasoning as drawGlassRing
@@ -2219,178 +2269,27 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
 
   // ── Endpoints: upside-down glass triangles marking the final point of
   // each curve, muted to match the app's own frosted panels (see
-  // drawGlassTriangle) rather than a saturated colour shape. Each gets a
-  // boxless label stack above it — share count (neutral) on top, capital
-  // (strategy colour) under it, near-plateau monthly estimate under
-  // that, calendar duration at the bottom. Shares moved here from a
-  // dedicated on-chart gauge — position sizing already determines share
-  // count, so it only really matters relative to capital, which this
-  // stack already shows right below it; no dark outline stroke (the
-  // panels behind are dark enough without it). Text is 20% smaller than
-  // the original pass (9px/11px line-gap -> 7.2px/8.8px). One shared
-  // collision pool keeps stacks that finish close together from
-  // overlapping each other; a second curve-avoidance pass keeps a stack
-  // from sitting on top of (or getting crossed by) a DIFFERENT line that
-  // is still rising through that point in time.
+  // drawGlassTriangle) rather than a saturated colour shape. The figures
+  // for each line (capital, near-plateau $/mo, calendar time-to-goal)
+  // no longer float in their own label stack above the triangle — with
+  // up to 6 strategies plus the real-log line, that scattered clusters
+  // across the whole top of the frame. They're collected instead into
+  // dockEndpoints and handed to dvUpdateEndpointDock, which renders them
+  // as one small fixed cluster (see #dv-endpoint-dock) — colour-dotted
+  // per row so a figure still reads back to its strategy without having
+  // to sit next to its marker.
   const TRI_R=6.5,TRI_H=TRI_R*2.1;
-  const TRI_LBL_GAP=9; // breathing room between the triangle's top edge and the label stack above it (was 4 — too tight)
-  const LBL_SIZE=7.2,LBL_GAP=8.8;
-  // Share-count line: same size/weight as the capital line just below it
-  // (it's a peer numeric fact, not a footnote) but neutral-coloured, and
-  // real-log points never get one (no share concept there).
-  const SHR_GAP=8.8;
-  // Third line added under the $/mo value: the same calendar ("1y 6mo")
-  // formatting used by the rapid-growth callout and the hover day-tally,
-  // applied to each strategy's own endpoint day. Smaller and dimmer than
-  // the two lines above it since it's supplementary context, not a
-  // headline figure.
-  const CAL_SIZE=6.4,CAL_GAP=7.4;
-  const endpoints=[];
+  const dockEndpoints=[];
   if(hasReal){
     const lastR=realPts[realPts.length-1];
     const realAsPts=realPts.map((p,i)=>({day:i,cap:p.cap}));
-    endpoints.push({x:Math.min(Math.max(xS(realPts.length-1),pd.l+24),pd.l+pw-24),y:yS(lastR.cap)-TRI_H-TRI_LBL_GAP-CAL_GAP,color:'#e2e6ed',cap:lastR.cap,mo:dvPlateauMoRate(realAsPts),day:realPts.length-1});
+    dockEndpoints.push({color:'#e2e6ed',cap:lastR.cap,mo:dvPlateauMoRate(realAsPts),day:realPts.length-1});
   }
   for(const s of series){
     const last=s.pts[s.pts.length-1];
-    // Share count deliberately left off this stack (ep.sh stays
-    // undefined, which every downstream check below already guards on) —
-    // it's back in its own dedicated gauge below the chart, and showing
-    // it in both places was exactly the kind of redundant duplicate
-    // figure this app avoids elsewhere.
-    endpoints.push({x:Math.min(Math.max(xS(last.day),pd.l+24),pd.l+pw-24),y:yS(last.cap)-TRI_H-TRI_LBL_GAP-CAL_GAP,color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts),day:last.day});
+    dockEndpoints.push({color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts),day:last.day});
   }
-  // Measure each stack's footprint up front (same font used to draw it
-  // below) so both anti-overlap passes can reason about actual width,
-  // not just a point.
-  ctx.font=`bold ${LBL_SIZE}px IBM Plex Mono`;
-  for(const ep of endpoints){
-    const capTxt='$'+fmt(ep.cap,0);
-    const moTxt=(ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo';
-    ep.lw=Math.max(ctx.measureText(capTxt).width,ctx.measureText(moTxt).width);
-    if(ep.sh!=null){
-      ctx.font=`${LBL_SIZE}px IBM Plex Mono`;
-      ep.shTxt=ep.sh.toLocaleString()+' sh';
-      ep.lw=Math.max(ep.lw,ctx.measureText(ep.shTxt).width);
-    }
-    ctx.font=`${CAL_SIZE}px IBM Plex Mono`;
-    ep.calTxt=cal(dayToCal(ep.day));
-    ep.lw=Math.max(ep.lw,ctx.measureText(ep.calTxt).width);
-    ctx.font=`bold ${LBL_SIZE}px IBM Plex Mono`;
-  }
-  // Every plotted line, in day-domain points, so a label can be checked
-  // against lines OTHER than the one it belongs to.
-  const avoidCurves=series.map(s=>s.pts);
-  if(hasReal)avoidCurves.push(realPts.map((p,i)=>({day:i,cap:p.cap})));
-  // Each endpoint's TRUE (unclamped) triangle position, for a separate
-  // obstacle check below — a curve's sampled path stops at its own last
-  // day (dvCapAtDay returns null past it), so a strategy that finishes
-  // EARLY wouldn't otherwise register as an obstacle for a label stack
-  // anchored further right at a still-running strategy's endpoint, even
-  // though that early-finisher's triangle marker is sitting right there.
-  const triObstacles=endpoints.map(e=>({x:xS(e.day),y:yS(e.cap)}));
-  function dvCapAtDay(pts,day){
-    if(!pts.length||day<pts[0].day||day>pts[pts.length-1].day)return null;
-    for(let i=1;i<pts.length;i++){
-      if(pts[i].day>=day){
-        const p0=pts[i-1],p1=pts[i];
-        const t=(day-p0.day)/((p1.day-p0.day)||1);
-        return p0.cap+(p1.cap-p0.cap)*t;
-      }
-    }
-    return pts[pts.length-1].cap;
-  }
-  function dvAvoidCurves(){
-    let moved=false;
-    endpoints.forEach((ep,epI)=>{
-      const topGap=ep.sh!=null?(LBL_GAP+SHR_GAP):LBL_GAP;
-      const blockBot=ep.labelY+CAL_GAP+CAL_SIZE+2,blockTop=ep.labelY-topGap-LBL_SIZE-2;
-      const halfW=ep.lw/2+3;
-      for(const pts of avoidCurves){
-        for(const sx of[ep.x-halfW,ep.x,ep.x+halfW]){
-          const day=Math.max(0,Math.min(maxDay,((sx-pd.l)/pw)*maxDay));
-          const cap=dvCapAtDay(pts,day);
-          if(cap==null)continue;
-          const cy=yS(cap);
-          if(cy>blockTop&&cy<blockBot+4){
-            const req=cy-7;
-            if(req<ep.labelY){ep.labelY=req;moved=true;}
-          }
-        }
-      }
-      // A finished strategy's triangle sits at a fixed point past where
-      // its own curve stops being sampled above, so it needs its own
-      // direct box-vs-box check against every OTHER label's box — using
-      // the triangle's own full vertical span (its flat top edge sits
-      // TRI_H above the actual data point, per drawGlassTriangle) and
-      // horizontal half-width, not just its single apex coordinate,
-      // since the apex can clear a label's box while the wider top edge
-      // above it still pokes into it.
-      triObstacles.forEach((ob,obI)=>{
-        if(obI===epI)return;
-        if(ob.x<ep.x-halfW-TRI_R||ob.x>ep.x+halfW+TRI_R)return;
-        const obTop=ob.y-TRI_H,obBot=ob.y;
-        if(obBot>blockTop&&obTop<blockBot+4){
-          const req=obTop-7;
-          if(req<ep.labelY){ep.labelY=req;moved=true;}
-        }
-      });
-    });
-    return moved;
-  }
-  // minGap raised again, 30 -> 39, now that simulated points anchor a
-  // four-line stack (shares, $ value, $/mo, calendar value) instead of
-  // three — the extra shares line adds roughly SHR_GAP+LBL_SIZE (~16px)
-  // of footprint, so the three-line-tuned gap would let neighbouring
-  // four-line stacks visibly overlap even though their anchors were
-  // technically far enough apart under the old rule. Alternate the two
-  // anti-overlap passes a couple of times so a stack pushed up to clear a
-  // curve, or to clear another label, doesn't quietly reintroduce the
-  // other kind of collision.
-  for(let round=0;round<6;round++){
-    dvResolveLabelCollisions(endpoints,39);
-    if(!dvAvoidCurves())break;
-  }
-  // Hard floor at the canvas's own top edge: with several curves finishing
-  // close together right near the top of the frame, dvAvoidCurves can run
-  // out of room and keep pushing a stack up past pd.t entirely off-canvas
-  // (invisible, which is worse than a little crowding). Never let a
-  // stack's topmost line clear the visible top edge.
-  for(const ep of endpoints){
-    const topGap=ep.sh!=null?(LBL_GAP+SHR_GAP):LBL_GAP;
-    const minLabelY=pd.t+4+topGap+LBL_SIZE+2;
-    if(ep.labelY<minLabelY)ep.labelY=minLabelY;
-  }
-  // Last resort, horizontal: when several curves finish close together
-  // near the top of the frame, vertical room can run out entirely even
-  // with the floor above in place — several stacks end up pinned to
-  // (near) the same row with nowhere left to go vertically. Spread only
-  // the ones that are genuinely box-overlapping (both axes) apart along
-  // x instead; two stacks at a similar row height but already clear of
-  // each other horizontally are left alone.
-  endpoints.forEach(ep=>{if(ep.labelX===undefined)ep.labelX=ep.x;});
-  for(let pass=0;pass<6;pass++){
-    let moved=false;
-    for(let i=0;i<endpoints.length;i++){
-      for(let j=i+1;j<endpoints.length;j++){
-        const a=endpoints[i],b=endpoints[j];
-        const aTopGap=a.sh!=null?(LBL_GAP+SHR_GAP):LBL_GAP;
-        const bTopGap=b.sh!=null?(LBL_GAP+SHR_GAP):LBL_GAP;
-        const aTop=a.labelY-aTopGap-LBL_SIZE-2,aBot=a.labelY+CAL_GAP+CAL_SIZE+2;
-        const bTop=b.labelY-bTopGap-LBL_SIZE-2,bBot=b.labelY+CAL_GAP+CAL_SIZE+2;
-        if(aBot<bTop||bBot<aTop)continue;
-        const minSep=a.lw/2+b.lw/2+6;
-        const dx=b.labelX-a.labelX;
-        const sep=Math.abs(dx);
-        if(sep<minSep){
-          const push=(minSep-sep)/2,dir=dx>=0?1:-1;
-          a.labelX-=push*dir;b.labelX+=push*dir;
-          moved=true;
-        }
-      }
-    }
-    if(!moved)break;
-  }
+  dvUpdateEndpointDock(dockEndpoints,dayToCal);
   for(const s of series){
     const last=s.pts[s.pts.length-1];
     const [r,g,b]=hexToRgb(s.color);
@@ -2400,29 +2299,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const lastR=realPts[realPts.length-1];
     const [r,g,b]=hexToRgb('#e2e6ed');
     drawGlassTriangle(ctx,xS(realPts.length-1),yS(lastR.cap),TRI_R,[r,g,b],pd.t,pd.t+ph);
-  }
-  ctx.textAlign='center';
-  for(const ep of endpoints){
-    const moLy=ep.labelY!==undefined?ep.labelY:ep.y;
-    const capLy=moLy-LBL_GAP;
-    const calLy=moLy+CAL_GAP;
-    const [cr,cg,cb]=hexToRgb(ep.color);
-    const lx=ep.labelX!==undefined?ep.labelX:ep.x;
-    if(ep.sh!=null){
-      const shrLy=capLy-SHR_GAP;
-      ctx.font=`${LBL_SIZE}px IBM Plex Mono`;
-      ctx.fillStyle='rgba(226,230,237,.7)';
-      ctx.fillText(ep.shTxt,lx,shrLy);
-    }
-    ctx.font=`${LBL_SIZE}px IBM Plex Mono`;
-    ctx.fillStyle=`rgba(${cr},${cg},${cb},.8)`;
-    ctx.fillText('$'+fmt(ep.cap,0),lx,capLy);
-    ctx.font=`bold ${LBL_SIZE}px IBM Plex Mono`;
-    ctx.fillStyle='rgba(255,255,255,.8)';
-    ctx.fillText((ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo',lx,moLy);
-    ctx.font=`${CAL_SIZE}px IBM Plex Mono`;
-    ctx.fillStyle=`rgba(${cr},${cg},${cb},.55)`;
-    ctx.fillText(ep.calTxt,lx,calLy);
   }
 
   cv._race={series,realPts,hasReal,pd,pw,ph,xS,yS,maxDay,dayToCal};
@@ -2552,38 +2428,6 @@ function dvDrawGaugeRow(cv,hoverDay){
       ctx.fillStyle='rgba(255,255,255,.82)';
       ctx.fill();
     }
-  }
-}
-
-// Magnetic label collision resolution: given a list of {y, ...} points with
-// a shared minimum vertical spacing, nudge any pair closer than that apart
-// (moving both away from each other) until none overlap or the safety cap
-// is reached. Sets point.labelY to the resolved position; leaves point.y
-// untouched (that's still the true data position, used for the dot itself).
-function dvResolveLabelCollisions(points,minGap){
-  points.forEach(p=>{if(p.labelY===undefined)p.labelY=p.y+3;});
-  for(let pass=0;pass<12;pass++){
-    let moved=false;
-    const sorted=[...points].sort((a,b)=>a.labelY-b.labelY);
-    for(let i=0;i<sorted.length-1;i++){
-      const a=sorted[i],b=sorted[i+1];
-      const gap=b.labelY-a.labelY;
-      if(gap<minGap){
-        const shift=(minGap-gap)/2;
-        a.labelY-=shift;b.labelY+=shift;
-        moved=true;
-      }
-    }
-    // Re-clamped every pass (not just once at the end) so this floor and
-    // the mutual-spacing pass above converge together instead of one
-    // undoing the other: never let a point drift down past its own
-    // untouched default (`y`, already tuned to clear ITS OWN triangle by
-    // TRI_LBL_GAP) just to make room for a neighbour above it — that
-    // trade was landing a label back on top of its own marker.
-    for(const p of points){
-      if(p.labelY>p.y){p.labelY=p.y;moved=true;}
-    }
-    if(!moved)break;
   }
 }
 
