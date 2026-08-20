@@ -2399,8 +2399,18 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   // candidates below, so all three obstruction sources are always
   // considered together rather than the overlay/curve check on the
   // default spot and something looser on the fallback.
-  function boxHits(x0,x1,y0,y1,excludeMembers){
-    if(rapid&&x0<W*.76&&y0<H*.47)return true;
+  function boxHits(x0,x1,y0,y1,excludeMembers,includeOverlay){
+    // The overlay's own box is huge (76%x47% of the whole chart) so it
+    // only ever gets to veto the DEFAULT centre-top spot (includeOverlay
+    // left at its default true there) - if it also vetoed the two small
+    // +/-side candidates below, a triangle anywhere under that box could
+    // never shift far enough left or right to escape it (the shift is
+    // only ~90px, nowhere near the box's own width), so EVERY candidate
+    // would read "still blocked" and fall back to the old half-of-chart
+    // guess without ever actually checking whether that guess dodges the
+    // curves/labels it's really meant to dodge. Curves and already-placed
+    // labels stay checked for every candidate regardless.
+    if(includeOverlay!==false&&rapid&&x0<W*.76&&y0<H*.47)return true;
     for(let ci=0;ci<curveList.length;ci++){
       if(excludeMembers.includes(ci))continue;
       const pts=curveList[ci];
@@ -2439,21 +2449,36 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       lx=anchorX;moLy=moLyDefault;
       boxX0=anchorX-halfW;boxX1=anchorX+halfW;boxY0=stackTop;boxY1=stackBot;
     }else{
-      // No clean room directly above — try both sides against every
-      // obstruction source (curves, overlay, already-placed labels) and
-      // take whichever is actually clear, rather than always guessing
-      // from which half of the chart the triangle sits in. Only falls
-      // back to that half-of-chart guess when both sides are equally
-      // (un)clear, so it still resolves to *something* deterministic.
+      // No clean room directly above — try both sides and take whichever
+      // is actually clear, rather than always guessing from which half
+      // of the chart the triangle sits in. Curves/other-labels are the
+      // decisive check here (includeOverlay:false) - the overlay's own
+      // box is huge (76%x47% of the whole chart) so a small +/-side
+      // shift can almost never fully escape it; letting it veto BOTH
+      // side candidates the way it vetoes the default spot would just
+      // mean every candidate under that box reads "still blocked" and
+      // this whole side-vs-side comparison never gets to run, falling
+      // straight back to the old half-of-chart guess regardless of
+      // which side the curves actually favour. The overlay still gets a
+      // say when curves leave both sides open: prefer whichever of those
+      // also clears the overlay. Only when curves themselves are a wash
+      // (both or neither side clear) does the old half-of-chart guess
+      // decide, same fallback as before.
       const sideTop=grp.y-topGap-LBL_SIZE-2,sideBot=grp.y+CAL_GAP+CAL_SIZE+2;
       const rightLx=Math.min(grp.x+TRI_R+8,pd.l+pw-6);
       const leftLx=Math.max(grp.x-TRI_R-8,pd.l+6);
-      const rightClear=!boxHits(rightLx,rightLx+halfW*2,sideTop,sideBot,grp.members);
-      const leftClear=!boxHits(leftLx-halfW*2,leftLx,sideTop,sideBot,grp.members);
+      const rightClear=!boxHits(rightLx,rightLx+halfW*2,sideTop,sideBot,grp.members,false);
+      const leftClear=!boxHits(leftLx-halfW*2,leftLx,sideTop,sideBot,grp.members,false);
       let side;
       if(rightClear&&!leftClear)side='right';
       else if(leftClear&&!rightClear)side='left';
-      else side=grp.x<(pd.l+pw/2)?'right':'left';
+      else if(rightClear&&leftClear){
+        const rightAlsoOverlay=boxHits(rightLx,rightLx+halfW*2,sideTop,sideBot,grp.members);
+        const leftAlsoOverlay=boxHits(leftLx-halfW*2,leftLx,sideTop,sideBot,grp.members);
+        if(!rightAlsoOverlay&&leftAlsoOverlay)side='right';
+        else if(!leftAlsoOverlay&&rightAlsoOverlay)side='left';
+        else side=grp.x<(pd.l+pw/2)?'right':'left';
+      }else side=grp.x<(pd.l+pw/2)?'right':'left';
       ctx.textAlign=side==='right'?'left':'right';
       lx=side==='right'?rightLx:leftLx;
       moLy=grp.y;
