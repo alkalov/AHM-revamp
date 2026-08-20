@@ -740,13 +740,37 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
    treatment (margin/radius/border like the rest of the app's cards,
    instead of a flush edge-to-edge strip) and its own oversized hero
    stepper (scoped to #gc-stepper so every other stepper in the app is
-   untouched) so it reads as the first, most important thing on the tab. */
-.global-capital{margin:10px 16px 14px;padding:14px 16px 12px;border-radius:6px;border:1px solid rgba(52,211,153,.3);background:#10141c;position:relative;overflow:hidden;box-shadow:0 14px 32px -18px rgba(52,211,153,.35);}
-.global-capital::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#34d399,transparent);}
+   untouched) so it reads as the first, most important thing on the tab.
+   Round 65: the card frame itself (margin-inset floating box, border,
+   green drop-shadow, top accent line) removed again - same position in
+   the tab (still the first thing on #scr-sim, nothing reordered), just
+   flush like .sbar below it rather than a distinct floating "window",
+   with a plain divider taking over the separation job the shadow/margin
+   used to do. What used to make the OUTER box read as special (green
+   tint, glassy depth) now lives on the stepper itself instead: same
+   pooled-colour-light + backdrop-blur + specular-top-highlight recipe
+   .dv-rg-bubble/.dv-ep-tri-fill use elsewhere in this app (ellipse
+   radial gradient bright-top to dark-bottom, translucent enough that the
+   page's own ambient blur shows through rather than an opaque fill),
+   just with fixed green rgb instead of a per-instance custom prop since
+   there's only ever one of these. Needs !important + the #gc-stepper ID
+   scope to beat the shared .stp{background...!important} rule further
+   up the sheet, same trick #gc-stepper .stp-val already relies on for
+   its font-size override just below. */
+.global-capital{padding:14px 16px 12px;border-bottom:1px solid #232b3d;}
 .gc-hd{display:flex;align-items:center;gap:7px;padding:0 0 10px;}
 .gc-hd span{font-family:'Cabinet Grotesk',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#e2e6ed;}
 .gc-body{padding:0;}
-#gc-stepper .stp{height:58px;background:transparent;border:1px solid rgba(52,211,153,.22);border-radius:6px;overflow:hidden;}
+#gc-stepper .stp{
+  height:58px;border-radius:6px;overflow:hidden;
+  background:
+    radial-gradient(ellipse 120% 85% at 50% 0%,rgba(140,255,210,.26) 0%,rgba(52,211,153,.16) 48%,rgba(10,40,32,.22) 100%)
+    !important;
+  backdrop-filter:blur(18px) saturate(1.6);
+  -webkit-backdrop-filter:blur(18px) saturate(1.6);
+  border:1px solid rgba(52,211,153,.4) !important;
+  box-shadow:inset 0 1px 0 rgba(190,255,225,.35),inset 0 0 0 1px rgba(52,211,153,.08);
+}
 #gc-stepper .stp-btn{width:48px;height:58px;font-size:22px;background:rgba(52,211,153,.07);color:#34d399;border-right:1px solid rgba(52,211,153,.18);}
 #gc-stepper .stp-btn:last-child{border-right:none;border-left:1px solid rgba(52,211,153,.18);}
 #gc-stepper .stp-val{font-family:'IBM Plex Mono',monospace;font-size:28px !important;font-weight:800;color:#e2e6ed;background:transparent;}
