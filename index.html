@@ -390,57 +390,76 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .dv-dt-label{font-size:5.85px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(226,230,237,.55);line-height:1;}
 .dv-dt-num{font-size:14.4px;font-weight:700;line-height:1.05;}
 .dv-dt-cal{font-size:7.2px;font-weight:500;color:rgba(226,230,237,.72);line-height:1;}
-/* Endpoint info clusters — same glass FILL material as .dv-daytally
-   (radial top-light highlight + backdrop-filter frost), always fully
-   visible (no .show/opacity/transition — these are static chart
-   annotations, not a scroll-driven readout), tinted in each strategy's
-   own colour instead of neutral white/grey. The OUTLINE, though, matches
-   drawGlassTriangle's border recipe instead of the daytally's flat hairline
-   — same two-stop gradient stroke (brighter top fading to the strategy's
-   true colour at the bottom) plus a soft colour-matched glow just outside
-   the edge, so the bubble reads as the same material as the triangle it
-   sits on rather than a different kind of glass. --eprgb is the base/
-   bottom colour (e.g. "231,124,58"); --eprgb-hi is that same colour
-   lightened by +70 per channel for the gradient's top stop — the exact
-   arithmetic drawGlassTriangle itself uses (Math.min(255,c+70)), just
-   computed in JS once per bubble instead of per canvas frame. Plain
-   rectangle rather than the earlier rounded square: border-image (needed
-   for a gradient-coloured border) doesn't respect border-radius reliably
-   across browsers, and a hard-edged box is arguably a closer match to a
-   hard-edged triangle anyway. Width is intentionally NOT fixed like the
-   daytally's 55.8px circle — content varies (an extra shares line, longer
-   $ values) so the box hugs its own text instead; left/right padding is
-   2% (resolved against .chart-wrap's own width, its containing block)
-   rather than a flat px guess, so the box sits a consistent 2%-of-chart-
-   width away from whichever line of text is widest, on both sides, at any
-   screen size. Anchored bottom-center via translate(-50%,-100%) so JS only
-   has to set left/top to the triangle's own tip x and its flat top edge y
-   (y-TRI_H) for a true flush fit, no manual height math on this end. */
-.dv-ep-bubble{
-  position:absolute;left:0;top:0;transform:translate(-50%,-100%);
-  padding:4px 2% 3.5px;box-sizing:border-box;
-  display:flex;flex-direction:column;align-items:center;
-  gap:.5px;
-  font-family:'IBM Plex Mono',monospace;
-  white-space:nowrap;
+/* Endpoint markers — the small decorative canvas triangle (drawGlassTriangle)
+   and the separate HTML stat bubble that used to float above it are now ONE
+   shape: a single enlarged glass triangle with its own info cluster living
+   inside it. Three stacked layers, same (left,top) anchor, sized by the
+   .dv-ep-tri-w/-h vars set inline per instance:
+     .dv-ep-tri-fill — the frosted glass FILL, clipped to the triangle
+       silhouette via clip-path. Carries over .dv-daytally's own material
+       (radial top-light highlight + backdrop-filter frost) tinted in the
+       strategy's colour, exactly as the old bubble did — clip-path
+       confines both the background AND the backdrop-filter's blur region
+       to the visible triangle, so the frost doesn't bleed into a
+       rectangle the way a plain box would.
+     .dv-ep-tri-svg — the OUTLINE. A plain CSS border can't follow a
+       clip-path's diagonal edges (it still traces the box's original
+       rectangle, most of which is clipped away), so the border instead
+       lives in an SVG overlay whose <polygon> literally traces the same
+       three points as the fill's clip-path. Recipe mirrors
+       drawGlassTriangle's own border stroke-for-stroke: two soft
+       colour-matched glow understrokes, then the real stroke as a
+       two-stop gradient (brighter top --eprgb-hi fading to the true
+       --eprgb at the bottom — same Math.min(255,c+70) arithmetic,
+       computed once in JS per instance), plus a top-edge-only specular
+       highlight line. The outer glow that used to be box-shadow on the
+       rectangle is now filter:drop-shadow on the fill layer instead,
+       since drop-shadow (unlike box-shadow) hugs an element's actual
+       clipped silhouette rather than its unclipped box.
+     .dv-ep-tri-txt — the info cluster, unclipped and unblurred so its
+       text stays crisp, positioned to sit inside the triangle's wide
+       upper portion. Per the request that folded the two shapes
+       together: capital, then monthly value, then time — in that
+       top-to-bottom order — with the shares line dropped entirely (the
+       share gauges elsewhere already cover that).
+   Triangle size is fixed (not auto-fit like the old bubble's width) at
+   TRI2_W×TRI2_H — generous enough that even the widest line (the monthly
+   value, typically longer than the capital figure once it carries its
+   +$/−$ sign and "/mo" suffix) still clears the sloped sides with room to
+   spare at its own vertical position; verified empirically against real
+   multi-strategy runs rather than derived from font-metrics alone.
+   Anchored via translate(-50%,-100%) so JS only ever has to set left/top
+   to the triangle's own tip — the exact data-point coordinate, matching
+   what drawGlassTriangle used to receive directly. */
+.dv-ep-tri{
+  position:absolute;left:0;top:0;
+  width:var(--eptw);height:var(--epth);
+  transform:translate(-50%,-100%);
+  pointer-events:none;z-index:2;
+}
+.dv-ep-tri-fill{
+  position:absolute;inset:0;
+  clip-path:polygon(0% 0%,100% 0%,50% 100%);
   background:
     radial-gradient(ellipse 100% 70% at 50% 0%, rgba(var(--eprgb),.28) 0%, rgba(var(--eprgb),.04) 55%, rgba(var(--eprgb),0) 85%),
     rgba(18,23,33,.4);
   backdrop-filter:blur(7px) saturate(1.3);
   -webkit-backdrop-filter:blur(7px) saturate(1.3);
-  border:.8px solid transparent;
-  border-image:linear-gradient(to bottom, rgba(var(--eprgb-hi),.92), rgba(var(--eprgb),.85)) 1;
-  box-shadow:0 0 3px 1px rgba(var(--eprgb),.06),0 0 5px 2px rgba(var(--eprgb),.04);
-  pointer-events:none;z-index:2;
+  filter:drop-shadow(0 0 3px rgba(var(--eprgb),.06)) drop-shadow(0 0 5px rgba(var(--eprgb),.04));
 }
-/* Text sizing matches the pre-bubble canvas labels exactly (LBL_SIZE
-   7.2px for shares/capital/mo, CAL_SIZE 6.4px for the calendar line, only
-   the mo line bold) rather than the daytally's own scale (small label ->
-   big headline number -> medium calendar) — the bubble borrows the
-   daytally's MATERIAL (glass/blur/border) and per-strategy tint, not its
-   typographic proportions, which were sized for a fixed 55.8px circle
-   showing one emphasised number, not a 4-line stat stack. */
-.dv-ep-sh{font-size:7.2px;font-weight:400;color:rgba(226,230,237,.7);line-height:1.2;}
+.dv-ep-tri-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;display:block;}
+.dv-ep-tri-txt{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;
+  padding-top:6px;gap:.5px;
+  font-family:'IBM Plex Mono',monospace;
+  white-space:nowrap;
+}
+/* Text sizing matches the original canvas labels exactly (LBL_SIZE 7.2px
+   for capital/mo, CAL_SIZE 6.4px for the calendar line, only the mo line
+   bold) — the triangle borrows the daytally's MATERIAL (glass/blur/
+   border) and per-strategy tint, not its typographic proportions, which
+   were sized for a fixed 55.8px circle showing one emphasised number. */
 .dv-ep-cap{font-size:7.2px;font-weight:400;line-height:1.2;color:rgba(var(--eprgb),.95);}
 .dv-ep-mo{font-size:7.2px;font-weight:700;line-height:1.2;color:rgba(255,255,255,.88);}
 .dv-ep-cal{font-size:6.4px;font-weight:400;line-height:1.2;color:rgba(var(--eprgb),.72);}
@@ -1519,8 +1538,10 @@ function drawGlassRing(ctx,x,y,r,rgb,boost,glowMul){
 /* GLASS CIRCLE — hover/highlight points. Now just the glass ring above,
    in the same neutral white the growth marker itself uses, with no
    centre dot — "the same aesthetics as the growth marker without the
-   middle circle". Endpoint/"finished" points use drawGlassTriangle
-   instead, see below. */
+   middle circle". Endpoint/"finished" points are marked by the HTML
+   .dv-ep-tri glass triangle instead (see the CSS near the top of the
+   file and the endpoint-building loop in dvDrawRaceChart) — canvas no
+   longer draws anything for them. */
 function drawGlassCircle(ctx,x,y,r){
   ctx.save();
   drawGlassRing(ctx,x,y,r,[255,255,255]);
@@ -1563,94 +1584,14 @@ function drawGlassBullseye(ctx,x,y,r,rgb,boost,flatDot,glowMul){
   ctx.restore();
 }
 
-/* Endpoint marker for a "finished" curve — an upside-down (point-down)
-   glass triangle instead of a sphere, so a finished point reads
-   visually distinct from the live hover/highlight orbs. Point sits
-   exactly at (x,y), the true data coordinate; the flat top edge is
-   above it, leaving clear room for a label to sit "on" the marker
-   without covering the point itself. Same restrained glass treatment
-   as the sphere (bloom, shadow, gradient body, small highlight) with
-   no prism, kept simple since a triangle reads clearly at small size. */
-// Muted to match the app's own frosted-glass panels (the same treatment
-// as the .chart-panel card on the SIM tab: a mostly-neutral dark surface,
-// a faint diagonal gloss, a thin border) instead of a saturated colour
-// gem — still identifiable as "this strategy" via a low-key colour tint
-// and its border, just not shouting for attention the way a solid-colour
-// shape would.
-function drawGlassTriangle(ctx,x,y,r,rgb,gradTop,gradBottom){
-  const [cr,cg,cb]=rgb;
-  const w=r*1.9,h=r*2.1;
-  const topY=y-h,leftX=x-w/2,rightX=x+w/2;
-  if(gradTop===undefined){gradTop=topY;gradBottom=y;}
-  const tracePath=()=>{ctx.beginPath();ctx.moveTo(leftX,topY);ctx.lineTo(rightX,topY);ctx.lineTo(x,y);ctx.closePath();};
-  ctx.save();
-
-  // Border only gets the equity curves' "glass tube" recipe — the same
-  // soft layered glow, vertical-gradient stroke and thin specular
-  // highlight used on the lines themselves — so the two read as one
-  // continuous material. The fill/interior below is untouched by any of
-  // this, same neutral panel wash it's always had. Glow alphas here
-  // mirror the curve stroke's own 30% cut (not separately requested, but
-  // left un-cut here would visibly mismatch the now-dimmer curve right at
-  // the seam where the two are meant to read as one material).
-  ctx.save();
-  tracePath();
-  ctx.lineJoin='round';
-  ctx.lineWidth=5;ctx.strokeStyle=`rgba(${cr},${cg},${cb},.0392)`;ctx.stroke();
-  ctx.lineWidth=3;ctx.strokeStyle=`rgba(${cr},${cg},${cb},.0651)`;ctx.stroke();
-  ctx.restore();
-
-  // Neutral panel base (matches .chart-panel's rgba(18,23,33,.42)) with
-  // just a low-alpha wash of the strategy's colour over it.
-  tracePath();
-  ctx.fillStyle='rgba(18,23,33,.82)';ctx.fill();
-  ctx.fillStyle=`rgba(${cr},${cg},${cb},.22)`;ctx.fill();
-
-  // Interior frost — a soft overall haze diffused through the fill,
-  // distinct from the directional diagonal gloss streak further below
-  // (that one's a reflection; this is ambient milkiness, like light
-  // scattering through frosted glass). The interior had none before this
-  // pass, so this establishes it fresh at roughly 30% of a full frost's
-  // strength.
-  ctx.save();
-  tracePath();
-  ctx.clip();
-  const frost=ctx.createRadialGradient(x,topY+h*.4,0,x,topY+h*.4,w*.85);
-  frost.addColorStop(0,'rgba(255,255,255,.15)');
-  frost.addColorStop(.7,'rgba(255,255,255,.05)');
-  frost.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.fillStyle=frost;
-  ctx.fillRect(leftX,topY,w,h);
-  ctx.restore();
-
-  ctx.save();
-  tracePath();
-  const grad=ctx.createLinearGradient(0,gradTop,0,gradBottom);
-  grad.addColorStop(0,`rgba(${Math.min(255,cr+70)},${Math.min(255,cg+70)},${Math.min(255,cb+70)},.92)`);
-  grad.addColorStop(1,`rgba(${cr},${cg},${cb},.85)`);
-  ctx.lineJoin='round';ctx.strokeStyle=grad;ctx.lineWidth=.8;
-  ctx.stroke();
-  ctx.restore();
-
-  // Specular highlight cut 30% to match the curve's own flare cut, same
-  // seam-consistency reasoning as the border glow above.
-  ctx.save();
-  ctx.beginPath();ctx.moveTo(leftX,topY);ctx.lineTo(rightX,topY);
-  ctx.strokeStyle='rgba(255,255,255,.112)';ctx.lineWidth=.6;
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.save();
-  tracePath();
-  ctx.clip();
-  // Faint diagonal gloss, same 135deg white sheen the panels use.
-  const gloss=ctx.createLinearGradient(leftX,topY,rightX,y);
-  gloss.addColorStop(0,'rgba(255,255,255,.1)');gloss.addColorStop(.55,'rgba(255,255,255,0)');
-  ctx.fillStyle=gloss;ctx.fillRect(leftX,topY,w,h);
-  ctx.restore();
-
-  ctx.restore();
-}
+// The canvas-drawn endpoint triangle (drawGlassTriangle) that used to live
+// here has been replaced by the HTML .dv-ep-tri shape built in
+// dvDrawRaceChart, which now also holds the stat cluster that used to be
+// a separate floating .dv-ep-bubble. See the CSS comment above .dv-ep-tri
+// near the top of the file for the full border/fill recipe — it mirrors
+// this function's old layering (glow understrokes, gradient stroke,
+// specular highlight) via an SVG overlay instead of canvas calls, since a
+// plain canvas shape can't host real DOM text or backdrop-filter blur.
 
 function drawChart(equity,acct0,tab){
   const s=tab===0?'':'_'+tab;const cv=$('cv'+s);if(!cv)return;
@@ -2138,11 +2079,24 @@ function dvFindRapidGrowth(series){
   // routinely landing within 1-2% of each other from ordinary day-to-day
   // randomness alone — a 10% band called EVERY one of those runs a tie,
   // which just hides a real (if narrow) leader behind "nobody won."
+  //
+  // Capital closeness alone isn't enough once more strategies are in
+  // play, though: with 6 strategies drawn from similar settings, their
+  // final capitals often ALL land within 2% of each other purely by
+  // chance even though their finish days are spread across a much wider
+  // window (one real run had all 6 within 1.7% on capital but 109 days
+  // apart on when they actually finished). Averaging a "tie" like that
+  // produces a marker that floats over no real point on any curve. So a
+  // strategy only counts as part of the tie if it ALSO finished within a
+  // day-window of the day's current top performer's own finish day — a
+  // real photo finish has to be close in both dollars and time.
   function leaderSetAt(day){
     const caps=series.map((s,si)=>({si,cap:capNow(si,day)}));
     const top=Math.max(...caps.map(o=>o.cap));
     const tol=Math.max(Math.abs(top)*0.02,1);
-    return new Set(caps.filter(o=>top-o.cap<=tol).map(o=>o.si));
+    const topSi=caps.find(o=>o.cap===top).si;
+    const dayTol=Math.max(maxDay*0.1,5);
+    return new Set(caps.filter(o=>top-o.cap<=tol&&Math.abs(finalDay[o.si]-finalDay[topSi])<=dayTol).map(o=>o.si));
   }
   const sameSet=(a,b)=>a.size===b.size&&[...a].every(x=>b.has(x));
   const finalSet=leaderSetAt(maxDay);
@@ -2464,75 +2418,76 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     ctx.restore();
   }
 
-  // ── Endpoints: upside-down glass triangles marking the final point of
-  // each curve, muted to match the app's own frosted panels (see
-  // drawGlassTriangle) rather than a saturated colour shape. Each gets a
-  // real HTML "bubble" (see .dv-ep-bubble) — a rounded-square glass panel
-  // in the strategy's own colour, sitting flush against the triangle's
-  // flat top edge — rather than boxless canvas text; only an HTML element
-  // can use backdrop-filter to actually blur/refract whatever it happens
-  // to sit over (a curve, the rapid-growth overlay, another bubble),
-  // matching the same material .dv-daytally already uses. Unlike the
-  // rounds-37-40 obstruction-avoidance system this replaces, placement is
-  // now unconditional — every bubble always sits centred above its own
-  // triangle — because a solid frosted panel reads fine landing on top of
-  // a curve or the overlay text in a way transparent fill-text never did,
-  // so there's no longer anything to dodge. Triangles/lines finishing
-  // within 10% of each other's capital still merge into one averaged,
-  // uncoloured bubble centred over the group (dvGroupEndpoints) — that
-  // merge/averaging behaviour is a separate concern from positioning and
-  // is unchanged.
-  const TRI_R=6.5,TRI_H=TRI_R*2.1;
+  // ── Endpoints: one enlarged upside-down glass triangle per curve,
+  // marking its final point AND holding its own stat cluster (capital,
+  // monthly value, time — see .dv-ep-tri) — the small decorative canvas
+  // triangle and the separate floating HTML bubble above it have been
+  // folded into this single shape. Still a real HTML element rather than
+  // boxless canvas text/strokes; only an HTML element can use
+  // backdrop-filter to actually blur/refract whatever it happens to sit
+  // over (a curve, the rapid-growth overlay, another triangle), matching
+  // the same material .dv-daytally already uses. Placement stays
+  // unconditional — every triangle sits tip-down on its own data point,
+  // nothing dodges anything else — a solid frosted shape reads fine
+  // landing on top of a curve or another triangle. Triangles/lines
+  // finishing within 10% of each other's capital still merge into one
+  // averaged, uncoloured triangle centred over the group
+  // (dvGroupEndpoints) — that merge/averaging behaviour is a separate
+  // concern from positioning/shape and is unchanged.
+  const TRI2_W=112,TRI2_H=58;
   const rawEndpoints=[];
   if(hasReal){
     const lastR=realPts[realPts.length-1];
     const realAsPts=realPts.map((p,i)=>({day:i,cap:p.cap}));
-    rawEndpoints.push({x:xS(realPts.length-1),y:yS(lastR.cap),color:'#e2e6ed',cap:lastR.cap,mo:dvPlateauMoRate(realAsPts),day:realPts.length-1,sh:null});
+    rawEndpoints.push({x:xS(realPts.length-1),y:yS(lastR.cap),color:'#e2e6ed',cap:lastR.cap,mo:dvPlateauMoRate(realAsPts),day:realPts.length-1});
   }
   for(const s of series){
     const last=s.pts[s.pts.length-1];
-    rawEndpoints.push({x:xS(last.day),y:yS(last.cap),color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts),day:last.day,sh:last.sh});
+    rawEndpoints.push({x:xS(last.day),y:yS(last.cap),color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts),day:last.day});
   }
   const labelGroups=dvGroupEndpoints(rawEndpoints);
-  // Horizontal-only clamp so a bubble near either edge of the plot still
-  // hugs its own triangle (translate(-50%,-100%) in CSS handles the
+  // Horizontal-only clamp so a triangle near either edge of the plot
+  // still sits tip-on-point (translate(-50%,-100%) in CSS handles the
   // centring/bottom-anchor) without spilling past the chart-wrap's
-  // border — same margin-from-edge idea as the old halfW label-box clamp,
-  // just against a bubble's own auto-fit width instead of a fixed box.
-  const EP_MARGIN=32;
-  let bubblesHtml='';
+  // border — margin is half the fixed triangle width (+2px) rather than
+  // the old auto-fit-width bubble's flat guess, since every triangle is
+  // now the same size.
+  const EP_MARGIN=TRI2_W/2+2;
+  let trisHtml='';
+  let epGi=0;
   for(const grp of labelGroups){
     const capTxt='$'+fmt(grp.cap,0);
     const moTxt=(grp.mo>=0?'+$':'−$')+fmt(Math.abs(grp.mo),0)+'/mo';
     const calTxt=cal(dayToCal(grp.day));
-    const shTxt=grp.sh!=null?Math.round(grp.sh).toLocaleString()+' sh':null;
     const [cr,cg,cb]=grp.color?hexToRgb(grp.color):[163,173,190];
-    // Same lightened-top-stop math as drawGlassTriangle's own border
-    // gradient (Math.min(255,c+70)), so the bubble's outline is the same
-    // material as the triangle it sits on, not just a similarly-shaped one.
+    // Same lightened-top-stop math as the old canvas drawGlassTriangle's
+    // own border gradient (Math.min(255,c+70)), so the outline reads as
+    // the same material the equity curves themselves use.
     const hr=Math.min(255,cr+70),hg=Math.min(255,cg+70),hb=Math.min(255,cb+70);
     const anchorX=Math.min(Math.max(grp.x,pd.l+EP_MARGIN),pd.l+pw-EP_MARGIN);
-    const bubTop=grp.y-TRI_H;
-    bubblesHtml+=`<div class="dv-ep-bubble" style="left:${anchorX}px;top:${bubTop}px;--eprgb:${cr},${cg},${cb};--eprgb-hi:${hr},${hg},${hb};">`+
-      (shTxt!=null?`<span class="dv-ep-sh">${shTxt}</span>`:'')+
-      `<span class="dv-ep-cap">${capTxt}</span>`+
-      `<span class="dv-ep-mo">${moTxt}</span>`+
-      `<span class="dv-ep-cal">${calTxt}</span>`+
+    const gid='epg'+(epGi++);
+    const pts=`0,0 ${TRI2_W},0 ${TRI2_W/2},${TRI2_H}`;
+    trisHtml+=`<div class="dv-ep-tri" style="left:${anchorX}px;top:${grp.y}px;--eptw:${TRI2_W}px;--epth:${TRI2_H}px;--eprgb:${cr},${cg},${cb};--eprgb-hi:${hr},${hg},${hb};">`+
+      `<div class="dv-ep-tri-fill"></div>`+
+      `<svg class="dv-ep-tri-svg" viewBox="0 0 ${TRI2_W} ${TRI2_H}">`+
+        `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">`+
+          `<stop offset="0" stop-color="rgb(${hr},${hg},${hb})" stop-opacity=".92"/>`+
+          `<stop offset="1" stop-color="rgb(${cr},${cg},${cb})" stop-opacity=".85"/>`+
+        `</linearGradient></defs>`+
+        `<polygon points="${pts}" fill="none" stroke="rgba(${cr},${cg},${cb},.0392)" stroke-width="5.5" stroke-linejoin="round"/>`+
+        `<polygon points="${pts}" fill="none" stroke="rgba(${cr},${cg},${cb},.0651)" stroke-width="3.2" stroke-linejoin="round"/>`+
+        `<polygon points="${pts}" fill="none" stroke="url(#${gid})" stroke-width="1" stroke-linejoin="round"/>`+
+        `<line x1="1.5" y1="0.5" x2="${TRI2_W-1.5}" y2="0.5" stroke="rgba(255,255,255,.112)" stroke-width="0.9"/>`+
+      `</svg>`+
+      `<div class="dv-ep-tri-txt">`+
+        `<span class="dv-ep-cap">${capTxt}</span>`+
+        `<span class="dv-ep-mo">${moTxt}</span>`+
+        `<span class="dv-ep-cal">${calTxt}</span>`+
+      `</div>`+
       `</div>`;
   }
   const bubblesEl=$('dv-ep-bubbles');
-  if(bubblesEl)bubblesEl.innerHTML=bubblesHtml;
-  ctx.textAlign='center';
-  for(const s of series){
-    const last=s.pts[s.pts.length-1];
-    const [r,g,b]=hexToRgb(s.color);
-    drawGlassTriangle(ctx,xS(last.day),yS(last.cap),TRI_R,[r,g,b],pd.t,pd.t+ph);
-  }
-  if(hasReal){
-    const lastR=realPts[realPts.length-1];
-    const [r,g,b]=hexToRgb('#e2e6ed');
-    drawGlassTriangle(ctx,xS(realPts.length-1),yS(lastR.cap),TRI_R,[r,g,b],pd.t,pd.t+ph);
-  }
+  if(bubblesEl)bubblesEl.innerHTML=trisHtml;
 
   cv._race={series,realPts,hasReal,pd,pw,ph,xS,yS,maxDay,dayToCal};
   if(legendEl)legendEl.innerHTML='';
