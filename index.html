@@ -428,49 +428,63 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
        silhouettes coincide exactly and the accent reads as the outer
        triangle's own lower portion turning solid, not a separate shape.
        That height itself sits 1% of the triangle's own width below the
-       bottom of the last line of text — the SAME distance the widest
-       line of text keeps from the outer sides — matching breathing room
-       on the third edge too, and it's also exactly the vertical midpoint
-       of the whole shape: the tip zone mirrors the content zone's own
-       height, an even top-half/bottom-half split rather than an
-       arbitrary fixed height (see dvSolveEpTri).
-     .dv-ep-tri-txt — the info cluster, unclipped and unblurred so its
-       text stays crisp, positioned to sit inside the triangle's wide
-       upper portion. Just two lines now: monthly, then date/time — the
-       capital line and the shares line are both gone (the share gauges
-       elsewhere already cover shares, and capital was redundant with the
-       monthly figure once that figure was decided to be enough on its
-       own). Date has no spaces in it ("1y6mo" not "1y 6mo"); monthly
-       drops its "+" on a gain (the row's own position already reads as
-       "the monthly number") and its "/mo" suffix, keeping only the "−"
-       on a loss since that sign is the one that's actually information.
-   Both width AND height are auto-fit PER INSTANCE now (not just width
-   against a fixed height) — JS measures each of the 2 lines' actual
-   rendered width (ctx.measureText, same font/weight/size as the CSS)
-   and dvSolveEpTri iterates to the smallest top-edge width, and the
-   shortest matching height, whose sloped sides still clear both lines
-   at their own vertical position with ~1% of the triangle's own FINAL
-   width as headroom on every edge — top, left, right, and the gap
-   before the tip — so the text basically touches the sides instead of
-   floating in empty margin, and the box holds no more height than the
-   two lines plus that padding plus a matching tip need. Width and
-   height are solved together because they depend on each other (a
-   shorter box tapers faster, which can demand a wider top edge for the
-   same text, which in turn changes how tall a mirrored tip needs to be)
-   — the iteration converges in a handful of rounds for any input.
-   Monthly feeds this formula already K-abbreviated (fmtK — "$1.9K"
-   rather than "$1,924") specifically so the measured width, and
-   therefore the solved-for triangle size, comes out as small as the
-   text can honestly make it. Anchored via translate(-50%,-100%) so JS
-   only ever has to set left/top to the triangle's own tip — the exact
-   data-point coordinate, matching what drawGlassTriangle used to
-   receive directly. No more merging nearby endpoints into one averaged,
-   uncoloured triangle either — every strategy (and the real-portfolio
-   overlay) always gets its own, in its own colour; the dark frosted
-   fill reads clearly even when triangles land on top of each other, so
-   the old dvGroupEndpoints workaround (built when labels were
-   transparent fillText and any overlap was unreadable) no longer earns
-   its complexity. */
+       bottom of the last line of text above it — the SAME distance the
+       widest line of text keeps from the outer sides — matching
+       breathing room on the third edge too. Unlike earlier rounds, this
+       inner tip is no longer purely decorative: it holds its own label
+       (the years figure — see .dv-ep-tri-tip-txt below), so its own
+       height is now content-driven rather than an arbitrary mirror of
+       the zone above it (see dvSolveEpTri).
+     .dv-ep-tri-txt — the upper info cluster, unclipped and unblurred so
+       its text stays crisp, sitting inside the triangle's wide frosted
+       trapezoid (everything above the flush transition line). Two
+       lines: monthly, then capital — monthly drops its "+" on a gain
+       (the row's own position already reads as "the monthly number")
+       and its "/mo" suffix, keeping only the "−" on a loss since that
+       sign is the one that's actually information; capital is a plain
+       K-abbreviated dollar figure, no sign (it's never negative).
+     .dv-ep-tri-tip-txt — a second, separate single-line text block, NOT
+       part of the .dv-ep-tri-txt flex stack above (its vertical position
+       is governed by the flush transition line + the tip's own 1% top
+       padding, unrelated to that stack's flow) — absolutely positioned
+       via left:50%+translateX(-50%) and an inline --eptiptop instead.
+       Holds the years-to-here figure as a plain one-token decimal
+       ("1.2y"/"10.9y") rather than the old two-unit "1y6mo" breakdown -
+       a compact badge suits a label now living inside a narrowing
+       coloured point better than a longer string would.
+   Both width AND height are auto-fit PER INSTANCE, solved together
+   across BOTH zones — JS measures all 3 lines' actual rendered widths
+   (ctx.measureText, same font/weight/size as the CSS) and dvSolveEpTri
+   iterates to the smallest top-edge width, and the shortest matching
+   height, whose sloped sides still clear every line at its own vertical
+   position with ~1% of the triangle's own FINAL width as headroom on
+   every edge — top, left, right, the gap before the tip, AND the tip's
+   own top padding above the years label — so text basically touches the
+   sides instead of floating in empty margin. The point below the years
+   label extends EP_TIP_EXT_MUL (2x) the label-zone's own height (label +
+   its top padding) rather than an arbitrary tail — see the sizing
+   comment above dvSolveEpTri for why 2x specifically (a real width/
+   height trade-off with a numeric sweep behind it, not a guess) — so
+   the tip still reads as a genuine point instead of stopping flat at
+   the text. Width and height are solved together because every piece
+   depends on the others (a shorter box tapers faster, which can demand
+   a wider top edge for the same text, which changes how tall the point
+   below the years label needs to be, which changes the final height
+   every row's headroom is measured against) — the iteration converges
+   in a handful of rounds for any input. Monthly and capital feed this
+   formula already K-abbreviated (fmtK — "$1.9K" rather than "$1,924")
+   specifically so the measured widths, and therefore the solved-for
+   triangle size, come out as small as the text can honestly make them.
+   Anchored via
+   translate(-50%,-100%) so JS only ever has to set left/top to the
+   triangle's own tip — the exact data-point coordinate, matching what
+   drawGlassTriangle used to receive directly. No more merging nearby
+   endpoints into one averaged, uncoloured triangle either — every
+   strategy (and the real-portfolio overlay) always gets its own, in its
+   own colour; the dark frosted fill reads clearly even when triangles
+   land on top of each other, so the old dvGroupEndpoints workaround
+   (built when labels were transparent fillText and any overlap was
+   unreadable) no longer earns its complexity. */
 .dv-ep-tri{
   position:absolute;left:0;top:0;
   width:var(--eptw);height:var(--epth);
@@ -496,14 +510,42 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
   white-space:nowrap;
 }
 /* Text sizing matches the original canvas labels exactly (LBL_SIZE 7.2px
-   for the mo line, CAL_SIZE 6.4px for the calendar line, only the mo
-   line bold) — the triangle borrows the daytally's MATERIAL (glass/blur/
-   border) and per-strategy tint, not its typographic proportions, which
-   were sized for a fixed 55.8px circle showing one emphasised number.
-   --eptop (top padding) is set inline per instance, same 1%-of-final-
-   width formula as the left/right headroom, not a fixed constant. */
+   for the mo/capital lines, only mo bold) — the triangle borrows the
+   daytally's MATERIAL (glass/blur/border) and per-strategy tint, not its
+   typographic proportions, which were sized for a fixed 55.8px circle
+   showing one emphasised number. --eptop (top padding) is set inline
+   per instance, same 1%-of-final-width formula as the left/right
+   headroom, not a fixed constant. */
 .dv-ep-mo{font-size:7.2px;font-weight:700;line-height:1.2;color:rgba(255,255,255,.88);}
-.dv-ep-cal{font-size:6.4px;font-weight:400;line-height:1.2;color:rgba(var(--eprgb),.72);}
+.dv-ep-cap{font-size:7.2px;font-weight:400;line-height:1.2;color:rgba(var(--eprgb),.95);}
+/* The years-to-here badge — the ONE piece of text living inside the
+   solid coloured tip rather than the frosted trapezoid above it, so it
+   needs its own absolutely-positioned single-line block (centred via
+   left:50%+translateX, not the flex column above) rather than another
+   row in .dv-ep-tri-txt's stack, since its vertical position (governed
+   by the flush transition line + the tip's own 1% top padding) has
+   nothing to do with that stack's flow. --eptiptop set inline per
+   instance from dvSolveEpTri's yrTop. 500 weight (an actually-loaded
+   IBM Plex Mono weight, unlike the synthetic-bold 700 above) and
+   near-white rather than the old accent-tinted colour the date line
+   used to have — that tint was sized for the frosted upper zone's
+   lighter backdrop, not the darker solid tip fill underneath this. */
+.dv-ep-tri-tip-txt{
+  position:absolute;left:50%;top:var(--eptiptop);
+  transform:translateX(-50%);
+  /* display:flex (not the block default) for the same reason
+     .dv-ep-tri-txt above is a flex column and not a plain block: a
+     block container's line box gets padded out by an invisible "strut"
+     sized to the CONTAINER's own (here, inherited/much larger) font-
+     size even when the only content is a smaller inline child span -
+     silently adding ~7px of top offset the geometry math above knows
+     nothing about. flex sidesteps the strut entirely, so the div's
+     rendered height matches .dv-ep-yr's own line-height exactly. */
+  display:flex;
+  font-family:'IBM Plex Mono',monospace;
+  white-space:nowrap;
+}
+.dv-ep-yr{font-size:6.4px;font-weight:500;line-height:1.2;color:rgba(255,255,255,.82);}
 .chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,.08);}
 .cm{padding:7px 10px;border-right:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);}
 .cm:nth-child(even){border-right:none;}
@@ -2451,8 +2493,10 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   }
 
   // ── Endpoints: one enlarged upside-down glass triangle per curve,
-  // marking its final point AND holding its own stat cluster (monthly
-  // value, then time — see .dv-ep-tri) — the small decorative canvas
+  // marking its final point AND holding its own stat cluster split
+  // across the shape's two zones — monthly + capital in the frosted
+  // upper trapezoid, years-to-here as its own label inside the solid
+  // coloured tip (see .dv-ep-tri) — the small decorative canvas
   // triangle and the separate floating HTML bubble above it have been
   // folded into this single shape. Still a real HTML element rather than
   // boxless canvas text/strokes; only an HTML element can use
@@ -2470,41 +2514,62 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   // reads fine even stacked on another one, so the workaround no longer
   // earns its complexity.
   //
-  // Both dimensions are auto-fit per instance now, not just width. The
-  // two remaining lines (monthly, date/time) fix a constant text-block
-  // height; top padding and the gap before the tip both sit at 1% of the
-  // triangle's own FINAL width — same headroom formula as the left/right
-  // sides below, just applied to the other two edges — and the tip zone
-  // (the flush lower portion that reads as a solid colour point) is sized
-  // to mirror the content zone's own height, so the shape splits evenly
-  // into "text half" / "point half" instead of using an arbitrary fixed
-  // height. Because that final height then feeds back into how much
-  // width the taper needs at each line's position, dvSolveEpTri iterates
-  // a few rounds to a stable (width, height) pair rather than solving
-  // either one first.
-  const EP_LINE_MO_H=7.2*1.2,EP_ROW_GAP=.5,EP_LINE_CAL_H=6.4*1.2;
-  const EP_MIN_W=22;
-  const dvSolveEpTri=(moW,calW)=>{
+  // Both dimensions are auto-fit per instance, solved together, across
+  // BOTH zones now. Zone A (frosted, upper) holds monthly then capital;
+  // its top padding and the gap down to the tip's flush transition line
+  // both sit at 1% of the triangle's own FINAL width — same headroom
+  // formula as the left/right sides. Zone B (solid, the tip) holds the
+  // years label; its own top padding below the transition line is the
+  // same 1% rule again.
+  //
+  // Putting real text inside the tip is inherently a WIDTH cost, not a
+  // saving: the tip sits past the flush transition line, already partway
+  // down the taper, so the exact same string needs more triW there than
+  // it would sitting up in zone A — a first pass that kept the old
+  // "point mirrors the label-zone 1:1" ratio landed noticeably BIGGER
+  // than the previous (2-line, no-tip-text) round despite the shorter
+  // decimal-year string, entirely because of that repositioning, not
+  // the format. The fix isn't the ratio at the transition line (that
+  // stays 1%, same as every other edge) — it's how far the OUTER
+  // triangle's point extends below the years label. A taller/skinnier
+  // tip tapers more gently, so the same label needs less triW to clear
+  // it; a numeric sweep across the point-extension multiplier (1x/2x/
+  // .../20x the label-zone's own height) found triW falling fast up to
+  // about 2x-4x and then flattening (total area — triW*H — actually
+  // bottoms out around 3x-4x and creeps back up past that as H's growth
+  // outpaces triW's shrinkage). 2x was picked over the true area-minimum
+  // at ~3.5x specifically to stay closer to the established silhouette:
+  // it already lands at a smaller triW than the previous round (~43px
+  // vs ~39-47px) while keeping H/triW near 1:1 rather than the ~2:1
+  // elongated shape the area-minimum would have produced — smaller
+  // without starting to look like a different shape.
+  const EP_LINE_MO_H=7.2*1.2,EP_LINE_CAP_H=7.2*1.2,EP_ROW_GAP=.5,EP_LINE_YR_H=6.4*1.2;
+  const EP_MIN_W=20,EP_TIP_EXT_MUL=2;
+  const dvSolveEpTri=(moW,capW,yrW)=>{
     let triW=EP_MIN_W;
-    for(let it=0;it<14;it++){
+    for(let it=0;it<16;it++){
       const topPad=0.01*triW;
       const y1=topPad+EP_LINE_MO_H;
-      const y2=y1+EP_ROW_GAP+EP_LINE_CAL_H;
+      const y2=y1+EP_ROW_GAP+EP_LINE_CAP_H;
       const innerTop=y2+0.01*triW;
-      const H=innerTop*2;
+      const yrTop=innerTop+0.01*triW;
+      const yrBot=yrTop+EP_LINE_YR_H;
+      const H=yrBot+EP_TIP_EXT_MUL*(yrBot-innerTop);
       const req=(textW,yBot)=>{
         const avail=1-yBot/H;
         const denom=avail/2-0.01;
         return denom>0?(textW/2)/denom:EP_MIN_W;
       };
-      triW=Math.max(EP_MIN_W,req(moW,y1),req(calW,y2));
+      triW=Math.max(EP_MIN_W,req(moW,y1),req(capW,y2),req(yrW,yrBot));
     }
     const topPad=0.01*triW;
     const y1=topPad+EP_LINE_MO_H;
-    const y2=y1+EP_ROW_GAP+EP_LINE_CAL_H;
+    const y2=y1+EP_ROW_GAP+EP_LINE_CAP_H;
     const innerTop=y2+0.01*triW;
-    const H=innerTop*2;
-    return {triW,H,topPad,innerTop};
+    const yrTop=innerTop+0.01*triW;
+    const yrBot=yrTop+EP_LINE_YR_H;
+    const H=yrBot+EP_TIP_EXT_MUL*(yrBot-innerTop);
+    return {triW,H,topPad,innerTop,yrTop};
   };
   const rawEndpoints=[];
   if(hasReal){
@@ -2522,15 +2587,17 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     // No "+" on a positive monthly figure — the row's own position
     // already reads as "the monthly number", so the sign would be
     // redundant; a loss still gets its "−" since that's the one case
-    // where the sign itself is the information. No "/mo" suffix either,
-    // same reasoning. Capital is dropped entirely: monthly rate + time
-    // are the two figures a glass triangle carries now.
+    // where the sign itself is the information.
     const moTxt=(ep.mo>=0?'$':'−$')+fmtK(Math.abs(ep.mo));
-    // No spaces in the date line ("1y6mo" not "1y 6mo") — shared cal()
-    // is used as-is everywhere else in the app (Diagnostics, milestone
-    // table); the space-strip is scoped to just this triangle line, one
-    // more small width saving on top of the K-abbreviated $ line above.
-    const calTxt=cal(dayToCal(ep.day)).replace(/\s+/g,'');
+    const capTxt='$'+fmtK(ep.cap);
+    // Years-to-here as a plain decimal ("1.2y"/"10.9y") instead of the
+    // shared cal()'s "1y6mo" — this label now lives inside the solid
+    // coloured tip rather than the frosted text block above it, so it
+    // reads as a small standalone badge; a compact one-token number
+    // suits that better than a two-unit breakdown. dayToCal() is still
+    // the one shared trading-days-to-calendar-months conversion used
+    // everywhere else in the app — only the final formatting differs.
+    const yrTxt=(dayToCal(ep.day)/12).toFixed(1)+'y';
     const [cr,cg,cb]=hexToRgb(ep.color);
     // Same lightened-top-stop math as the old canvas drawGlassTriangle's
     // own border gradient (Math.min(255,c+70)), so the outline reads as
@@ -2541,9 +2608,11 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     // instead of a one-size-fits-all guess.
     ctx.font='700 7.2px "IBM Plex Mono", monospace';
     const moW=ctx.measureText(moTxt).width;
-    ctx.font='400 6.4px "IBM Plex Mono", monospace';
-    const calW=ctx.measureText(calTxt).width;
-    const {triW,H,topPad,innerTop}=dvSolveEpTri(moW,calW);
+    ctx.font='400 7.2px "IBM Plex Mono", monospace';
+    const capW=ctx.measureText(capTxt).width;
+    ctx.font='500 6.4px "IBM Plex Mono", monospace';
+    const yrW=ctx.measureText(yrTxt).width;
+    const {triW,H,topPad,innerTop,yrTop}=dvSolveEpTri(moW,capW,yrW);
     // Horizontal-only clamp so a triangle near either edge of the plot
     // still sits tip-on-point (translate(-50%,-100%) in CSS handles the
     // centring/bottom-anchor) without spilling past the chart-wrap's
@@ -2588,7 +2657,10 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       `</svg>`+
       `<div class="dv-ep-tri-txt">`+
         `<span class="dv-ep-mo">${moTxt}</span>`+
-        `<span class="dv-ep-cal">${calTxt}</span>`+
+        `<span class="dv-ep-cap">${capTxt}</span>`+
+      `</div>`+
+      `<div class="dv-ep-tri-tip-txt" style="--eptiptop:${yrTop}px;">`+
+        `<span class="dv-ep-yr">${yrTxt}</span>`+
       `</div>`+
       `</div>`;
   }
