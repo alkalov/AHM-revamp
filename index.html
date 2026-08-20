@@ -390,6 +390,59 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .dv-dt-label{font-size:5.85px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(226,230,237,.55);line-height:1;}
 .dv-dt-num{font-size:14.4px;font-weight:700;line-height:1.05;}
 .dv-dt-cal{font-size:7.2px;font-weight:500;color:rgba(226,230,237,.72);line-height:1;}
+/* Growth-marker callout — a glowing leader line + rounded-rect glass
+   label pointing off the canvas-drawn bullseye marker (drawGlassBullseye/
+   drawGlassRing) toward readable text ("RAPID GROWTH POINT" on the Sim
+   tab's own per-strategy chart, "FASTEST PATH" on the Table tab's
+   combined chart — same callout, different wording per context, wired
+   up by the one shared dvPositionGrowthCallout() so both stay in sync).
+   Both pieces are real HTML/CSS rather than canvas specifically so the
+   glow can use filter:drop-shadow, which — unlike canvas shadowBlur —
+   hugs each element's own rotated/rounded silhouette and reads as a
+   genuine escaping flare strong enough to stay legible over any curve,
+   rather than a soft box. Position (left/top/width/rotate) is computed
+   per redraw in JS from the marker's own canvas x/y, mirroring the
+   marker's established 10-o'clock-primary/2-o'clock-fallback dodge so
+   the label still avoids the chart's left edge on tight layouts. Colour
+   is set inline per instance via --rgrgb/--rgrgb-hi/--rgrgb-dk (true /
+   lightened-by-100 / darkened-to-40% per channel) — the exact same
+   Math.min(255,c+100) and *.4 arithmetic drawGlassRing itself uses for
+   its own ring-fill gradient — so the bubble reads as that marker's own
+   "big ring" turned into a readable label, not a separately invented
+   style; the double inset box-shadow below echoes the ring's own
+   brighter-outer/fainter-inner double stroke the same way. */
+.dv-rg-line{
+  position:absolute;left:0;top:0;height:2px;width:0;
+  transform-origin:0 50%;
+  background:rgba(var(--rgrgb),.9);
+  border-radius:2px;
+  pointer-events:none;opacity:0;transition:opacity .35s ease;z-index:2;
+  filter:
+    drop-shadow(0 0 3px rgba(var(--rgrgb),.85))
+    drop-shadow(0 0 8px rgba(var(--rgrgb),.55))
+    drop-shadow(0 0 16px rgba(var(--rgrgb),.3));
+}
+.dv-rg-line.show{opacity:1;}
+.dv-rg-bubble{
+  position:absolute;left:0;top:0;
+  padding:4px 8px;border-radius:6px;box-sizing:border-box;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:7px;
+  letter-spacing:.09em;text-transform:uppercase;color:#f5f7fa;
+  white-space:nowrap;
+  background:
+    radial-gradient(ellipse 100% 70% at 50% 0%, rgba(var(--rgrgb-hi),.42) 0%, rgba(var(--rgrgb),.30) 55%, rgba(var(--rgrgb-dk),.24) 100%);
+  backdrop-filter:blur(6px) saturate(1.3);
+  -webkit-backdrop-filter:blur(6px) saturate(1.3);
+  border:1px solid rgba(var(--rgrgb),.9);
+  box-shadow:inset 0 0 0 2.5px rgba(var(--rgrgb),.32),inset 0 1px 0 rgba(var(--rgrgb-hi),.35);
+  filter:
+    drop-shadow(0 0 4px rgba(var(--rgrgb),.5))
+    drop-shadow(0 0 11px rgba(var(--rgrgb),.26))
+    drop-shadow(0 0 22px rgba(var(--rgrgb),.12));
+  pointer-events:none;opacity:0;transition:opacity .35s ease;z-index:3;
+}
+.dv-rg-bubble.show{opacity:1;}
 /* Endpoint markers — the small decorative canvas triangle (drawGlassTriangle)
    and the separate HTML stat bubble that used to float above it are now ONE
    shape: a single enlarged glass triangle with its own info cluster living
@@ -872,6 +925,8 @@ canvas.spark{width:100%;height:34px;display:block;}
           <span class="rg-time" id="rg-time">—</span>
           <div class="rg-bottom">to rapid growth</div>
         </div>
+        <div class="dv-rg-line" id="rg-line-tbl"></div>
+        <div class="dv-rg-bubble" id="rg-bubble-tbl"></div>
         <div id="dv-ep-bubbles"></div>
         <div class="dv-daytally" id="dv-daytally">
           <span class="dv-dt-label">Day</span>
@@ -1717,6 +1772,58 @@ function drawGlassBullseye(ctx,x,y,r,rgb,boost,flatDot,glowMul){
   ctx.restore();
 }
 
+/* Positions the .dv-rg-line/.dv-rg-bubble pair (see their CSS comment
+   for the full material rationale) for one growth marker. Shared by both
+   the Sim tab's own per-strategy bullseye and the Table tab's combined
+   FASTEST PATH bullseye so the two callouts stay pixel-identical in
+   mechanism, just worded/coloured per instance. mx/my/r/rgb are that
+   marker's own canvas x/y, radius and colour (the SAME rgb already
+   passed to drawGlassBullseye for it, so the callout always matches the
+   ring it's attached to); leftBound/rightBound are the chart's own plot
+   left/right edges (pd.l / pd.l+pw) used for the same left-edge dodge
+   the old canvas "FASTEST PATH" text used. Pass mx==null to hide (no
+   rapid-growth point this redraw) — always safe to call every redraw,
+   same as the marker draw itself, since hidden state is just .show
+   toggling off, not removal. */
+function dvPositionGrowthCallout(lineEl,bubbleEl,mx,my,r,rgb,label,leftBound,rightBound){
+  if(!lineEl||!bubbleEl)return;
+  if(mx==null){lineEl.classList.remove('show');bubbleEl.classList.remove('show');return;}
+  const [cr,cg,cb]=rgb;
+  const hr=Math.min(255,cr+100),hg=Math.min(255,cg+100),hb=Math.min(255,cb+100);
+  const dr=Math.round(cr*.4),dg=Math.round(cg*.4),db=Math.round(cb*.4);
+  bubbleEl.textContent=label;
+  const rgrgb=`${cr},${cg},${cb}`;
+  bubbleEl.style.setProperty('--rgrgb',rgrgb);
+  bubbleEl.style.setProperty('--rgrgb-hi',`${hr},${hg},${hb}`);
+  bubbleEl.style.setProperty('--rgrgb-dk',`${dr},${dg},${db}`);
+  lineEl.style.setProperty('--rgrgb',rgrgb);
+  // Same 10-o'clock-primary/2-o'clock-fallback dodge the old canvas label
+  // used: try the upper-left diagonal first, measure the bubble for real
+  // (not a guessed char width, unlike the old ctx.measureText version —
+  // an actual DOM element can just be measured), mirror to upper-right
+  // if it would cross the chart's own left edge.
+  const leadLen=21,textGap=6;
+  const ang10=150*Math.PI/180,dx10=Math.cos(ang10),dy10=-Math.sin(ang10);
+  const edge10X=mx+r*dx10,edge10Y=my+r*dy10;
+  const tip10X=edge10X+leadLen*dx10,tip10Y=edge10Y+leadLen*dy10;
+  const anchor10X=tip10X+textGap*dx10;
+  const bw=bubbleEl.offsetWidth||label.length*5+14;
+  const fitsLeft=leftBound==null||(anchor10X-bw)>=leftBound;
+  const ang=fitsLeft?ang10:30*Math.PI/180;
+  const dx=Math.cos(ang),dy=-Math.sin(ang);
+  const ex=mx+r*dx,ey=my+r*dy;
+  const tx=ex+leadLen*dx,ty=ey+leadLen*dy;
+  const anchorX=tx+textGap*dx,anchorY=ty+textGap*dy;
+  const dxL=tx-ex,dyL=ty-ey,len=Math.hypot(dxL,dyL),angDeg=Math.atan2(dyL,dxL)*180/Math.PI;
+  lineEl.style.left=ex+'px';lineEl.style.top=ey+'px';
+  lineEl.style.width=len+'px';
+  lineEl.style.transform=`rotate(${angDeg}deg)`;
+  bubbleEl.style.left=anchorX+'px';bubbleEl.style.top=anchorY+'px';
+  bubbleEl.style.transform=fitsLeft?'translate(-100%,-50%)':'translate(0,-50%)';
+  lineEl.classList.add('show');
+  bubbleEl.classList.add('show');
+}
+
 // The canvas-drawn endpoint triangle (drawGlassTriangle) that used to live
 // here has been replaced by the HTML .dv-ep-tri shape built in
 // dvDrawRaceChart, which now also holds the stat cluster that used to be
@@ -1790,10 +1897,19 @@ function _drawChart(cv,equity,acct0,rgb){
     // centre the way the default "glass sphere" dot does.
     const growthPts=equity.map(p=>({day:p.day,cap:acct0+p.cumPnl}));
     const growthHit=dvStrategyRapidGrowth(growthPts);
+    const sfx=cv.id.slice(2);
+    const rgLineEl=$('rg-line'+sfx),rgBubbleEl=$('rg-bubble'+sfx);
+    let placedGrowth=false;
     if(growthHit){
       const gi=growthPts.findIndex(p=>p.day===growthHit.day);
-      if(gi>=0)drawGlassBullseye(ctx,xS(gi),yS(pnls[gi]),11,[255,255,255],3,true,.85);
+      if(gi>=0){
+        const gx=xS(gi),gy=yS(pnls[gi]);
+        drawGlassBullseye(ctx,gx,gy,11,[255,255,255],3,true,.85);
+        dvPositionGrowthCallout(rgLineEl,rgBubbleEl,gx,gy,11,[255,255,255],'RAPID GROWTH POINT',pd.l,pd.l+pw);
+        placedGrowth=true;
+      }
     }
+    if(!placedGrowth)dvPositionGrowthCallout(rgLineEl,rgBubbleEl,null);
   }else{
     ctx.beginPath();ctx.moveTo(xS(0),yS(pnls[0]));
     for(let i=1;i<pnls.length;i++){const cpx=(xS(i-1)+xS(i))/2;ctx.bezierCurveTo(cpx,yS(pnls[i-1]),cpx,yS(pnls[i]),xS(i),yS(pnls[i]));}
@@ -2495,52 +2611,27 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const RG_MK_R=14.2; // 10.92 × 1.3 — 30% bigger
     // Marker itself is tinted in the winning strategy's own identity
     // colour (rapid.color, set in dvFindRapidGrowth) so it's identifiable
-    // at a glance — the dashed lead-in line and "FASTEST PATH" text below
-    // stay neutral white on purpose, unchanged. Boosted (brighter ring +
-    // wider bloom + more opaque centre) specifically here — with up to
-    // six strategies' worth of curves crossing right through this point,
-    // the original subtle-glass tuning (rounds 25-27) was easy to lose
-    // among them. Every other drawGlassBullseye/drawGlassRing call site
-    // (Sim tab's own per-strategy markers, hover dots) omits the boost
-    // arg and renders exactly as before.
+    // at a glance — the "FASTEST PATH" callout below now matches that
+    // same tint (passed straight through to dvPositionGrowthCallout, the
+    // marker's own colour is the callout's colour by design); only the
+    // dashed lead-in dropline above stays neutral white. Boosted (brighter
+    // ring + wider bloom + more opaque centre) specifically here — with up
+    // to six strategies' worth of curves crossing right through this
+    // point, the original subtle-glass tuning (rounds 25-27) was easy to
+    // lose among them. Every other drawGlassBullseye/drawGlassRing call
+    // site (Sim tab's own per-strategy markers, hover dots) omits the
+    // boost arg and renders exactly as before.
     drawGlassBullseye(ctx,mx,my,RG_MK_R,hexToRgb(rapid.color),3.2);
 
-    // "Fastest path" annotation — a single straight leader at the
-    // marker's own 10-o'clock angle running all the way out to the text,
-    // no horizontal bend/shelf. Mirrors to the marker's 2-o'clock point
-    // instead when there isn't room for the label between the marker and
-    // the chart's left edge.
-    ctx.save();
-    ctx.font='700 7px IBM Plex Mono';
-    ctx.fillStyle='rgba(255,255,255,.7)';
-    ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=.8;
-    const rgLblTxt='FASTEST PATH';
-    const rgLblW=ctx.measureText(rgLblTxt).width;
-    const leadLen=21,textGap=5;
-    // 10 o'clock: 150° in standard math convention (0°=east,90°=north);
-    // screen y grows downward, so the y component is negated.
-    const ang10=150*Math.PI/180;
-    const dx10=Math.cos(ang10),dy10=-Math.sin(ang10);
-    const edgeX=mx+RG_MK_R*dx10,edgeY=my+RG_MK_R*dy10;
-    const tipX=edgeX+leadLen*dx10,tipY=edgeY+leadLen*dy10;
-    const anchorX=tipX+textGap*dx10,anchorY=tipY+textGap*dy10;
-    const fitsLeft=(anchorX-rgLblW)>=pd.l;
-    if(fitsLeft){
-      ctx.textAlign='right';
-      ctx.beginPath();ctx.moveTo(edgeX,edgeY);ctx.lineTo(tipX,tipY);ctx.stroke();
-      ctx.fillText(rgLblTxt,anchorX,anchorY+2.5);
-    }else{
-      // 2 o'clock: mirror of 10 o'clock across the vertical axis (30°).
-      const ang2=30*Math.PI/180;
-      const dx2=Math.cos(ang2),dy2=-Math.sin(ang2);
-      const edgeX2=mx+RG_MK_R*dx2,edgeY2=my+RG_MK_R*dy2;
-      const tipX2=edgeX2+leadLen*dx2,tipY2=edgeY2+leadLen*dy2;
-      const anchorX2=tipX2+textGap*dx2,anchorY2=tipY2+textGap*dy2;
-      ctx.textAlign='left';
-      ctx.beginPath();ctx.moveTo(edgeX2,edgeY2);ctx.lineTo(tipX2,tipY2);ctx.stroke();
-      ctx.fillText(rgLblTxt,anchorX2,anchorY2+2.5);
-    }
-    ctx.restore();
+    // "Fastest path" annotation — now the shared HTML glass-bubble
+    // callout (see dvPositionGrowthCallout + its .dv-rg-line/.dv-rg-bubble
+    // CSS) instead of plain canvas fillText + a thin stroke, so it gets
+    // the same glowing leader + tinted-glass label the Sim tab's own
+    // "RAPID GROWTH POINT" marker uses — strong enough to stay legible
+    // crossing up to six competing curves, not just the marker itself.
+    dvPositionGrowthCallout($('rg-line-tbl'),$('rg-bubble-tbl'),mx,my,RG_MK_R,hexToRgb(rapid.color),'FASTEST PATH',pd.l,pd.l+pw);
+  }else{
+    dvPositionGrowthCallout($('rg-line-tbl'),$('rg-bubble-tbl'),null);
   }
 
   // ── Endpoints: one enlarged upside-down glass triangle per curve,
@@ -3928,7 +4019,7 @@ function buildPanes(){
       </div>
       <div class="chart-panel">
         <div class="chart-hd"><span class="chart-lbl">Equity Curve · ${L}</span><span class="chart-tt" id="ct${s}"></span></div>
-        <div class="chart-wrap"><canvas class="eqcv" id="cv${s}"></canvas></div>
+        <div class="chart-wrap"><canvas class="eqcv" id="cv${s}"></canvas><div class="dv-rg-line" id="rg-line${s}"></div><div class="dv-rg-bubble" id="rg-bubble${s}"></div></div>
         <div class="chart-metrics">
           <div class="cm"><div class="cml">Time to Goal</div><div class="cmv steel" id="cm-ttg${s}">—</div><div class="cms" id="cm-ttgs${s}">—</div></div>
           <div class="cm"><div class="cml">Capital at Goal</div><div class="cmv amb" id="cm-cap${s}">—</div><div class="cms" id="cm-caps${s}">—</div></div>
@@ -3976,6 +4067,9 @@ function clearStrategy(tab){
   simResults[tab]=null;
   const cv=$('cv'+s);if(cv){const ctx=cv.getContext('2d');if(ctx)ctx.clearRect(0,0,cv.width,cv.height);}
   const ttEl=$('ct'+s);if(ttEl)ttEl.textContent='';
+  const rgLineEl=$('rg-line'+s),rgBubbleEl=$('rg-bubble'+s);
+  if(rgLineEl)rgLineEl.classList.remove('show');
+  if(rgBubbleEl)rgBubbleEl.classList.remove('show');
   const CM_DEFAULT_CLS={'cm-ttg':'cmv steel','cm-cap':'cmv amb','cm-ret':'cmv','cm-ann':'cmv'};
   Object.keys(CM_DEFAULT_CLS).forEach(id=>{const e=$(id+s);if(e){e.textContent='—';e.className=CM_DEFAULT_CLS[id];}});
   ['cm-ttgs','cm-caps','cm-rets'].forEach(id=>{const e=$(id+s);if(e)e.textContent='—';});
