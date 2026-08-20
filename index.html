@@ -2385,6 +2385,39 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     curveList.push(s.pts);
   }
   const labelGroups=dvGroupEndpoints(rawEndpoints);
+  const halfW=44;
+  // Every already-placed label's own footprint, so a LATER group's
+  // obstruction check also avoids landing on top of an EARLIER group's
+  // stack — not just curve lines and the rapid-growth overlay. With
+  // several endpoints bunched close together (steep, near-simultaneous
+  // curves) their default centre-top spots can overlap each other even
+  // when no curve or overlay is anywhere near.
+  const placedBoxes=[];
+  // True if the given rectangle collides with the rapid-growth overlay,
+  // any OTHER curve's line, or any already-placed label - the one check
+  // shared by both the default centre-top test and the two side
+  // candidates below, so all three obstruction sources are always
+  // considered together rather than the overlay/curve check on the
+  // default spot and something looser on the fallback.
+  function boxHits(x0,x1,y0,y1,excludeMembers){
+    if(rapid&&x0<W*.76&&y0<H*.47)return true;
+    for(let ci=0;ci<curveList.length;ci++){
+      if(excludeMembers.includes(ci))continue;
+      const pts=curveList[ci];
+      for(let k=0;k<=6;k++){
+        const sx=x0+(x1-x0)*(k/6);
+        const day=Math.max(0,Math.min(maxDay,((sx-pd.l)/pw)*maxDay));
+        const cap=dvCapAtDay(pts,day);
+        if(cap==null)continue;
+        const cy=yS(cap);
+        if(cy>y0&&cy<y1)return true;
+      }
+    }
+    for(const b of placedBoxes){
+      if(x0<b.x1&&x1>b.x0&&y0<b.y1&&y1>b.y0)return true;
+    }
+    return false;
+  }
   for(const grp of labelGroups){
     const capTxt='$'+fmt(grp.cap,0);
     const moTxt=(grp.mo>=0?'+$':'−$')+fmt(Math.abs(grp.mo),0)+'/mo';
@@ -2398,40 +2431,36 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const moLyDefault=grp.y-TRI_H-TRI_LBL_GAP-CAL_GAP;
     const topGap=shTxt!=null?(LBL_GAP+SHR_GAP):LBL_GAP;
     const stackTop=moLyDefault-topGap-LBL_SIZE-2,stackBot=moLyDefault+CAL_GAP+CAL_SIZE+2;
-    const halfW=44;
-    // The "X TO RAPID GROWTH" kinetic-text overlay (rg-overlay) sits over
-    // the chart's own top-left 76%x47% whenever a rapid-growth point was
-    // found (dvUpdateRapidOverlay) - a label stack landing on top of that
-    // big text is exactly as unreadable as one sitting on another curve's
-    // line, so it counts as its own obstruction source alongside the
-    // per-curve sampling below rather than only reacting to lines.
-    let obstructed=!!rapid&&(anchorX-halfW)<W*.76&&stackTop<H*.47;
-    for(let ci=0;ci<curveList.length&&!obstructed;ci++){
-      if(grp.members.includes(ci))continue;
-      const pts=curveList[ci];
-      for(const sx of[anchorX-halfW,anchorX,anchorX+halfW]){
-        const day=Math.max(0,Math.min(maxDay,((sx-pd.l)/pw)*maxDay));
-        const cap=dvCapAtDay(pts,day);
-        if(cap==null)continue;
-        const cy=yS(cap);
-        if(cy>stackTop&&cy<stackBot){obstructed=true;break;}
-      }
-    }
+    const obstructed=boxHits(anchorX-halfW,anchorX+halfW,stackTop,stackBot,grp.members);
 
-    let lx,moLy;
+    let lx,moLy,boxX0,boxX1,boxY0,boxY1;
     if(!obstructed){
       ctx.textAlign='center';
       lx=anchorX;moLy=moLyDefault;
+      boxX0=anchorX-halfW;boxX1=anchorX+halfW;boxY0=stackTop;boxY1=stackBot;
     }else{
-      // No clean room directly above — fall back to whichever side of
-      // the triangle has more room (left half of the chart -> label
-      // goes right, right half -> label goes left) instead of chasing
-      // vertical space that isn't there.
-      const side=grp.x<(pd.l+pw/2)?'right':'left';
+      // No clean room directly above — try both sides against every
+      // obstruction source (curves, overlay, already-placed labels) and
+      // take whichever is actually clear, rather than always guessing
+      // from which half of the chart the triangle sits in. Only falls
+      // back to that half-of-chart guess when both sides are equally
+      // (un)clear, so it still resolves to *something* deterministic.
+      const sideTop=grp.y-topGap-LBL_SIZE-2,sideBot=grp.y+CAL_GAP+CAL_SIZE+2;
+      const rightLx=Math.min(grp.x+TRI_R+8,pd.l+pw-6);
+      const leftLx=Math.max(grp.x-TRI_R-8,pd.l+6);
+      const rightClear=!boxHits(rightLx,rightLx+halfW*2,sideTop,sideBot,grp.members);
+      const leftClear=!boxHits(leftLx-halfW*2,leftLx,sideTop,sideBot,grp.members);
+      let side;
+      if(rightClear&&!leftClear)side='right';
+      else if(leftClear&&!rightClear)side='left';
+      else side=grp.x<(pd.l+pw/2)?'right':'left';
       ctx.textAlign=side==='right'?'left':'right';
-      lx=side==='right'?Math.min(grp.x+TRI_R+8,pd.l+pw-6):Math.max(grp.x-TRI_R-8,pd.l+6);
+      lx=side==='right'?rightLx:leftLx;
       moLy=grp.y;
+      boxY0=sideTop;boxY1=sideBot;
+      if(side==='right'){boxX0=lx;boxX1=lx+halfW*2;}else{boxX0=lx-halfW*2;boxX1=lx;}
     }
+    placedBoxes.push({x0:boxX0,x1:boxX1,y0:boxY0,y1:boxY1});
     const capLy=moLy-LBL_GAP,calLy=moLy+CAL_GAP;
     if(shTxt!=null){
       ctx.font=`${LBL_SIZE}px IBM Plex Mono`;
