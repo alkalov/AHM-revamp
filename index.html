@@ -3841,6 +3841,13 @@ function renderStratComparison(){
       // uncommon here (this comparison only exists once 2+ sims have
       // run) and not worth a second normalisation scheme for.
       const maxV=Math.max(...c.vals.map(r=>r.v));
+      // 30% headroom: the longest bar caps at 70% of track width instead of
+      // filling it, so even the group's own max value reads as "leading",
+      // not "maxed out" — this app's existing headroom convention elsewhere
+      // (chart curves, endpoint triangles) applied here too. Ratio-to-max
+      // stays the normalisation basis (comment above); only the ceiling it's
+      // scaled against changed, from 100 to BAR_CAP.
+      const BAR_CAP=70;
       // Binary again (place-based tiers tried and reverted the same round):
       // only the winner(s) — within epsilon of best, ties share the win per
       // the same convention as everywhere else in this function — stay in
@@ -3849,7 +3856,7 @@ function renderStratComparison(){
       // rank; now it only does so for the actual winner).
       c.vals.forEach(({i,v})=>{
         const isWin=c.winners.includes(i);
-        const pct=maxV>0?Math.max(0,Math.min(100,(v/maxV)*100)):(isWin?100:0);
+        const pct=maxV>0?Math.max(0,Math.min(BAR_CAP,(v/maxV)*BAR_CAP)):(isWin?BAR_CAP:0);
         const sat=isWin?100:0;
         html+=`<div class="sc-bar-row"><span class="sc-bar-name" style="color:${COLS[i]};filter:saturate(${sat}%);">${STRAT_LABELS[i]}</span><div class="sc-bar-track"><div class="sc-bar-fill" style="width:${pct}%;background:${COLS[i]};filter:saturate(${sat}%);"></div></div><span class="sc-bar-val${isWin?' win':''}"${isWin?` style="color:${COLS[i]};"`:''}>${c.fmt(v)}</span></div>`;
       });
