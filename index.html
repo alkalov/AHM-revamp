@@ -1809,15 +1809,19 @@ function dvPositionGrowthCallout(lineEl,bubbleEl,mx,my,r,rgb,label,leftBound,rig
   // used: try the upper-left diagonal first, measure the bubble for real
   // (not a guessed char width, unlike the old ctx.measureText version —
   // an actual DOM element can just be measured), mirror to upper-right
-  // if it would cross the chart's own left edge. textGap is negative on
-  // purpose — the old canvas version left a gap here because it was
-  // pointing at bare floating text with nothing to visually "arrive at";
-  // now that there's a real bubble with its own border, a gap read as a
-  // disconnected floating line instead. Negative tucks the line's tip a
-  // few px PAST the bubble's own anchor edge, under the bubble itself
-  // (it's drawn on top, z-index 3 vs the line's 2) so the two always
-  // read as touching regardless of sub-pixel rounding.
-  const leadLen=21,textGap=-3;
+  // if it would cross the chart's own left edge. textGap is 0 (exact
+  // touch) rather than the old canvas version's +6 gap or a first
+  // attempt at a small negative overlap — the bubble's own z-index is
+  // higher than the line's, but its fill is translucent glass (a
+  // gradient at ~.24-.42 alpha plus backdrop-filter blur, not an opaque
+  // backing), so a solid line segment tucked under its edge didn't stay
+  // hidden the way it would under an opaque shape — it visibly bled
+  // through/past the border instead. Landing exactly on the anchor point
+  // avoids that: the line's crisp 2px stroke never crosses into the
+  // bubble's footprint at all, only its own soft drop-shadow glow does
+  // (which is meant to bleed everywhere anyway), so the seam reads as a
+  // clean touch rather than a stroke poking through translucent glass.
+  const leadLen=21,textGap=0;
   const ang10=150*Math.PI/180,dx10=Math.cos(ang10),dy10=-Math.sin(ang10);
   const edge10X=mx+r*dx10,edge10Y=my+r*dy10;
   const tip10X=edge10X+leadLen*dx10,tip10Y=edge10Y+leadLen*dy10;
