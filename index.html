@@ -822,6 +822,19 @@ canvas.spark{width:100%;height:34px;display:block;}
 .vs-badge.behind{background:rgba(248,113,113,.1);color:#f87171;}
 .vs-badge.ahead{background:rgba(96,165,250,.1);color:#60a5fa;}
 .vs-badge.nosim{background:#161b26;color:#4d5a6e;}
+.sc-verdict{padding:9px 12px 11px;font-size:10.5px;color:#8892a4;line-height:1.55;border-bottom:1px solid rgba(255,255,255,.06);}
+.sc-verdict b{color:#c7cedb;}
+.sc-metric{padding:8px 12px 2px;}
+.sc-metric-lbl{font-size:7.3px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;}
+.sc-dir{text-transform:none;letter-spacing:normal;color:#3a4356;}
+.sc-bar-row{display:flex;align-items:center;gap:6px;margin-bottom:3px;}
+.sc-bar-name{font-size:7.5px;color:#7d8699;width:11px;flex-shrink:0;}
+.sc-bar-track{flex:1;height:10px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;}
+.sc-bar-fill{height:100%;border-radius:2px;}
+.sc-bar-val{font-size:8px;min-width:58px;flex-shrink:0;text-align:right;color:#8892a4;font-variant-numeric:tabular-nums;}
+.sc-bar-val.win{font-weight:700;}
+.sc-metric:last-child{padding-bottom:9px;}
+.sc-tied{padding:8px 12px 10px;font-size:9px;color:#5b6376;line-height:1.6;border-top:1px solid rgba(255,255,255,.06);}
 .vs-rows{padding:4px 12px;}
 .vs-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1c2333;}
 .vs-row:last-child{border:none;}
@@ -3726,7 +3739,6 @@ function renderEquityCurves(){
 
 function renderStratComparison(){
   const COLS=STRAT_COLORS;
-  const NAMES=STRAT_LABELS.map(l=>'Strat '+l);
   const active=simResults.map((r,i)=>r?i:-1).filter(i=>i>=0);
   // Comparison content is identical regardless of which strategy tab is
   // active — it compares all of them — so compute once, write into all
@@ -3747,33 +3759,81 @@ function renderStratComparison(){
       {lbl:'Friction / Day',get:r=>r.c.frDay,fmt:v=>'$'+fmt(v),better:'lower'},
       {lbl:'Sharpe',get:r=>{const pnls=r.rows.map(e=>e.dayPnl);return sharpe(pnls,r.acct0)||0;},fmt:v=>v.toFixed(2),better:'higher'},
     ];
-    let html='';
-    metrics.forEach(m=>{
+    // Redesign: was 7 metric-rows of full bordered boxes (up to 6 per row,
+    // wrapping to 2 rows at 6 strategies) — starred EVERY box whenever
+    // strategies tied, which was most of the time (default-settings
+    // strategies usually share the same core edge and only differ in
+    // sizing/goals), so a typical run gold-starred 4 of 7 metrics across
+    // the board and told you nothing. Replaced with option "C" from a
+    // 3-way mockup (SendUserFile, one-off) plus a follow-up "C+B hybrid"
+    // mockup: proportional horizontal bars per metric (this app's own
+    // chart language, not more boxes) in a fixed A-F row order so the eye
+    // tracks "the blue bar" reliably down the card, PLUS — after seeing
+    // the hybrid's visual rank-strip — a request to drop the strip
+    // entirely and fold its "who's ahead" narrative into 2-3 sentences of
+    // real prose at the top instead, no extra visual element.
+    const EPS=1e-9;
+    const computed=metrics.map(m=>{
       const vals=active.map(i=>({i,v:m.get(simResults[i])}));
       const best=m.better==='higher'?Math.max(...vals.map(r=>r.v)):Math.min(...vals.map(r=>r.v));
-      // Was a solid opaque #161b26 row background — same issue as the
-      // .diag-body/.vs-hd fix the round before, just built as an inline
-      // style in JS instead of a CSS rule since this whole comparison
-      // table is generated as raw HTML strings: a flat opaque fill
-      // sitting inside the already-translucent .vs-card, reading as a
-      // stack of solid dark rectangles rather than glass. Dropped to
-      // transparent so the card's own blur/gloss shows through each row
-      // the same way it now does everywhere else on this card.
-      html+=`<div style="background:transparent;border-radius:3px;padding:7px 10px;margin-bottom:5px;">`;
-      html+=`<div style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;margin-bottom:5px;">${m.lbl}</div>`;
-      html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">`;
-      vals.forEach(({i,v})=>{
-        const isBest=Math.abs(v-best)<1e-9;
-        const [br,bgc,bb]=hexToRgb(COLS[i]);
-        const bg=isBest?`rgba(${br},${bgc},${bb},.1)`:'transparent';
-        const border=isBest?`1px solid ${COLS[i]}`:'1px solid #232b3d';
-        html+=`<div style="flex:1;background:${bg};border:${border};border-radius:3px;padding:5px 7px;text-align:center;">`;
-        html+=`<div style="font-size:7px;color:${COLS[i]};letter-spacing:.08em;margin-bottom:2px;">${NAMES[i]}</div>`;
-        html+=`<div style="font-size:12px;font-weight:${isBest?'700':'400'};color:${isBest?COLS[i]:'#8892a4'};">${m.fmt(v)}${isBest?' ★':''}</div>`;
-        html+=`</div>`;
-      });
-      html+=`</div></div>`;
+      const winners=vals.filter(r=>Math.abs(r.v-best)<EPS).map(r=>r.i);
+      return{...m,vals,best,winners,tied:winners.length===active.length};
     });
+    const varying=computed.filter(c=>!c.tied),tiedList=computed.filter(c=>c.tied);
+    // Win-count per strategy across metrics that actually discriminate —
+    // a fully-tied metric awards nobody a win, a PARTIAL tie (2 of 6
+    // strategies sharing the best value) still awards both, same as a
+    // clean outright win. Ranks the "leader" the verdict names below;
+    // ties in win-count fall back to final capital, same tiebreak Option
+    // B's mockup leaderboard used.
+    const winCount={};active.forEach(i=>winCount[i]=0);
+    varying.forEach(c=>c.winners.forEach(i=>winCount[i]++));
+    const finalCap=i=>{const r=simResults[i];return r.acct0+r.rows[r.rows.length-1].cumPnl;};
+    const ranked=[...active].sort((a,b)=>(winCount[b]-winCount[a])||(finalCap(b)-finalCap(a)));
+    let verdict;
+    if(!varying.length){
+      verdict=`All ${active.length} strategies are running neck-and-neck — every metric ties across the board.`;
+    }else{
+      const leader=ranked[0];
+      const leaderWins=varying.filter(c=>c.winners.includes(leader)).map(c=>c.lbl);
+      let s=`<b>Strat ${STRAT_LABELS[leader]}</b> leads`;
+      if(leaderWins.length){
+        s+=` — best ${leaderWins.slice(0,2).join(' and ')}`;
+        if(leaderWins.length>2)s+=` (+${leaderWins.length-2} more)`;
+      }
+      s+='.';
+      // A second voice for whichever strategy wins something the leader
+      // didn't — the "F reaches goal fastest despite ranking behind
+      // overall" line from the mockups — only when it's actually true.
+      const counter=varying.find(c=>!c.winners.includes(leader));
+      if(counter)s+=` <b>Strat ${STRAT_LABELS[counter.winners[0]]}</b> takes ${counter.lbl}.`;
+      if(tiedList.length)s+=` The other ${tiedList.length} metric${tiedList.length>1?'s':''} tie${tiedList.length===1?'s':''} across the field.`;
+      verdict=s;
+    }
+    let html=`<div class="sc-verdict">${verdict}</div>`;
+    varying.forEach(c=>{
+      const dirNote=c.better==='lower'?' <span class="sc-dir">(lower is better)</span>':'';
+      html+=`<div class="sc-metric"><div class="sc-metric-lbl">${c.lbl}${dirNote}</div>`;
+      // Bar length is each value's own ratio to the group's max (not a
+      // min-max stretch) — validated visually in the mockups: it keeps
+      // even the "worst" bar honestly proportioned instead of forcing it
+      // to 0%, and reads correctly for "lower is better" metrics too
+      // since the label note (above) carries the direction, not the bar
+      // itself. Negative values (a losing EV/Day or Monthly Est) clamp to
+      // a near-empty bar rather than a negative width — genuinely
+      // uncommon here (this comparison only exists once 2+ sims have
+      // run) and not worth a second normalisation scheme for.
+      const maxV=Math.max(...c.vals.map(r=>r.v));
+      c.vals.forEach(({i,v})=>{
+        const isWin=c.winners.includes(i);
+        const pct=maxV>0?Math.max(0,Math.min(100,(v/maxV)*100)):(isWin?100:0);
+        html+=`<div class="sc-bar-row"><span class="sc-bar-name" style="color:${COLS[i]};">${STRAT_LABELS[i]}</span><div class="sc-bar-track"><div class="sc-bar-fill" style="width:${pct}%;background:${COLS[i]};${isWin?'':'opacity:.55;'}"></div></div><span class="sc-bar-val${isWin?' win':''}"${isWin?` style="color:${COLS[i]};"`:''}>${c.fmt(v)}</span></div>`;
+      });
+      html+='</div>';
+    });
+    if(tiedList.length){
+      html+=`<div class="sc-tied">Also tied — ${tiedList.map(c=>`${c.lbl} ${c.fmt(c.best)}`).join(' · ')}</div>`;
+    }
     bodyHtml=html;
   }
   [0,1,2,3,4,5].forEach(tab=>{
