@@ -763,13 +763,16 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 .gc-body{padding:0;}
 #gc-stepper .stp{
   height:58px;border-radius:6px;overflow:hidden;
+  /* Neutral liquid, not a green one — same pooled-top/dark-bottom ellipse
+     shape as the recipe this was built from, just white/grey rather than
+     tinted, so the frost/liquid material reads without adding colour. */
   background:
-    radial-gradient(ellipse 120% 85% at 50% 0%,rgba(140,255,210,.26) 0%,rgba(52,211,153,.16) 48%,rgba(10,40,32,.22) 100%)
+    radial-gradient(ellipse 120% 85% at 50% 0%,rgba(255,255,255,.18) 0%,rgba(255,255,255,.07) 48%,rgba(0,0,0,.14) 100%)
     !important;
-  backdrop-filter:blur(18px) saturate(1.6);
-  -webkit-backdrop-filter:blur(18px) saturate(1.6);
-  border:1px solid rgba(52,211,153,.4) !important;
-  box-shadow:inset 0 1px 0 rgba(190,255,225,.35),inset 0 0 0 1px rgba(52,211,153,.08);
+  backdrop-filter:blur(18px) saturate(1.4);
+  -webkit-backdrop-filter:blur(18px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.16) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.05);
 }
 #gc-stepper .stp-btn{width:48px;height:58px;font-size:22px;background:rgba(52,211,153,.07);color:#34d399;border-right:1px solid rgba(52,211,153,.18);}
 #gc-stepper .stp-btn:last-child{border-right:none;border-left:1px solid rgba(52,211,153,.18);}
