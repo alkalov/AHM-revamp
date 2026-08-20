@@ -579,12 +579,42 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    overriding it here lets that same translucent/blurred/glossed surface
    show through the body too — header and body now read as one
    continuous glass card instead of glass-on-top-of-solid. */
-.diag-body{padding:4px 12px 6px;background:transparent;}
-.diag-row{font-size:11px;color:#8892a4;line-height:1.8;padding:1px 0;border-bottom:1px solid #1c2333;}
-.diag-row:last-child{border:none;}
-/* Same 700-weight tabular mono bump as .cmv above — these rows are the
+.diag-body{padding:2px 0 8px;background:transparent;}
+/* Restructured (was one flat list of 17 identically-weighted rows —
+   same font size, same bright colour, a divider under every line, no
+   way for the eye to know what mattered most). Now three tiers:
+   .diag-tiles — the 2 numbers you actually decide from (Monthly Est.,
+   Time to Goal — or EV/day + Status when the strategy fails), in the
+   EXACT same .cm/.cml/.cmv/.cms tile markup as the chart-metrics grid
+   immediately above this card, so the two panels read as one
+   continuous system instead of a data dump bolted onto a clean grid.
+   .diag-verdict — one synthesized plain-English line (the "so what" a
+   reader used to have to assemble themselves out of 17 rows).
+   .diag-detail — a <details> disclosure holding everything else,
+   collapsed by default, grouped into labelled clusters (.diag-grp) of
+   two-up rows (.diag-grp-row) instead of one column with a border on
+   every line — nothing that used to be a row is gone, it's just not
+   all shouting at once by default. Hidden outright (display:none, set
+   in JS) on the rare run that has nothing left to put in it. */
+.diag-tiles{display:grid;grid-template-columns:1fr 1fr;}
+.diag-verdict{padding:9px 12px 11px;font-size:10.5px;color:#8892a4;line-height:1.55;border-top:1px solid rgba(255,255,255,.06);}
+.diag-verdict b{color:#c7cedb;}
+.diag-detail{border-top:1px solid rgba(255,255,255,.06);}
+.diag-detail summary{list-style:none;cursor:pointer;padding:9px 12px;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#5b8bb0;display:flex;align-items:center;justify-content:space-between;user-select:none;}
+.diag-detail summary::-webkit-details-marker{display:none;}
+.diag-detail summary .chev{transition:transform .2s ease;font-size:9px;}
+.diag-detail[open] summary .chev{transform:rotate(180deg);}
+.diag-grp{padding:8px 12px 0;}
+.diag-grp-lbl{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#4d5a6e;margin-bottom:5px;}
+.diag-grp-rows{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
+.diag-grp-row{font-size:10.5px;color:#7d8699;padding:2px 0 5px;display:flex;justify-content:space-between;gap:6px;}
+.diag-grp-row.full{grid-column:1/-1;}
+.diag-grp-row .k{color:#6b7488;flex:none;}
+/* Same 700-weight tabular mono bump as .cmv above — these are the
    other place this tab states a hard number back to you, so they share
-   the one "answer" typography instead of their own lighter 600 weight. */
+   the one "answer" typography instead of their own lighter 600 weight.
+   Still used exactly as before, just inside .diag-grp-row now instead
+   of the retired flat .diag-row. */
 .dpos{color:#34d399;font-weight:700;font-variant-numeric:tabular-nums;}
 .dneg{color:#f87171;font-weight:700;font-variant-numeric:tabular-nums;}
 .dneu{color:#fbbf24;font-weight:700;font-variant-numeric:tabular-nums;}
@@ -1913,12 +1943,18 @@ function buildDiag(c,cumPnl,days,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,
     realSharpe=sharpe(pnls,rCapS||acct0);
   }
 
-  // ── Row builder: sim value + optional real suffix ──
-  // realVal: the real numeric value to compare | simVal: the sim numeric (for % comparison)
-  // betterDir: 'higher'|'lower' (is higher real better?)
-  function row(lbl,val,cls,note='',realDisplay=null,simNumeric=null,betterDir='higher'){
+  // ── Detail-row builder: sim value + optional real suffix ──
+  // Same comparison logic as the old flat-list version (realVal: the
+  // real numeric value to compare | simVal: the sim numeric for the %
+  // diff | betterDir: 'higher'|'lower' is higher real better) — output
+  // is now a {html,full} pair instead of a bare string, since rows now
+  // live in a two-up grid (.diag-grp-rows) and need to say whether they
+  // need the full row width (carries a note and/or a real-comparison,
+  // both of which run out of room in a half-width cell) or can pair up
+  // with a neighbour.
+  function grow(lbl,val,cls,note='',realDisplay=null,simNumeric=null,betterDir='higher',forceFull=false){
     const vc=cls==='pos'?'dpos':cls==='neg'?'dneg':cls==='neu'?'dneu':'dval';
-    let realHtml='';
+    let realHtml='',full=forceFull||!!note;
     if(realDisplay!==null&&hasReal){
       let realCls='dneu';
       if(simNumeric!==null&&simNumeric!==0){
@@ -1929,53 +1965,98 @@ function buildDiag(c,cumPnl,days,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,
           realCls=realBetter?'dpos':'dneg';
         }
       }
-      realHtml=` <span style="font-size:8px;color:#4d5a6e;margin-left:2px;">real</span> <span class="${realCls}">${realDisplay._str}</span>`;
+      realHtml=` <span class="dnote" style="margin-left:3px;">real</span> <span class="${realCls}">${realDisplay._str}</span>`;
+      full=true;
     }
-    return`<div class="diag-row">${lbl}: <span class="${vc}">${val}</span>${note?` <span class="dnote">${note}</span>`:''}${realHtml}</div>`;
+    const html=`<div class="diag-grp-row${full?' full':''}"><span class="k">${lbl}</span><span class="v"><span class="${vc}">${val}</span>${note?` <span class="dnote">${note}</span>`:''}${realHtml}</span></div>`;
+    return{html,full};
   }
   function rv(num,str){return{_num:num,_str:str};}
+  const groups=[];let detailCount=0;
+  // Half-width rows first (they pack cleanly 2-up with no seams), full-
+  // width rows after (each already claims the whole line) — a group
+  // that interleaves them in DOM order (e.g. full, half, full, half)
+  // would otherwise leave a visible empty cell next to every lone half
+  // row, since CSS grid's default sparse packing doesn't backfill a
+  // hole a later full-width item already forced past.
+  function addGroup(label,items){
+    if(items.length){
+      const sorted=[...items].sort((a,b)=>(a.full?1:0)-(b.full?1:0));
+      groups.push({label,html:sorted.map(i=>i.html).join('')});
+      detailCount+=items.length;
+    }
+  }
 
-  const rows=[];
+  let tilesHtml='',verdictHtml='';
   if(capped||c.evNet<0){
-    rows.push(row('EV/day',sgn(c.evNet),'neg','after all costs',hasReal&&realEV!==null?rv(realEV,sgn(realEV)):null,c.evNet,'higher'));
+    // ── Failing case: 2 headline tiles (EV/day, Status — mirrors the
+    // profitable branch's 2-tile layout below instead of leaving this
+    // branch visually unlike the other), the Cause/Fix diagnosis as the
+    // verdict line (already prose, so it IS the "so what" here rather
+    // than a summary of something else), and the supporting dollar
+    // figures behind that diagnosis tucked in the one-group detail. ──
+    const evReal=hasReal&&realEV!==null?rv(realEV,sgn(realEV)):null;
+    tilesHtml=
+      `<div class="cm"><div class="cml">EV / Day</div><div class="cmv stop">${sgn(c.evNet)}</div><div class="cms">after all costs${evReal?' · real '+evReal._str:''}</div></div>`+
+      `<div class="cm"><div class="cml">Status</div><div class="cmv stop">TARGET UNREACHABLE</div><div class="cms">adjust settings below</div></div>`;
     // Diagnose the specific cause so beginners see WHY, not just THAT it's unprofitable.
     const grossWin=c.avgP*c.tick*c.sh;
     const frictionPctOfWin=grossWin>0?(c.frTr/grossWin)*100:0;
+    const detail=[];
     if(frictionPctOfWin>50){
-      rows.push(row('Friction/trade','$'+fmt(c.frTr),'neg',frictionPctOfWin.toFixed(0)+'% of gross win — this is the problem'));
-      rows.push(row('Gross win/trade','$'+fmt(grossWin),'neu','before any costs'));
-      if(c.sh<100){
-        rows.push(row('Cause','Share size too small','neg','$0.35 flat commission under 100 shares dominates at this size'));
-      }else{
-        rows.push(row('Cause','Target too tight for share size','neg','friction consumes most or all of the edge'));
-      }
-      rows.push(row('Fix','Increase shares or profit target','pos','either reduces friction as % of gross win'));
+      const cause=c.sh<100?'Share size too small':'Target too tight for share size';
+      const causeNote=c.sh<100?'$0.35 flat commission under 100 shares dominates at this size.':'Friction consumes most or all of the edge.';
+      verdictHtml=`<b>${cause}.</b> ${causeNote} Friction is $${fmt(c.frTr)}/trade — ${frictionPctOfWin.toFixed(0)}% of the $${fmt(grossWin)} gross win. <b>Fix:</b> increase shares or the profit target — either one reduces friction as a share of the win.`;
+      detail.push(grow('Friction/trade','$'+fmt(c.frTr),'neg',frictionPctOfWin.toFixed(0)+'% of gross win'));
+      detail.push(grow('Gross win/trade','$'+fmt(grossWin),'neu','before any costs'));
     }else{
-      rows.push(row('Cause','Win rate below breakeven threshold','neg','edge itself is negative before friction'));
+      verdictHtml=`<b>Win rate below breakeven threshold.</b> The edge itself is negative before friction even enters the picture — no amount of share-size or target tuning fixes a losing edge.`;
     }
-    rows.push(row('Status','TARGET UNREACHABLE','neg','adjust settings — see cause above'));
+    addGroup('Breakdown',detail);
   }else{
-    rows.push(row('EV/day',sgn(c.evNet),'pos','net of all costs',hasReal&&realEV!==null?rv(realEV,sgn(realEV)):null,c.evNet,'higher'));
-    rows.push(row('EV/trade',evTr>=0?'+$'+fmt(evTr):'−$'+fmt(Math.abs(evTr)),evTr>0?'pos':'neg'));
-    rows.push(row('Monthly est',sgn(mo),mo>0?'pos':'neg',  '',hasReal&&realMo!==null?rv(realMo,sgn(realMo)):null,mo,'higher'));
-    rows.push(row('Time to goal',cal(calMo),'neu',days.toLocaleString()+' trading days',hasReal&&realTTG?rv(0,realTTG):null,null,null));
-    rows.push(row('Rapid Growth Threshold',growthHit?cal((growthHit.day/252)*12):'—',growthHit?'pos':'neu',growthHit?'day '+growthHit.day+' — compounding visibly takes off':'no rapid-growth point detected yet'));
-    rows.push(row('R:R',actRR.toFixed(2)+':1',actRR>=1.5?'pos':actRR>=1?'neu':'neg','',hasReal&&realRR!==null?rv(realRR,realRR.toFixed(2)+':1'):null,actRR,'higher'));
-    rows.push(row('Min WR to BE',(minWR*100).toFixed(1)+'%',wrOk?'pos':'neg'));
-    rows.push(row('WR',         (c.wr*100).toFixed(1)+'%',wrOk?'pos':'neg','',hasReal&&realWR!==null?rv(realWR*100,(realWR*100).toFixed(1)+'%'):null,c.wr*100,'higher'));
-    rows.push(row('BE',         (c.be*100).toFixed(1)+'%','neu','',hasReal&&realBE!==null?rv(realBE*100,(realBE*100).toFixed(1)+'%'):null,c.be*100,'lower'));
-    rows.push(row('WR buffer',+wrB>=0?'+'+wrB+'%':wrB+'%',+wrB>=10?'pos':+wrB>=0?'neu':'neg',+wrB>=10?'solid':'thin',hasReal&&realWRbuf!==null?rv(realWRbuf,(realWRbuf>=0?'+':'')+realWRbuf.toFixed(1)+'%'):null,+wrB,'higher'));
-    rows.push(row('Friction/day','$'+fmt(c.frDay),'neu',frPct.toFixed(0)+'% of gross'));
-    if(!c.dpct&&frTot>0)rows.push(row('Friction total',sgn(frTot),frPct>40?'neg':'neu'));
-    rows.push(row('Days/share',dts?'~'+dts+'d':'∞',dts&&dts<30?'pos':dts&&dts<100?'neu':'neg','',hasReal&&realDTS?rv(realDTS,'~'+realDTS+'d'):null,dts,'lower'));
-    rows.push(row('Swing capture',c.swUtil.toFixed(0)+'%',c.swUtil>=60?'pos':c.swUtil>=35?'neu':'neg'));
-    rows.push(row('Sharpe',sp!==null&&!isNaN(sp)?sharpeStr(sp):'—',sp===null?'neu':sp>=1?'pos':sp>=.5?'neu':'neg','',hasReal&&realSharpe!==null?rv(realSharpe,sharpeStr(realSharpe)):null,sp,'higher'));
-    rows.push(row('Max drawdown','$'+fmt(simMDD)+' ('+simMDDpct.toFixed(1)+'%)',simMDDpct>20?'neg':simMDDpct>10?'neu':'pos','sim',hasReal&&realMDD>0?rv(realMDD,'$'+fmt(realMDD)+(realMDDpct>0?' ('+realMDDpct.toFixed(1)+'%)':'')):null,simMDD,'lower'));
+    // ── Profitable case: Monthly Est. + Time to Goal as headline tiles
+    // (the exact .cm/.cml/.cmv/.cms markup the chart-metrics grid right
+    // above this card already uses, so the two read as one system), a
+    // synthesized one-line verdict, then every other figure grouped and
+    // paired-up behind the Full breakdown toggle. ──
+    const moReal=hasReal&&realMo!==null?rv(realMo,sgn(realMo)):null;
+    const ttgReal=hasReal&&realTTG?rv(0,realTTG):null;
+    tilesHtml=
+      `<div class="cm"><div class="cml">Monthly Est.</div><div class="cmv ${mo>0?'go':'stop'}">${sgn(mo)}</div><div class="cms">net of all costs${moReal?' · real '+moReal._str:''}</div></div>`+
+      `<div class="cm"><div class="cml">Time to Goal</div><div class="cmv steel">${cal(calMo)}</div><div class="cms">${days.toLocaleString()} trading days${ttgReal?' · real '+ttgReal._str:''}</div></div>`;
+
+    const edgeNote=+wrB>=10?`Edge is solid — ${+wrB>=0?'+':''}${wrB}% win-rate buffer over breakeven.`:+wrB>=0?`Edge is thin — only ${wrB}% win-rate buffer over breakeven.`:`Edge is negative on a per-trade basis — win rate sits below the breakeven threshold.`;
+    const fricNote=frPct>40?`Friction is heavy, eating ${frPct.toFixed(0)}% of gross.`:'';
+    const growthNote=growthHit?`Rapid growth kicks in around <b>${cal((growthHit.day/252)*12)}</b> in (day ${growthHit.day}).`:'';
+    verdictHtml=[edgeNote,fricNote,growthNote].filter(Boolean).join(' ');
+
+    addGroup('Performance',[
+      grow('EV/day',sgn(c.evNet),'pos','net of all costs',hasReal&&realEV!==null?rv(realEV,sgn(realEV)):null,c.evNet,'higher'),
+      grow('EV/trade',evTr>=0?'+$'+fmt(evTr):'−$'+fmt(Math.abs(evTr)),evTr>0?'pos':'neg'),
+      grow('Rapid Growth',growthHit?cal((growthHit.day/252)*12):'—',growthHit?'pos':'neu',growthHit?'day '+growthHit.day:'not yet detected'),
+      grow('Status',wrOk&&c.evNet>0?'PROFITABLE':c.evNet>0?'MARGINAL':'NEGATIVE',wrOk&&c.evNet>0?'pos':c.evNet>0?'neu':'neg'),
+    ]);
+    addGroup('Edge',[
+      grow('R:R',actRR.toFixed(2)+':1',actRR>=1.5?'pos':actRR>=1?'neu':'neg','',hasReal&&realRR!==null?rv(realRR,realRR.toFixed(2)+':1'):null,actRR,'higher'),
+      grow('WR',(c.wr*100).toFixed(1)+'%',wrOk?'pos':'neg','',hasReal&&realWR!==null?rv(realWR*100,(realWR*100).toFixed(1)+'%'):null,c.wr*100,'higher'),
+      grow('Min WR to BE',(minWR*100).toFixed(1)+'%',wrOk?'pos':'neg'),
+      grow('BE',(c.be*100).toFixed(1)+'%','neu','',hasReal&&realBE!==null?rv(realBE*100,(realBE*100).toFixed(1)+'%'):null,c.be*100,'lower'),
+      grow('WR buffer',+wrB>=0?'+'+wrB+'%':wrB+'%',+wrB>=10?'pos':+wrB>=0?'neu':'neg',+wrB>=10?'solid':'thin',hasReal&&realWRbuf!==null?rv(realWRbuf,(realWRbuf>=0?'+':'')+realWRbuf.toFixed(1)+'%'):null,+wrB,'higher'),
+    ]);
+    const costs=[grow('Friction/day','$'+fmt(c.frDay),'neu',frPct.toFixed(0)+'% of gross')];
+    if(!c.dpct&&frTot>0)costs.push(grow('Friction total',sgn(frTot),frPct>40?'neg':'neu'));
+    costs.push(grow('Days/share',dts?'~'+dts+'d':'∞',dts&&dts<30?'pos':dts&&dts<100?'neu':'neg','',hasReal&&realDTS?rv(realDTS,'~'+realDTS+'d'):null,dts,'lower'));
+    addGroup('Costs',costs);
+    const risk=[
+      grow('Swing capture',c.swUtil.toFixed(0)+'%',c.swUtil>=60?'pos':c.swUtil>=35?'neu':'neg'),
+      grow('Sharpe',sp!==null&&!isNaN(sp)?sharpeStr(sp):'—',sp===null?'neu':sp>=1?'pos':sp>=.5?'neu':'neg','',hasReal&&realSharpe!==null?rv(realSharpe,sharpeStr(realSharpe)):null,sp,'higher'),
+      grow('Max drawdown','$'+fmt(simMDD)+' ('+simMDDpct.toFixed(1)+'%)',simMDDpct>20?'neg':simMDDpct>10?'neu':'pos','sim',hasReal&&realMDD>0?rv(realMDD,'$'+fmt(realMDD)+(realMDDpct>0?' ('+realMDDpct.toFixed(1)+'%)':'')):null,simMDD,'lower'),
+    ];
     if(c.volCeil>0){
       const avgShDisp=hasReal&&realAvgSh?rv(realAvgSh,realAvgSh.toLocaleString()+' sh'):null;
-      rows.push(row('Volume ceiling','CAPPED at '+c.volCeil.toLocaleString()+' sh','neu','growth stops here',avgShDisp,c.volCeil,'lower'));
+      risk.push(grow('Volume ceiling','CAPPED at '+c.volCeil.toLocaleString()+' sh','neu','growth stops here',avgShDisp,c.volCeil,'lower',true));
     }
-    rows.push(row('Status',wrOk&&c.evNet>0?'PROFITABLE':c.evNet>0?'MARGINAL':'NEGATIVE',wrOk&&c.evNet>0?'pos':c.evNet>0?'neu':'neg'));
+    addGroup('Risk',risk);
     // ── Which strategy is faster / better, if others have been simulated ──
     const others=[0,1,2,3,4,5].filter(i=>i!==tab&&simResults[i]&&simResults[i].rows&&simResults[i].rows.length);
     if(others.length){
@@ -1995,7 +2076,7 @@ function buildDiag(c,cumPnl,days,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,
       else if(fasterThan.length&&slowerThan.length)speedNote=`Faster than ${fasterThan.join(', ')}, slower than ${slowerThan.join(', ')}`;
       else speedNote='Same pace as '+cmp.map(o=>o.label).join(', ');
       const speedCls=fasterThan.length>=slowerThan.length?'pos':'neg';
-      rows.push(row('vs. other strategies',speedNote,speedCls,higherEVThan.length===cmp.length?'also highest EV/day':higherEVThan.length===0?'lowest EV/day of the three':''));
+      addGroup('Comparison',[grow('vs. other strategies',speedNote,speedCls,higherEVThan.length===cmp.length?'also highest EV/day':higherEVThan.length===0?'lowest EV/day of the three':'',null,null,'higher',true)]);
     }
   }
   let cls;
@@ -2003,10 +2084,20 @@ function buildDiag(c,cumPnl,days,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,
   else if(c.evNet>0&&+wrB>=8&&frPct<35)cls='vi';
   else cls='mg';
   box.className='diag show '+cls;
-  const t=$('diag-t'+s),b=$('diag-b'+s),l=$('diag-l'+s);
+  const t=$('diag-t'+s),b=$('diag-b'+s),tiles=$('diag-tiles'+s),verdict=$('diag-verdict'+s),detailEl=$('diag-detail'+s),detailCountEl=$('diag-detail-count'+s),l=$('diag-l'+s);
   if(t)t.textContent='Diagnostics';
   if(b)b.textContent=cls==='vi'?'VIABLE':cls==='mg'?'MARGINAL':'FAILING';
-  if(l)l.innerHTML=rows.join('');
+  if(tiles)tiles.innerHTML=tilesHtml;
+  if(verdict)verdict.innerHTML=verdictHtml;
+  if(l)l.innerHTML=groups.map(g=>`<div class="diag-grp"><div class="diag-grp-lbl">${g.label}</div><div class="diag-grp-rows">${g.html}</div></div>`).join('');
+  if(detailEl){
+    if(detailCount>0){
+      detailEl.style.display='';
+      if(detailCountEl)detailCountEl.textContent='Full breakdown ('+detailCount+' more)';
+    }else{
+      detailEl.style.display='none';
+    }
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -3840,7 +3931,12 @@ function buildPanes(){
       </div>
       <div class="diag" id="diag${s}">
         <div class="diag-hd"><span class="diag-title" id="diag-t${s}">Diagnostics</span><span class="diag-badge" id="diag-b${s}">—</span></div>
-        <div class="diag-body" id="diag-l${s}"></div>
+        <div class="diag-tiles" id="diag-tiles${s}"></div>
+        <div class="diag-verdict" id="diag-verdict${s}"></div>
+        <details class="diag-detail" id="diag-detail${s}">
+          <summary><span id="diag-detail-count${s}">Full breakdown</span><span class="chev">⌄</span></summary>
+          <div class="diag-body" id="diag-l${s}"></div>
+        </details>
       </div>
       <div class="vs-card" id="strat-cmp-card${s}">
         <div class="vs-hd"><span class="vs-title">Strategy Comparison</span><span class="vs-badge nosim" id="strat-cmp-badge${s}">No Sims Run</span></div>
@@ -3876,10 +3972,13 @@ function clearStrategy(tab){
   const CM_DEFAULT_CLS={'cm-ttg':'cmv steel','cm-cap':'cmv amb','cm-ret':'cmv','cm-ann':'cmv'};
   Object.keys(CM_DEFAULT_CLS).forEach(id=>{const e=$(id+s);if(e){e.textContent='—';e.className=CM_DEFAULT_CLS[id];}});
   ['cm-ttgs','cm-caps','cm-rets'].forEach(id=>{const e=$(id+s);if(e)e.textContent='—';});
-  const diagT=$('diag-t'+s),diagB=$('diag-b'+s),diagL=$('diag-l'+s),diagEl=$('diag'+s);
+  const diagT=$('diag-t'+s),diagB=$('diag-b'+s),diagTiles=$('diag-tiles'+s),diagVerdict=$('diag-verdict'+s),diagDetail=$('diag-detail'+s),diagL=$('diag-l'+s),diagEl=$('diag'+s);
   if(diagT)diagT.textContent='Diagnostics';
   if(diagB)diagB.textContent='—';
+  if(diagTiles)diagTiles.innerHTML='';
+  if(diagVerdict)diagVerdict.innerHTML='';
   if(diagL)diagL.innerHTML='';
+  if(diagDetail){diagDetail.style.display='none';diagDetail.open=false;}
   if(diagEl)diagEl.className='diag';
   renderStratComparison();
   if(activeTblStrat===tab)renderTable(tab);
