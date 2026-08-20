@@ -384,42 +384,6 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .dv-dt-label{font-size:5.85px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(226,230,237,.55);line-height:1;}
 .dv-dt-num{font-size:14.4px;font-weight:700;line-height:1.05;}
 .dv-dt-cal{font-size:7.2px;font-weight:500;color:rgba(226,230,237,.72);line-height:1;}
-/* Fixed clusters of per-line endpoint figures — $/mo, $ capital, calendar
-   time-to-goal — one compact row per active strategy (plus the real-log
-   line when present), colour-dotted instead of chasing each triangle
-   marker around the chart (see dvUpdateEndpointDock). Up to three fixed
-   parking spots (top-right, right side, left side) rather than one single
-   corner — a small set still lands entirely in "top" and reads as one
-   tight cluster (round 34's original goal), a larger set spills into the
-   side docks instead of overcrowding one corner. "top" is clear of the
-   "time to rapid growth" overlay's 76%-wide footprint on the left; the
-   side docks sit low, clear of that same overlay's 47%-tall footprint.
-   Each has its own small glass backing so it stays legible over whatever
-   curve happens to pass underneath. */
-.dv-endpoint-dock{
-  position:absolute;max-width:42%;
-  display:none;flex-direction:column;gap:2px;
-  padding:5px 7px;border-radius:5px;
-  background:rgba(10,14,20,.5);
-  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
-  border:1px solid rgba(255,255,255,.06);
-  pointer-events:none;z-index:2;
-}
-.dv-endpoint-dock.pos-top{top:6px;right:6px;align-items:flex-end;}
-.dv-endpoint-dock.pos-right{bottom:6px;right:6px;align-items:flex-end;}
-.dv-endpoint-dock.pos-left{bottom:6px;left:6px;align-items:flex-start;}
-.dv-ep-row{display:flex;align-items:baseline;gap:4px;line-height:1.25;white-space:nowrap;font-family:'IBM Plex Mono',monospace;}
-.dv-ep-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-bottom:1px;}
-.dv-ep-mo{font-size:7.4px;font-weight:700;color:rgba(255,255,255,.85);}
-.dv-ep-cap{font-size:6.6px;font-weight:500;}
-.dv-ep-cal{font-size:6px;}
-/* Merged/averaged row — two or more strategies finishing within 10% of
-   each other collapse into one row (see dvGroupEndpoints) that no longer
-   speaks for a single strategy, so it's deliberately left uncoloured
-   instead of picking one of the merged strategies' colours. */
-.dv-ep-dot-merge{background:rgba(163,173,190,.55) !important;box-shadow:none !important;}
-.dv-ep-cap-merge{color:rgba(163,173,190,.8) !important;}
-.dv-ep-cal-merge{color:rgba(163,173,190,.5) !important;}
 .chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,.08);}
 .cm{padding:7px 10px;border-right:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);}
 .cm:nth-child(even){border-right:none;}
@@ -714,9 +678,6 @@ canvas.spark{width:100%;height:34px;display:block;}
           <span class="dv-dt-num" id="dv-dt-num"></span>
           <span class="dv-dt-cal" id="dv-dt-cal"></span>
         </div>
-        <div class="dv-endpoint-dock pos-top" id="dv-endpoint-dock-top"></div>
-        <div class="dv-endpoint-dock pos-right" id="dv-endpoint-dock-right"></div>
-        <div class="dv-endpoint-dock pos-left" id="dv-endpoint-dock-left"></div>
       </div>
       <div class="dv-gauge-row">
         <canvas id="dv-gauge-cv"></canvas>
@@ -1504,7 +1465,7 @@ function drawGlassCircle(ctx,x,y,r){
    shared drawGlassRing above; only the centre dot below is unique to
    this marker. Ring and dot are both translucent so the curve/gridlines
    underneath still show through. */
-function drawGlassBullseye(ctx,x,y,r,rgb,boost){
+function drawGlassBullseye(ctx,x,y,r,rgb,boost,flatDot){
   boost=boost||1;
   const [cr,cg,cb]=rgb;
   const lightX=x-r*0.35,lightY=y-r*0.4;
@@ -1512,14 +1473,25 @@ function drawGlassBullseye(ctx,x,y,r,rgb,boost){
 
   drawGlassRing(ctx,x,y,r,rgb,boost);
 
-  /* centre dot: a small glass sphere, not a flat fill */
+  /* centre dot: a small glass sphere by default (bright near the light
+     source, dimming toward the true centre — the classic "3D bead"
+     look). flatDot swaps that for a uniform fill matching the ring's own
+     brightest tone instead, for a marker that needs to read as evenly
+     bright/pronounced rather than dim in the middle (see the Sim tab's
+     own growth marker, which asked for exactly this). */
   const dotR=r*.34;
-  const body=ctx.createRadialGradient(lightX,lightY,dotR*.1,x,y,dotR*1.05);
-  body.addColorStop(0,`rgba(${Math.min(255,cr+130)},${Math.min(255,cg+130)},${Math.min(255,cb+130)},${Math.min(1,.0712*boost)})`);
-  body.addColorStop(.5,`rgba(${cr},${cg},${cb},${Math.min(1,.592*boost)})`);
-  body.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},${Math.min(1,.504*boost)})`);
-  ctx.beginPath();ctx.arc(x,y,dotR,0,Math.PI*2);
-  ctx.fillStyle=body;ctx.fill();
+  if(flatDot){
+    ctx.beginPath();ctx.arc(x,y,dotR,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${cr},${cg},${cb},${Math.min(1,.75*boost)})`;
+    ctx.fill();
+  }else{
+    const body=ctx.createRadialGradient(lightX,lightY,dotR*.1,x,y,dotR*1.05);
+    body.addColorStop(0,`rgba(${Math.min(255,cr+130)},${Math.min(255,cg+130)},${Math.min(255,cb+130)},${Math.min(1,.0712*boost)})`);
+    body.addColorStop(.5,`rgba(${cr},${cg},${cb},${Math.min(1,.592*boost)})`);
+    body.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},${Math.min(1,.504*boost)})`);
+    ctx.beginPath();ctx.arc(x,y,dotR,0,Math.PI*2);
+    ctx.fillStyle=body;ctx.fill();
+  }
 
   ctx.restore();
 }
@@ -1664,14 +1636,20 @@ function _drawChart(cv,equity,acct0,rgb){
     // used to anchor the Race to Goal chart's FASTEST PATH marker
     // (dvStrategyRapidGrowth), run here against just this one curve so
     // each strategy's own pane shows where ITS OWN compounding visibly
-    // took off, in its own colour. Small bullseye, no text callout — the
-    // chart is tiny and the same figure is spelled out as "Growth ETA"
-    // in this strategy's Diagnostics card just below.
+    // took off. No text callout — the chart is tiny and the same figure
+    // is spelled out as "Rapid Growth Threshold" in this strategy's
+    // Diagnostics card just below. Deliberately pronounced rather than
+    // subtle: sized up well past the original r=5.2 (read as a barely-
+    // visible speck), boosted for a genuine glow, neutral white instead
+    // of the strategy's own colour (only one curve on this chart, so
+    // there's nothing to disambiguate), and flatDot so the centre reads
+    // as evenly bright instead of dimming toward the true centre the way
+    // the default "glass sphere" dot does.
     const growthPts=equity.map(p=>({day:p.day,cap:acct0+p.cumPnl}));
     const growthHit=dvStrategyRapidGrowth(growthPts);
     if(growthHit){
       const gi=growthPts.findIndex(p=>p.day===growthHit.day);
-      if(gi>=0)drawGlassBullseye(ctx,xS(gi),yS(pnls[gi]),5.2,rgb);
+      if(gi>=0)drawGlassBullseye(ctx,xS(gi),yS(pnls[gi]),11,[255,255,255],3,true);
     }
   }else{
     ctx.beginPath();ctx.moveTo(xS(0),yS(pnls[0]));
@@ -1875,7 +1853,7 @@ function buildDiag(c,cumPnl,days,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,
     rows.push(row('EV/trade',evTr>=0?'+$'+fmt(evTr):'−$'+fmt(Math.abs(evTr)),evTr>0?'pos':'neg'));
     rows.push(row('Monthly est',sgn(mo),mo>0?'pos':'neg',  '',hasReal&&realMo!==null?rv(realMo,sgn(realMo)):null,mo,'higher'));
     rows.push(row('Time to goal',cal(calMo),'neu',days.toLocaleString()+' trading days',hasReal&&realTTG?rv(0,realTTG):null,null,null));
-    rows.push(row('Growth ETA',growthHit?cal((growthHit.day/252)*12):'—',growthHit?'pos':'neu',growthHit?'day '+growthHit.day+' — compounding visibly takes off':'no rapid-growth point detected yet'));
+    rows.push(row('Rapid Growth Threshold',growthHit?cal((growthHit.day/252)*12):'—',growthHit?'pos':'neu',growthHit?'day '+growthHit.day+' — compounding visibly takes off':'no rapid-growth point detected yet'));
     rows.push(row('R:R',actRR.toFixed(2)+':1',actRR>=1.5?'pos':actRR>=1?'neu':'neg','',hasReal&&realRR!==null?rv(realRR,realRR.toFixed(2)+':1'):null,actRR,'higher'));
     rows.push(row('Min WR to BE',(minWR*100).toFixed(1)+'%',wrOk?'pos':'neg'));
     rows.push(row('WR',         (c.wr*100).toFixed(1)+'%',wrOk?'pos':'neg','',hasReal&&realWR!==null?rv(realWR*100,(realWR*100).toFixed(1)+'%'):null,c.wr*100,'higher'));
@@ -2092,25 +2070,19 @@ function dvUpdateRapidOverlay(rapid,dayToCal,series){
   requestAnimationFrame(()=>el.classList.add('show'));
 }
 
-// The per-line endpoint figures (capital, near-plateau $/mo, calendar
-// time-to-goal) used to float as their own label stack directly above
-// each triangle marker, with a collision-avoidance pass shoving
-// overlapping stacks apart. That worked at 3 strategies; at 6 it left the
-// stacks scattered across the whole top of the frame instead of reading
-// as a group. Fixed positions instead: up to three small HTML docks
-// (#dv-endpoint-dock-top/-right/-left, see CSS) at the same spots every
-// time — a small set stays entirely in "top" and reads as one tight
-// cluster, a larger set spills into the side docks rather than
-// overcrowding one corner.
-
-// Two or more lines finishing within 10% of each other's final capital
-// are close enough that showing every one separately is just noise —
-// collapse them into a single averaged row (day/cap/mo mean-averaged)
-// instead of crowning any one of them, same "average it" rule applied to
-// the FASTEST PATH marker above. Sorts by capital to find the close-
-// together runs, then restores the original real/A-F order for display
-// (via each entry's own index) so the dock doesn't reshuffle on every
-// redraw as capitals drift.
+// The per-line endpoint figures (shares, capital, near-plateau $/mo,
+// calendar time-to-goal) float directly above each triangle marker —
+// back to the app's original per-triangle treatment (a brief detour
+// through a fixed corner dock didn't stick). Two or more lines finishing
+// within 10% of each other's final capital are close enough that
+// showing every one separately is just noise — merged into a single
+// averaged, UNCOLOURED stack (day/cap/mo/sh mean-averaged, centred over
+// the group) instead of crowning any one of them, same "average it,
+// don't colour-code it" rule used elsewhere. Sorts by capital to find
+// the close-together runs, then restores the original real/A-F order
+// (via each entry's own index) — display position itself is driven by
+// each (merged) entry's own screen x/y, this ordering is just for stable
+// iteration.
 function dvGroupEndpoints(endpoints){
   const withIdx=endpoints.map((e,i)=>({...e,_i:i}));
   const sorted=[...withIdx].sort((a,b)=>a.cap-b.cap);
@@ -2126,52 +2098,32 @@ function dvGroupEndpoints(endpoints){
   }
   const out=groups.map(g=>{
     const order=Math.min(...g.map(h=>h._i));
-    if(g.length===1)return{...g[0],_order:order};
+    if(g.length===1)return{...g[0],_order:order,members:[g[0]._i]};
+    const x=g.reduce((a,h)=>a+h.x,0)/g.length;
+    const y=g.reduce((a,h)=>a+h.y,0)/g.length;
     const cap=g.reduce((a,h)=>a+h.cap,0)/g.length;
     const mo=g.reduce((a,h)=>a+h.mo,0)/g.length;
     const day=g.reduce((a,h)=>a+h.day,0)/g.length;
-    // color:null marks this row as merged — rendered uncoloured below,
-    // deliberately not blended, since it no longer speaks for one strategy.
-    return{cap,mo,day,color:null,merged:true,count:g.length,_order:order};
+    const shVals=g.filter(h=>h.sh!=null).map(h=>h.sh);
+    const sh=shVals.length?shVals.reduce((a,b)=>a+b,0)/shVals.length:null;
+    return{x,y,cap,mo,day,sh,color:null,merged:true,count:g.length,_order:order,members:g.map(h=>h._i)};
   });
   out.sort((a,b)=>a._order-b._order);
   return out;
 }
-function dvUpdateEndpointDock(endpoints,dayToCal){
-  const topEl=$('dv-endpoint-dock-top'),rightEl=$('dv-endpoint-dock-right'),leftEl=$('dv-endpoint-dock-left');
-  if(!topEl)return;
-  const grouped=dvGroupEndpoints(endpoints);
-  const n=grouped.length;
-  // Only reach for the side docks once "top" alone would actually be
-  // crowded — a handful of lines still reads best as one tight cluster.
-  let buckets;
-  if(n<=3)buckets=[grouped,[],[]];
-  else if(n<=5){const c=Math.ceil(n/2);buckets=[grouped.slice(0,c),grouped.slice(c),[]];}
-  else{const c=Math.ceil(n/3);buckets=[grouped.slice(0,c),grouped.slice(c,c*2),grouped.slice(c*2)];}
-  [[topEl,buckets[0]],[rightEl,buckets[1]],[leftEl,buckets[2]]].forEach(([el,list])=>{
-    if(!el)return;
-    if(!list.length){el.innerHTML='';el.style.display='none';return;}
-    el.style.display='flex';
-    el.innerHTML=list.map(ep=>{
-      const moTxt=(ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo';
-      const calTxt=cal(dayToCal(ep.day));
-      if(!ep.color){
-        return '<div class="dv-ep-row">'
-          +'<span class="dv-ep-dot dv-ep-dot-merge"></span>'
-          +'<span class="dv-ep-mo">'+moTxt+'</span>'
-          +'<span class="dv-ep-cap dv-ep-cap-merge">$'+fmt(ep.cap,0)+' avg</span>'
-          +'<span class="dv-ep-cal dv-ep-cal-merge">'+calTxt+'</span>'
-          +'</div>';
-      }
-      const [r,g,b]=hexToRgb(ep.color);
-      return '<div class="dv-ep-row">'
-        +'<span class="dv-ep-dot" style="background:'+ep.color+';box-shadow:0 0 4px rgba('+r+','+g+','+b+',.85);"></span>'
-        +'<span class="dv-ep-mo">'+moTxt+'</span>'
-        +'<span class="dv-ep-cap" style="color:rgba('+r+','+g+','+b+',.85);">$'+fmt(ep.cap,0)+'</span>'
-        +'<span class="dv-ep-cal" style="color:rgba('+r+','+g+','+b+',.55);">'+calTxt+'</span>'
-        +'</div>';
-    }).join('');
-  });
+// Linear-interpolated capital at an arbitrary day along one curve's own
+// sampled points — used to check whether some OTHER curve is passing
+// directly through the space a label stack would otherwise occupy.
+function dvCapAtDay(pts,day){
+  if(!pts.length||day<pts[0].day||day>pts[pts.length-1].day)return null;
+  for(let i=1;i<pts.length;i++){
+    if(pts[i].day>=day){
+      const p0=pts[i-1],p1=pts[i];
+      const t=(day-p0.day)/((p1.day-p0.day)||1);
+      return p0.cap+(p1.cap-p0.cap)*t;
+    }
+  }
+  return pts[pts.length-1].cap;
 }
 
 /* Shared "glass tube" curve material — path builder + stroke renderer.
@@ -2398,27 +2350,91 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
 
   // ── Endpoints: upside-down glass triangles marking the final point of
   // each curve, muted to match the app's own frosted panels (see
-  // drawGlassTriangle) rather than a saturated colour shape. The figures
-  // for each line (capital, near-plateau $/mo, calendar time-to-goal)
-  // no longer float in their own label stack above the triangle — with
-  // up to 6 strategies plus the real-log line, that scattered clusters
-  // across the whole top of the frame. They're collected instead into
-  // dockEndpoints and handed to dvUpdateEndpointDock, which renders them
-  // as one small fixed cluster (see #dv-endpoint-dock) — colour-dotted
-  // per row so a figure still reads back to its strategy without having
-  // to sit next to its marker.
+  // drawGlassTriangle) rather than a saturated colour shape. Each gets a
+  // boxless label stack — share count (neutral) on top, capital
+  // (strategy colour) under it, near-plateau monthly estimate under
+  // that, calendar duration at the bottom — centred directly above it,
+  // same typography as the app's original per-triangle treatment.
+  // Triangles/lines finishing within 10% of each other's capital merge
+  // into one averaged, uncoloured stack centred over the group
+  // (dvGroupEndpoints) rather than stacking separate near-duplicate
+  // labels. When a stack's default spot directly above its triangle
+  // would sit on top of a DIFFERENT curve still passing through that
+  // point in time, it moves to whichever side of the triangle has more
+  // room instead of fighting that curve for the same vertical space.
   const TRI_R=6.5,TRI_H=TRI_R*2.1;
-  const dockEndpoints=[];
+  const TRI_LBL_GAP=9,LBL_SIZE=7.2,LBL_GAP=8.8,SHR_GAP=8.8,CAL_SIZE=6.4,CAL_GAP=7.4;
+  const rawEndpoints=[],curveList=[];
   if(hasReal){
     const lastR=realPts[realPts.length-1];
     const realAsPts=realPts.map((p,i)=>({day:i,cap:p.cap}));
-    dockEndpoints.push({color:'#e2e6ed',cap:lastR.cap,mo:dvPlateauMoRate(realAsPts),day:realPts.length-1});
+    rawEndpoints.push({x:xS(realPts.length-1),y:yS(lastR.cap),color:'#e2e6ed',cap:lastR.cap,mo:dvPlateauMoRate(realAsPts),day:realPts.length-1,sh:null});
+    curveList.push(realAsPts);
   }
   for(const s of series){
     const last=s.pts[s.pts.length-1];
-    dockEndpoints.push({color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts),day:last.day});
+    rawEndpoints.push({x:xS(last.day),y:yS(last.cap),color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts),day:last.day,sh:last.sh});
+    curveList.push(s.pts);
   }
-  dvUpdateEndpointDock(dockEndpoints,dayToCal);
+  const labelGroups=dvGroupEndpoints(rawEndpoints);
+  for(const grp of labelGroups){
+    const capTxt='$'+fmt(grp.cap,0);
+    const moTxt=(grp.mo>=0?'+$':'−$')+fmt(Math.abs(grp.mo),0)+'/mo';
+    const calTxt=cal(dayToCal(grp.day));
+    const shTxt=grp.sh!=null?Math.round(grp.sh).toLocaleString()+' sh':null;
+    const [cr,cg,cb]=grp.color?hexToRgb(grp.color):[163,173,190];
+    const capAlpha=grp.color?.8:.75,calAlpha=grp.color?.55:.5;
+    const moFill=grp.color?'rgba(255,255,255,.8)':'rgba(226,230,237,.85)';
+
+    const anchorX=Math.min(Math.max(grp.x,pd.l+24),pd.l+pw-24);
+    const moLyDefault=grp.y-TRI_H-TRI_LBL_GAP-CAL_GAP;
+    const topGap=shTxt!=null?(LBL_GAP+SHR_GAP):LBL_GAP;
+    const stackTop=moLyDefault-topGap-LBL_SIZE-2,stackBot=moLyDefault+CAL_GAP+CAL_SIZE+2;
+    const halfW=44;
+    let obstructed=false;
+    for(let ci=0;ci<curveList.length&&!obstructed;ci++){
+      if(grp.members.includes(ci))continue;
+      const pts=curveList[ci];
+      for(const sx of[anchorX-halfW,anchorX,anchorX+halfW]){
+        const day=Math.max(0,Math.min(maxDay,((sx-pd.l)/pw)*maxDay));
+        const cap=dvCapAtDay(pts,day);
+        if(cap==null)continue;
+        const cy=yS(cap);
+        if(cy>stackTop&&cy<stackBot){obstructed=true;break;}
+      }
+    }
+
+    let lx,moLy;
+    if(!obstructed){
+      ctx.textAlign='center';
+      lx=anchorX;moLy=moLyDefault;
+    }else{
+      // No clean room directly above — fall back to whichever side of
+      // the triangle has more room (left half of the chart -> label
+      // goes right, right half -> label goes left) instead of chasing
+      // vertical space that isn't there.
+      const side=grp.x<(pd.l+pw/2)?'right':'left';
+      ctx.textAlign=side==='right'?'left':'right';
+      lx=side==='right'?Math.min(grp.x+TRI_R+8,pd.l+pw-6):Math.max(grp.x-TRI_R-8,pd.l+6);
+      moLy=grp.y;
+    }
+    const capLy=moLy-LBL_GAP,calLy=moLy+CAL_GAP;
+    if(shTxt!=null){
+      ctx.font=`${LBL_SIZE}px IBM Plex Mono`;
+      ctx.fillStyle='rgba(226,230,237,.7)';
+      ctx.fillText(shTxt,lx,capLy-SHR_GAP);
+    }
+    ctx.font=`${LBL_SIZE}px IBM Plex Mono`;
+    ctx.fillStyle=`rgba(${cr},${cg},${cb},${capAlpha})`;
+    ctx.fillText(capTxt,lx,capLy);
+    ctx.font=`bold ${LBL_SIZE}px IBM Plex Mono`;
+    ctx.fillStyle=moFill;
+    ctx.fillText(moTxt,lx,moLy);
+    ctx.font=`${CAL_SIZE}px IBM Plex Mono`;
+    ctx.fillStyle=`rgba(${cr},${cg},${cb},${calAlpha})`;
+    ctx.fillText(calTxt,lx,calLy);
+  }
+  ctx.textAlign='center';
   for(const s of series){
     const last=s.pts[s.pts.length-1];
     const [r,g,b]=hexToRgb(s.color);
@@ -2524,9 +2540,14 @@ function dvDrawGaugeRow(cv,hoverDay){
     if(pt)hoverPts.push({color:s.color,label:s.label,cap:pt.cap,sh:pt.sh});
   }
   const n=hoverPts.length;
-  const marginX=10;
+  // Margin/gap pulled in to a hairline (just enough that domes read as
+  // distinct circles, not fused into one shape) so the gauges claim as
+  // much of the row as the space allows — basically touching the panel's
+  // own edges and each other, per spec, rather than leaving visible
+  // breathing room on either side.
+  const marginX=3;
   const availW=W-marginX*2;
-  const gGap=10;
+  const gGap=3;
   const gY=H-16; // dome base, leaves room for the capital tally below it
   // No letter row above the gauge any more — the strategy letter now
   // prefixes the capital tally text below instead (see txt below), and
