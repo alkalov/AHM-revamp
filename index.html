@@ -384,28 +384,42 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .dv-dt-label{font-size:5.85px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(226,230,237,.55);line-height:1;}
 .dv-dt-num{font-size:14.4px;font-weight:700;line-height:1.05;}
 .dv-dt-cal{font-size:7.2px;font-weight:500;color:rgba(226,230,237,.72);line-height:1;}
-/* Fixed cluster of per-line endpoint figures — $/mo, $ capital, calendar
+/* Fixed clusters of per-line endpoint figures — $/mo, $ capital, calendar
    time-to-goal — one compact row per active strategy (plus the real-log
    line when present), colour-dotted instead of chasing each triangle
-   marker around the chart (see dvUpdateEndpointDock). Anchored top-right,
-   clear of the "time to rapid growth" overlay's 76%-wide footprint on
-   the left, so the two never have to fight for space no matter how many
-   strategies are running. Own small glass backing so it stays legible
-   over whatever curve happens to pass underneath. */
+   marker around the chart (see dvUpdateEndpointDock). Up to three fixed
+   parking spots (top-right, right side, left side) rather than one single
+   corner — a small set still lands entirely in "top" and reads as one
+   tight cluster (round 34's original goal), a larger set spills into the
+   side docks instead of overcrowding one corner. "top" is clear of the
+   "time to rapid growth" overlay's 76%-wide footprint on the left; the
+   side docks sit low, clear of that same overlay's 47%-tall footprint.
+   Each has its own small glass backing so it stays legible over whatever
+   curve happens to pass underneath. */
 .dv-endpoint-dock{
-  position:absolute;top:6px;right:6px;max-width:42%;
-  display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+  position:absolute;max-width:42%;
+  display:none;flex-direction:column;gap:2px;
   padding:5px 7px;border-radius:5px;
   background:rgba(10,14,20,.5);
   -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
   border:1px solid rgba(255,255,255,.06);
   pointer-events:none;z-index:2;
 }
+.dv-endpoint-dock.pos-top{top:6px;right:6px;align-items:flex-end;}
+.dv-endpoint-dock.pos-right{bottom:6px;right:6px;align-items:flex-end;}
+.dv-endpoint-dock.pos-left{bottom:6px;left:6px;align-items:flex-start;}
 .dv-ep-row{display:flex;align-items:baseline;gap:4px;line-height:1.25;white-space:nowrap;font-family:'IBM Plex Mono',monospace;}
 .dv-ep-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-bottom:1px;}
 .dv-ep-mo{font-size:7.4px;font-weight:700;color:rgba(255,255,255,.85);}
 .dv-ep-cap{font-size:6.6px;font-weight:500;}
 .dv-ep-cal{font-size:6px;}
+/* Merged/averaged row — two or more strategies finishing within 10% of
+   each other collapse into one row (see dvGroupEndpoints) that no longer
+   speaks for a single strategy, so it's deliberately left uncoloured
+   instead of picking one of the merged strategies' colours. */
+.dv-ep-dot-merge{background:rgba(163,173,190,.55) !important;box-shadow:none !important;}
+.dv-ep-cap-merge{color:rgba(163,173,190,.8) !important;}
+.dv-ep-cal-merge{color:rgba(163,173,190,.5) !important;}
 .chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,.08);}
 .cm{padding:7px 10px;border-right:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);}
 .cm:nth-child(even){border-right:none;}
@@ -700,7 +714,9 @@ canvas.spark{width:100%;height:34px;display:block;}
           <span class="dv-dt-num" id="dv-dt-num"></span>
           <span class="dv-dt-cal" id="dv-dt-cal"></span>
         </div>
-        <div class="dv-endpoint-dock" id="dv-endpoint-dock"></div>
+        <div class="dv-endpoint-dock pos-top" id="dv-endpoint-dock-top"></div>
+        <div class="dv-endpoint-dock pos-right" id="dv-endpoint-dock-right"></div>
+        <div class="dv-endpoint-dock pos-left" id="dv-endpoint-dock-left"></div>
       </div>
       <div class="dv-gauge-row">
         <canvas id="dv-gauge-cv"></canvas>
@@ -1400,15 +1416,22 @@ function dvGlassGauge(ctx,cx,cyBase,r,frac,rgb,shareVal){
   // Number + caption sit low in the dome (close to the flat base, where
   // a half-circle is at its widest) rather than centred on the dome's
   // full height — keeps them clear of the arc above even when the arc
-  // sweeps most of the way round at a near-full fraction.
+  // sweeps most of the way round at a near-full fraction. Both scale
+  // with r (clamped at the low end to stay readable, and at the high end
+  // so it doesn't get cartoonish) instead of a fixed size — the gauge row
+  // now sizes each dome to fill whatever space it actually has rather
+  // than capping out around r=22, and a much bigger dome with the old
+  // fixed 7.2px number would just leave empty arc above tiny text.
+  const numSize=Math.max(7.2,Math.min(22,r*.33));
+  const capSize=Math.max(6,Math.min(15,r*.27));
   ctx.textAlign='center';
   ctx.fillStyle='rgba(226,230,237,.78)';
-  ctx.font='700 7.2px IBM Plex Mono';
-  ctx.fillText(Math.round(shareVal).toLocaleString(),cx,cyBase-8);
+  ctx.font=`700 ${numSize}px IBM Plex Mono`;
+  ctx.fillText(Math.round(shareVal).toLocaleString(),cx,cyBase-r*.36);
   ctx.fillStyle='rgba(163,173,190,.5)';
-  ctx.font='6px IBM Plex Mono';
+  ctx.font=`${capSize}px IBM Plex Mono`;
   ctx.textBaseline='alphabetic';
-  ctx.fillText('SHARES',cx,cyBase-1);
+  ctx.fillText('SHARES',cx,cyBase-r*.045);
 
   ctx.restore();
 }
@@ -1422,16 +1445,26 @@ function dvGlassGauge(ctx,cx,cyBase,r,frac,rgb,shareVal){
    marker bleeds a glow past its own silhouette) plus a frosted-glass
    annulus between two radii with a bright-highlight-to-shadow gradient
    fill and a soft edge stroke on each boundary circle. */
-function drawGlassRing(ctx,x,y,r,rgb){
+function drawGlassRing(ctx,x,y,r,rgb,boost){
+  // boost: optional intensity multiplier, default 1 (every existing call
+  // site — hover dots, table endpoint triangles' shared recipe, the Sim
+  // tab's own per-strategy growth markers — is untouched by this). Used
+  // by the Race to Goal chart's FASTEST PATH marker specifically, which
+  // needs to stay readable against up to six competing curves rather
+  // than the one or two this material was originally tuned against.
+  boost=boost||1;
   const [cr,cg,cb]=rgb;
   const lightX=x-r*0.35,lightY=y-r*0.4;
 
-  /* tight, dim bloom — just enough to lift the ring off the chart. */
-  const bloom=ctx.createRadialGradient(x,y,0,x,y,r*1.7);
-  bloom.addColorStop(0,`rgba(${cr},${cg},${cb},.0104)`);
+  /* tight, dim bloom — just enough to lift the ring off the chart.
+     Boosted requests get a wider, brighter bloom so the marker reads as
+     a genuine glow rather than just a slightly stronger ring. */
+  const bloomR=r*(boost>1?1.7+boost*0.55:1.7);
+  const bloom=ctx.createRadialGradient(x,y,0,x,y,bloomR);
+  bloom.addColorStop(0,`rgba(${cr},${cg},${cb},${Math.min(1,.0104*boost*boost)})`);
   bloom.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=bloom;
-  ctx.beginPath();ctx.arc(x,y,r*1.7,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(x,y,bloomR,0,Math.PI*2);ctx.fill();
 
   /* outer ring: frosted glass annulus (gradient fill between two radii)
      plus a soft gradient-toned edge stroke on each boundary circle */
@@ -1442,16 +1475,16 @@ function drawGlassRing(ctx,x,y,r,rgb){
   ctx.arc(x,y,ringInner,0,Math.PI*2,true);
   ctx.clip('evenodd');
   const ringFill=ctx.createRadialGradient(lightX,lightY,0,x,y,ringOuter*1.15);
-  ringFill.addColorStop(0,`rgba(${Math.min(255,cr+100)},${Math.min(255,cg+100)},${Math.min(255,cb+100)},.0424)`);
-  ringFill.addColorStop(.6,`rgba(${cr},${cg},${cb},.256)`);
-  ringFill.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.216)`);
+  ringFill.addColorStop(0,`rgba(${Math.min(255,cr+100)},${Math.min(255,cg+100)},${Math.min(255,cb+100)},${Math.min(1,.0424*boost)})`);
+  ringFill.addColorStop(.6,`rgba(${cr},${cg},${cb},${Math.min(1,.256*boost)})`);
+  ringFill.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},${Math.min(1,.216*boost)})`);
   ctx.fillStyle=ringFill;
   ctx.fillRect(x-ringOuter-2,y-ringOuter-2,(ringOuter+2)*2,(ringOuter+2)*2);
   ctx.restore();
-  ctx.lineWidth=.8;
-  ctx.strokeStyle=`rgba(${cr},${cg},${cb},.424)`;
+  ctx.lineWidth=boost>1?1.4:.8;
+  ctx.strokeStyle=`rgba(${cr},${cg},${cb},${Math.min(1,.424*boost)})`;
   ctx.beginPath();ctx.arc(x,y,ringOuter,0,Math.PI*2);ctx.stroke();
-  ctx.strokeStyle=`rgba(${cr},${cg},${cb},.272)`;
+  ctx.strokeStyle=`rgba(${cr},${cg},${cb},${Math.min(1,.272*boost)})`;
   ctx.beginPath();ctx.arc(x,y,ringInner,0,Math.PI*2);ctx.stroke();
 }
 
@@ -1471,19 +1504,20 @@ function drawGlassCircle(ctx,x,y,r){
    shared drawGlassRing above; only the centre dot below is unique to
    this marker. Ring and dot are both translucent so the curve/gridlines
    underneath still show through. */
-function drawGlassBullseye(ctx,x,y,r,rgb){
+function drawGlassBullseye(ctx,x,y,r,rgb,boost){
+  boost=boost||1;
   const [cr,cg,cb]=rgb;
   const lightX=x-r*0.35,lightY=y-r*0.4;
   ctx.save();
 
-  drawGlassRing(ctx,x,y,r,rgb);
+  drawGlassRing(ctx,x,y,r,rgb,boost);
 
   /* centre dot: a small glass sphere, not a flat fill */
   const dotR=r*.34;
   const body=ctx.createRadialGradient(lightX,lightY,dotR*.1,x,y,dotR*1.05);
-  body.addColorStop(0,`rgba(${Math.min(255,cr+130)},${Math.min(255,cg+130)},${Math.min(255,cb+130)},.0712)`);
-  body.addColorStop(.5,`rgba(${cr},${cg},${cb},.592)`);
-  body.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},.504)`);
+  body.addColorStop(0,`rgba(${Math.min(255,cr+130)},${Math.min(255,cg+130)},${Math.min(255,cb+130)},${Math.min(1,.0712*boost)})`);
+  body.addColorStop(.5,`rgba(${cr},${cg},${cb},${Math.min(1,.592*boost)})`);
+  body.addColorStop(1,`rgba(${Math.round(cr*.4)},${Math.round(cg*.4)},${Math.round(cb*.4)},${Math.min(1,.504*boost)})`);
   ctx.beginPath();ctx.arc(x,y,dotR,0,Math.PI*2);
   ctx.fillStyle=body;ctx.fill();
 
@@ -1626,6 +1660,19 @@ function _drawChart(cv,equity,acct0,rgb){
     // flat pnl-sign stroke below, untouched.
     const path=dvBuildCurvePath(xS,i=>yS(pnls[i]),pnls.length);
     dvStrokeGlassCurve(ctx,path,rgb,pd.t,pd.t+ph);
+    // Growth marker — the same single-strategy rapid-growth detector
+    // used to anchor the Race to Goal chart's FASTEST PATH marker
+    // (dvStrategyRapidGrowth), run here against just this one curve so
+    // each strategy's own pane shows where ITS OWN compounding visibly
+    // took off, in its own colour. Small bullseye, no text callout — the
+    // chart is tiny and the same figure is spelled out as "Growth ETA"
+    // in this strategy's Diagnostics card just below.
+    const growthPts=equity.map(p=>({day:p.day,cap:acct0+p.cumPnl}));
+    const growthHit=dvStrategyRapidGrowth(growthPts);
+    if(growthHit){
+      const gi=growthPts.findIndex(p=>p.day===growthHit.day);
+      if(gi>=0)drawGlassBullseye(ctx,xS(gi),yS(pnls[gi]),5.2,rgb);
+    }
   }else{
     ctx.beginPath();ctx.moveTo(xS(0),yS(pnls[0]));
     for(let i=1;i<pnls.length;i++){const cpx=(xS(i-1)+xS(i))/2;ctx.bezierCurveTo(cpx,yS(pnls[i-1]),cpx,yS(pnls[i]),xS(i),yS(pnls[i]));}
@@ -1729,7 +1776,13 @@ function buildDiag(c,cumPnl,days,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,
   // average — matches the chart's "$/mo" figures rather than diluting
   // the number with the strategy's early ramp-up days.
   const _res=simResults[tab];
-  const mo=_res&&_res.rows&&_res.rows.length>1?dvPlateauMoRate(_res.rows.map(r=>({day:r.day,cap:acct0+r.cumPnl}))):c.evNet*21;
+  const _pts=_res&&_res.rows&&_res.rows.length>1?_res.rows.map(r=>({day:r.day,cap:acct0+r.cumPnl})):null;
+  const mo=_pts?dvPlateauMoRate(_pts):c.evNet*21;
+  // Same single-strategy rapid-growth detector anchoring the Race to Goal
+  // chart's FASTEST PATH marker and this strategy's own Sim-tab chart
+  // marker (see _drawChart) — surfaced here as a plain calendar ETA so
+  // it's readable without having to eyeball the chart.
+  const growthHit=_pts?dvStrategyRapidGrowth(_pts):null;
   const evTr=c.evDol-c.frTr;
   const dts=c.evNet>0?Math.ceil(c.avgPr/c.evNet):null;const wrOk=c.wr>=minWR;
   const rCapS=+$('rCapS').value||0;
@@ -1822,6 +1875,7 @@ function buildDiag(c,cumPnl,days,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,
     rows.push(row('EV/trade',evTr>=0?'+$'+fmt(evTr):'−$'+fmt(Math.abs(evTr)),evTr>0?'pos':'neg'));
     rows.push(row('Monthly est',sgn(mo),mo>0?'pos':'neg',  '',hasReal&&realMo!==null?rv(realMo,sgn(realMo)):null,mo,'higher'));
     rows.push(row('Time to goal',cal(calMo),'neu',days.toLocaleString()+' trading days',hasReal&&realTTG?rv(0,realTTG):null,null,null));
+    rows.push(row('Growth ETA',growthHit?cal((growthHit.day/252)*12):'—',growthHit?'pos':'neu',growthHit?'day '+growthHit.day+' — compounding visibly takes off':'no rapid-growth point detected yet'));
     rows.push(row('R:R',actRR.toFixed(2)+':1',actRR>=1.5?'pos':actRR>=1?'neu':'neg','',hasReal&&realRR!==null?rv(realRR,realRR.toFixed(2)+':1'):null,actRR,'higher'));
     rows.push(row('Min WR to BE',(minWR*100).toFixed(1)+'%',wrOk?'pos':'neg'));
     rows.push(row('WR',         (c.wr*100).toFixed(1)+'%',wrOk?'pos':'neg','',hasReal&&realWR!==null?rv(realWR*100,(realWR*100).toFixed(1)+'%'):null,c.wr*100,'higher'));
@@ -1980,15 +2034,29 @@ function dvStrategyRapidGrowth(pts){
   return null;
 }
 function dvFindRapidGrowth(series){
-  // Earliest point, across all ACTIVE strategies (checked individually via
-  // dvStrategyRapidGrowth — never against some blended/combined curve).
-  // Exactly one strategy can "own" the overall earliest point.
-  let best=null;
+  // Every active strategy's own earliest rapid-growth hit, checked
+  // individually via dvStrategyRapidGrowth (never against some blended/
+  // combined curve). Strategies that land within 10% of the single
+  // earliest day are close enough to call a practical tie — rather than
+  // crowning one arbitrary "winner" off what's essentially noise, their
+  // day/cap get averaged into one marker. That averaged marker is left
+  // uncoloured (neutral, same convention as the real-log line) rather
+  // than blended, since it no longer speaks for one specific strategy —
+  // don't colour-code an average. A clear single earliest point (nothing
+  // else within 10%) still returns that one strategy's own true colour.
+  const hits=[];
   for(const s of series){
     const hit=dvStrategyRapidGrowth(s.pts);
-    if(hit&&(!best||hit.day<best.day))best={...hit,idx:s.idx,color:s.color};
+    if(hit)hits.push({...hit,idx:s.idx,color:s.color});
   }
-  return best;
+  if(!hits.length)return null;
+  const minDay=Math.min(...hits.map(h=>h.day));
+  const tol=Math.max(minDay*0.1,1);
+  const tied=hits.filter(h=>h.day-minDay<=tol);
+  if(tied.length===1)return tied[0];
+  const day=tied.reduce((a,h)=>a+h.day,0)/tied.length;
+  const cap=tied.reduce((a,h)=>a+h.cap,0)/tied.length;
+  return{day,cap,idx:null,color:'#e2e6ed',tiedIdxs:tied.map(h=>h.idx)};
 }
 // Near-plateau monthly rate: average daily capital growth over just the
 // TRAILING slice of a strategy's run (last ~15%, min 5 points), times 21
@@ -2029,26 +2097,81 @@ function dvUpdateRapidOverlay(rapid,dayToCal,series){
 // each triangle marker, with a collision-avoidance pass shoving
 // overlapping stacks apart. That worked at 3 strategies; at 6 it left the
 // stacks scattered across the whole top of the frame instead of reading
-// as a group. Fixed position instead: one small HTML dock
-// (#dv-endpoint-dock, see CSS) anchored to the same corner every time,
-// listing every active line's figures as a single tight cluster,
-// colour-dotted per row so it still reads back to the right triangle/
-// strategy without needing to physically sit next to it.
+// as a group. Fixed positions instead: up to three small HTML docks
+// (#dv-endpoint-dock-top/-right/-left, see CSS) at the same spots every
+// time — a small set stays entirely in "top" and reads as one tight
+// cluster, a larger set spills into the side docks rather than
+// overcrowding one corner.
+
+// Two or more lines finishing within 10% of each other's final capital
+// are close enough that showing every one separately is just noise —
+// collapse them into a single averaged row (day/cap/mo mean-averaged)
+// instead of crowning any one of them, same "average it" rule applied to
+// the FASTEST PATH marker above. Sorts by capital to find the close-
+// together runs, then restores the original real/A-F order for display
+// (via each entry's own index) so the dock doesn't reshuffle on every
+// redraw as capitals drift.
+function dvGroupEndpoints(endpoints){
+  const withIdx=endpoints.map((e,i)=>({...e,_i:i}));
+  const sorted=[...withIdx].sort((a,b)=>a.cap-b.cap);
+  const groups=[];
+  for(const ep of sorted){
+    const last=groups[groups.length-1];
+    if(last){
+      const ref=last[0].cap;
+      const tol=Math.max(Math.abs(ref)*0.1,1);
+      if(Math.abs(ep.cap-ref)<=tol){last.push(ep);continue;}
+    }
+    groups.push([ep]);
+  }
+  const out=groups.map(g=>{
+    const order=Math.min(...g.map(h=>h._i));
+    if(g.length===1)return{...g[0],_order:order};
+    const cap=g.reduce((a,h)=>a+h.cap,0)/g.length;
+    const mo=g.reduce((a,h)=>a+h.mo,0)/g.length;
+    const day=g.reduce((a,h)=>a+h.day,0)/g.length;
+    // color:null marks this row as merged — rendered uncoloured below,
+    // deliberately not blended, since it no longer speaks for one strategy.
+    return{cap,mo,day,color:null,merged:true,count:g.length,_order:order};
+  });
+  out.sort((a,b)=>a._order-b._order);
+  return out;
+}
 function dvUpdateEndpointDock(endpoints,dayToCal){
-  const el=$('dv-endpoint-dock');
-  if(!el)return;
-  if(!endpoints.length){el.innerHTML='';return;}
-  el.innerHTML=endpoints.map(ep=>{
-    const [r,g,b]=hexToRgb(ep.color);
-    const moTxt=(ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo';
-    const calTxt=cal(dayToCal(ep.day));
-    return '<div class="dv-ep-row">'
-      +'<span class="dv-ep-dot" style="background:'+ep.color+';box-shadow:0 0 4px rgba('+r+','+g+','+b+',.85);"></span>'
-      +'<span class="dv-ep-mo">'+moTxt+'</span>'
-      +'<span class="dv-ep-cap" style="color:rgba('+r+','+g+','+b+',.85);">$'+fmt(ep.cap,0)+'</span>'
-      +'<span class="dv-ep-cal" style="color:rgba('+r+','+g+','+b+',.55);">'+calTxt+'</span>'
-      +'</div>';
-  }).join('');
+  const topEl=$('dv-endpoint-dock-top'),rightEl=$('dv-endpoint-dock-right'),leftEl=$('dv-endpoint-dock-left');
+  if(!topEl)return;
+  const grouped=dvGroupEndpoints(endpoints);
+  const n=grouped.length;
+  // Only reach for the side docks once "top" alone would actually be
+  // crowded — a handful of lines still reads best as one tight cluster.
+  let buckets;
+  if(n<=3)buckets=[grouped,[],[]];
+  else if(n<=5){const c=Math.ceil(n/2);buckets=[grouped.slice(0,c),grouped.slice(c),[]];}
+  else{const c=Math.ceil(n/3);buckets=[grouped.slice(0,c),grouped.slice(c,c*2),grouped.slice(c*2)];}
+  [[topEl,buckets[0]],[rightEl,buckets[1]],[leftEl,buckets[2]]].forEach(([el,list])=>{
+    if(!el)return;
+    if(!list.length){el.innerHTML='';el.style.display='none';return;}
+    el.style.display='flex';
+    el.innerHTML=list.map(ep=>{
+      const moTxt=(ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo';
+      const calTxt=cal(dayToCal(ep.day));
+      if(!ep.color){
+        return '<div class="dv-ep-row">'
+          +'<span class="dv-ep-dot dv-ep-dot-merge"></span>'
+          +'<span class="dv-ep-mo">'+moTxt+'</span>'
+          +'<span class="dv-ep-cap dv-ep-cap-merge">$'+fmt(ep.cap,0)+' avg</span>'
+          +'<span class="dv-ep-cal dv-ep-cal-merge">'+calTxt+'</span>'
+          +'</div>';
+      }
+      const [r,g,b]=hexToRgb(ep.color);
+      return '<div class="dv-ep-row">'
+        +'<span class="dv-ep-dot" style="background:'+ep.color+';box-shadow:0 0 4px rgba('+r+','+g+','+b+',.85);"></span>'
+        +'<span class="dv-ep-mo">'+moTxt+'</span>'
+        +'<span class="dv-ep-cap" style="color:rgba('+r+','+g+','+b+',.85);">$'+fmt(ep.cap,0)+'</span>'
+        +'<span class="dv-ep-cal" style="color:rgba('+r+','+g+','+b+',.55);">'+calTxt+'</span>'
+        +'</div>';
+    }).join('');
+  });
 }
 
 /* Shared "glass tube" curve material — path builder + stroke renderer.
@@ -2226,8 +2349,14 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     // Marker itself is tinted in the winning strategy's own identity
     // colour (rapid.color, set in dvFindRapidGrowth) so it's identifiable
     // at a glance — the dashed lead-in line and "FASTEST PATH" text below
-    // stay neutral white on purpose, unchanged.
-    drawGlassBullseye(ctx,mx,my,RG_MK_R,hexToRgb(rapid.color));
+    // stay neutral white on purpose, unchanged. Boosted (brighter ring +
+    // wider bloom + more opaque centre) specifically here — with up to
+    // six strategies' worth of curves crossing right through this point,
+    // the original subtle-glass tuning (rounds 25-27) was easy to lose
+    // among them. Every other drawGlassBullseye/drawGlassRing call site
+    // (Sim tab's own per-strategy markers, hover dots) omits the boost
+    // arg and renders exactly as before.
+    drawGlassBullseye(ctx,mx,my,RG_MK_R,hexToRgb(rapid.color),3.2);
 
     // "Fastest path" annotation — a single straight leader at the
     // marker's own 10-o'clock angle running all the way out to the text,
@@ -2398,22 +2527,25 @@ function dvDrawGaugeRow(cv,hoverDay){
   const marginX=10;
   const availW=W-marginX*2;
   const gGap=10;
-  const gR=Math.max(13,Math.min(22,(availW-(n-1)*gGap)/(n*2)));
+  const gY=H-16; // dome base, leaves room for the capital tally below it
+  // No letter row above the gauge any more — the strategy letter now
+  // prefixes the capital tally text below instead (see txt below), and
+  // the gauge claims that reclaimed headroom. Sized to fill whatever
+  // space it actually has — bounded only by the row's own height and how
+  // many gauges need to fit side by side — rather than an arbitrary cap.
+  const rMaxByHeight=gY-4;
+  const rMaxByWidth=(availW-(n-1)*gGap)/(n*2);
+  const gR=Math.max(13,Math.min(rMaxByHeight,rMaxByWidth));
   const rowW=n*gR*2+(n-1)*gGap;
   const startX=(W-rowW)/2+gR;
   const gX=hoverPts.map((hp,i)=>startX+i*(gR*2+gGap));
-  const gY=H-16; // dome base, leaves room for the capital tally below it
-  const letterY=gY-gR-8;
   const leaderCap=n?Math.max(...hoverPts.map(hp=>hp.cap)):null;
   ctx.textAlign='center';
   for(let i=0;i<n;i++){
     const hp=hoverPts[i];
     const [r,g,b]=hexToRgb(hp.color);
-    ctx.font='700 7px IBM Plex Mono';
-    ctx.fillStyle=hp.color;
-    ctx.fillText(hp.label,gX[i],letterY);
     dvGlassGauge(ctx,gX[i],gY,gR,hp.sh/shRange,[r,g,b],hp.sh);
-    const txt='$'+fmt(hp.cap,0);
+    const txt=hp.label+'  $'+fmt(hp.cap,0);
     ctx.font='700 7.2px IBM Plex Mono';
     ctx.fillStyle=`rgba(${r},${g},${b},.9)`;
     ctx.fillText(txt,gX[i],gY+11);
