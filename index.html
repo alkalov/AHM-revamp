@@ -416,19 +416,27 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
        rectangle is now filter:drop-shadow on the fill layer instead,
        since drop-shadow (unlike box-shadow) hugs an element's actual
        clipped silhouette rather than its unclipped box. This same SVG
-       also draws a small NESTED accent triangle inside the tip, sharing
-       the outer tip point — the exact silhouette/border recipe the old
-       small canvas drawGlassTriangle marker used, brought back as a
-       "triangle inside the triangle" rather than left as empty tapering
-       space below the text; it gets a real two-pass fill (dark base +
-       colour wash, unlike the outer shape's blurred glass) since it has
-       nothing behind it left to blur.
+       also draws a coloured accent zone at the tip, sharing the outer
+       tip point and the outer shape's own border recipe (glow
+       understrokes, gradient stroke, specular highlight) plus a real
+       two-pass fill (dark base + colour wash) since it has nothing
+       behind it left to blur. Its top edge is NOT an independently
+       sized shape inset inside the outer one (that read as a small
+       floating triangle with a visible gap on both sides, not flush) —
+       its left/right x-coordinates are computed from the OUTER
+       triangle's own taper formula at that same height, so the two
+       silhouettes coincide exactly and the accent reads as the outer
+       triangle's own lower portion turning solid, not a separate shape.
+       That height itself sits `epGap` below the bottom of the last line
+       of text, where epGap (1% of the triangle's own width) is the
+       SAME distance the widest line of text keeps from the outer
+       sides — matching breathing room on both axes.
      .dv-ep-tri-txt — the info cluster, unclipped and unblurred so its
        text stays crisp, positioned to sit inside the triangle's wide
-       upper portion. Per the request that folded the two shapes
-       together: capital, then monthly value, then time — in that
-       top-to-bottom order — with the shares line dropped entirely (the
-       share gauges elsewhere already cover that).
+       upper portion. Order is monthly, then capital, then date/time —
+       date always last, with no spaces in it ("1y6mo" not "1y 6mo") —
+       the shares line is dropped entirely (the share gauges elsewhere
+       already cover that).
    Width is auto-fit PER INSTANCE (height stays the fixed TRI2_H — the
    3-line text block's own height never changes, only each line's content
    does) rather than one constant for every triangle: JS measures each of
@@ -447,10 +455,10 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    figures feed this formula already K-abbreviated (fmtK — "$22.6K" /
    "+$1.9K/mo" rather than "$22,570" / "+$1,924/mo") specifically so the
    measured widths, and therefore the solved-for triangle width, come out
-   as small as the text can honestly make them; the nested inner
-   triangle's own fixed footprint (EP_INNER_MIN_W) is folded in as a 4th
-   candidate so text this short can't shrink the shape past what that
-   inner triangle itself needs. Anchored via
+   as small as the text can honestly make them. The tip's accent zone no
+   longer has its own width requirement to fold into this formula (see
+   above — it's always exactly as wide as the outer triangle already is
+   at its own height), so nothing else changes here. Anchored via
    translate(-50%,-100%) so JS only ever has to set left/top to the
    triangle's own tip — the exact data-point coordinate, matching what
    drawGlassTriangle used to receive directly. No more merging nearby
@@ -2459,9 +2467,13 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   // earns its complexity.
   const TRI2_H=58;
   const EP_TXT_PADTOP=6,EP_TXT_GAP=.5;
-  const EP_Y_CAP=EP_TXT_PADTOP+7.2*1.2;
-  const EP_Y_MO=EP_Y_CAP+EP_TXT_GAP+7.2*1.2;
-  const EP_Y_CAL=EP_Y_MO+EP_TXT_GAP+6.4*1.2;
+  // Row Y-positions are keyed by SLOT (1st/2nd/3rd line rendered), not by
+  // which value lives there — monthly and capital are both 7.2px and
+  // interchangeable slot-wise; only the date line (always 3rd/last) is
+  // the smaller 6.4px size.
+  const EP_Y_L1=EP_TXT_PADTOP+7.2*1.2;
+  const EP_Y_L2=EP_Y_L1+EP_TXT_GAP+7.2*1.2;
+  const EP_Y_L3=EP_Y_L2+EP_TXT_GAP+6.4*1.2;
   // Smallest top-edge width whose sloped sides still clear a line of
   // width `textW` sitting at vertical position `yBot` (the bottom of
   // that line's own band — the narrowest point within it), leaving ~1%
@@ -2472,27 +2484,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const denom=avail/2-0.01;
     return denom>0?(textW/2)/denom:Infinity;
   };
-  // Nested accent triangle sitting inside the outer triangle's own tip —
-  // the exact silhouette the old small canvas-drawn endpoint marker used
-  // (r=6.5 -> w=r*1.9, h=r*2.1) reintroduced INSIDE the new bigger one, tip
-  // sharing tip, so the point reads as "a triangle inside the triangle"
-  // instead of empty tapering space below the text. Same border recipe as
-  // the outer shape (glow understrokes, gradient stroke, specular
-  // highlight) plus a real fill (dark base + colour wash, matching
-  // drawGlassTriangle's own two-pass fillStyle) since — unlike the outer
-  // shape — this one doesn't need to blur anything behind it, just read as
-  // a solid accent, so it's drawn entirely in the same SVG rather than a
-  // second clip-path+backdrop-filter div. EP_INNER_MIN_W folds its own
-  // footprint into the width-minimisation formula below as a 4th
-  // candidate, so an outer triangle never shrinks so far (from very short
-  // abbreviated text) that this fixed-size inner one would poke out past
-  // its sloped sides.
-  const EP_INNER_R=6.5,EP_INNER_W=EP_INNER_R*1.9,EP_INNER_H=EP_INNER_R*2.1;
-  const EP_INNER_MIN_W=(()=>{
-    const avail=EP_INNER_H/TRI2_H;
-    const denom=avail/2-0.01;
-    return (EP_INNER_W/2)/denom;
-  })();
   const EP_MIN_W=34;
   const rawEndpoints=[];
   if(hasReal){
@@ -2509,7 +2500,11 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   for(const ep of rawEndpoints){
     const capTxt='$'+fmtK(ep.cap);
     const moTxt=(ep.mo>=0?'+$':'−$')+fmtK(Math.abs(ep.mo))+'/mo';
-    const calTxt=cal(dayToCal(ep.day));
+    // No spaces in the date line ("1y6mo" not "1y 6mo") — shared cal()
+    // is used as-is everywhere else in the app (Diagnostics, milestone
+    // table); the space-strip is scoped to just this triangle line, one
+    // more small width saving on top of the K-abbreviated $ lines above.
+    const calTxt=cal(dayToCal(ep.day)).replace(/\s+/g,'');
     const [cr,cg,cb]=hexToRgb(ep.color);
     // Same lightened-top-stop math as the old canvas drawGlassTriangle's
     // own border gradient (Math.min(255,c+70)), so the outline reads as
@@ -2524,7 +2519,9 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const moW=ctx.measureText(moTxt).width;
     ctx.font='400 6.4px "IBM Plex Mono", monospace';
     const calW=ctx.measureText(calTxt).width;
-    const triW=Math.max(EP_MIN_W,EP_INNER_MIN_W,dvEpReqW(capW,EP_Y_CAP),dvEpReqW(moW,EP_Y_MO),dvEpReqW(calW,EP_Y_CAL));
+    // Row order is now monthly / capital / date top-to-bottom (date is
+    // always the 3rd/last slot).
+    const triW=Math.max(EP_MIN_W,dvEpReqW(moW,EP_Y_L1),dvEpReqW(capW,EP_Y_L2),dvEpReqW(calW,EP_Y_L3));
     // Horizontal-only clamp so a triangle near either edge of the plot
     // still sits tip-on-point (translate(-50%,-100%) in CSS handles the
     // centring/bottom-anchor) without spilling past the chart-wrap's
@@ -2534,7 +2531,20 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const anchorX=Math.min(Math.max(ep.x,pd.l+epMargin),pd.l+pw-epMargin);
     const gid='epg'+(epGi++);
     const pts=`0,0 ${triW},0 ${triW/2},${TRI2_H}`;
-    const innerL=triW/2-EP_INNER_W/2,innerR=triW/2+EP_INNER_W/2,innerTop=TRI2_H-EP_INNER_H;
+    // The tip's coloured "inner triangle" is no longer a separately-sized
+    // shape inset inside the outer one (that left a visible gap between
+    // the two sets of sloped sides — not flush). Instead its top edge
+    // sits wherever the OUTER triangle's own taper already is at that
+    // height, so the two silhouettes coincide exactly: the inner shape is
+    // simply the outer triangle's own lower portion, solid-filled instead
+    // of blurred glass. That top edge is placed the same distance below
+    // the bottom of the last line of text (the date) as the sides of the
+    // widest text line sit from the outer sides — both are `epGap`, so
+    // the vertical and horizontal breathing room match.
+    const epGap=0.01*triW;
+    const innerTop=EP_Y_L3+epGap;
+    const innerHalfW=(triW/2)*(1-innerTop/TRI2_H);
+    const innerL=triW/2-innerHalfW,innerR=triW/2+innerHalfW;
     const innerPts=`${innerL},${innerTop} ${innerR},${innerTop} ${triW/2},${TRI2_H}`;
     trisHtml+=`<div class="dv-ep-tri" style="left:${anchorX}px;top:${ep.y}px;--eptw:${triW}px;--epth:${TRI2_H}px;--eprgb:${cr},${cg},${cb};--eprgb-hi:${hr},${hg},${hb};">`+
       `<div class="dv-ep-tri-fill"></div>`+
@@ -2561,8 +2571,8 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
         `<line x1="${innerL+0.5}" y1="${innerTop+0.3}" x2="${innerR-0.5}" y2="${innerTop+0.3}" stroke="rgba(255,255,255,.112)" stroke-width="0.6"/>`+
       `</svg>`+
       `<div class="dv-ep-tri-txt">`+
-        `<span class="dv-ep-cap">${capTxt}</span>`+
         `<span class="dv-ep-mo">${moTxt}</span>`+
+        `<span class="dv-ep-cap">${capTxt}</span>`+
         `<span class="dv-ep-cal">${calTxt}</span>`+
       `</div>`+
       `</div>`;
