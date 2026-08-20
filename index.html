@@ -415,7 +415,14 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
        highlight line. The outer glow that used to be box-shadow on the
        rectangle is now filter:drop-shadow on the fill layer instead,
        since drop-shadow (unlike box-shadow) hugs an element's actual
-       clipped silhouette rather than its unclipped box.
+       clipped silhouette rather than its unclipped box. This same SVG
+       also draws a small NESTED accent triangle inside the tip, sharing
+       the outer tip point — the exact silhouette/border recipe the old
+       small canvas drawGlassTriangle marker used, brought back as a
+       "triangle inside the triangle" rather than left as empty tapering
+       space below the text; it gets a real two-pass fill (dark base +
+       colour wash, unlike the outer shape's blurred glass) since it has
+       nothing behind it left to blur.
      .dv-ep-tri-txt — the info cluster, unclipped and unblurred so its
        text stays crisp, positioned to sit inside the triangle's wide
        upper portion. Per the request that folded the two shapes
@@ -436,7 +443,14 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    literally widest in isolation — the math checks all three and takes
    the largest requirement, so nothing clips even though the two
    non-binding lines end up with more than 1% to spare (an unavoidable
-   consequence of a straight-sided triangle, not a bug). Anchored via
+   consequence of a straight-sided triangle, not a bug). Capital/monthly
+   figures feed this formula already K-abbreviated (fmtK — "$22.6K" /
+   "+$1.9K/mo" rather than "$22,570" / "+$1,924/mo") specifically so the
+   measured widths, and therefore the solved-for triangle width, come out
+   as small as the text can honestly make them; the nested inner
+   triangle's own fixed footprint (EP_INNER_MIN_W) is folded in as a 4th
+   candidate so text this short can't shrink the shape past what that
+   inner triangle itself needs. Anchored via
    translate(-50%,-100%) so JS only ever has to set left/top to the
    triangle's own tip — the exact data-point coordinate, matching what
    drawGlassTriangle used to receive directly. No more merging nearby
@@ -960,6 +974,19 @@ const $=id=>document.getElementById(id);
 const ri=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 const rf=(a,b)=>a+Math.random()*(b-a);
 const fmt=(n,d=2)=>Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+// K-abbreviated variant of fmt for tight spaces (currently just the
+// endpoint triangle's capital/monthly lines) — 1 decimal under $10K, whole
+// numbers at/above it (matching common "22.6K"/"41K" abbreviation
+// conventions), and a bare unabbreviated integer below $1K where "K" would
+// be misleading. Trailing ".0" is stripped so an exact thousand reads "9K"
+// rather than "9.0K".
+const fmtK=n=>{
+  const v=Math.abs(n);
+  if(v<1000)return fmt(v,0);
+  const k=v/1000;
+  const s=(k<10?k.toFixed(1):Math.round(k).toString());
+  return s.replace(/\.0$/,'')+'K';
+};
 const sgn=n=>(n>=0?'+$':'−$')+fmt(Math.abs(n));
 const pct=(n,d=1)=>(n>=0?'+':'')+n.toFixed(d)+'%';
 const cal=m=>{if(m>=12){const y=Math.floor(m/12),mo=Math.round(m%12);return y+'y'+(mo?' '+mo+'mo':'');}if(m>=1)return m.toFixed(1)+'mo';return((m/12)*52).toFixed(1)+'wk';};
@@ -2445,6 +2472,27 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const denom=avail/2-0.01;
     return denom>0?(textW/2)/denom:Infinity;
   };
+  // Nested accent triangle sitting inside the outer triangle's own tip —
+  // the exact silhouette the old small canvas-drawn endpoint marker used
+  // (r=6.5 -> w=r*1.9, h=r*2.1) reintroduced INSIDE the new bigger one, tip
+  // sharing tip, so the point reads as "a triangle inside the triangle"
+  // instead of empty tapering space below the text. Same border recipe as
+  // the outer shape (glow understrokes, gradient stroke, specular
+  // highlight) plus a real fill (dark base + colour wash, matching
+  // drawGlassTriangle's own two-pass fillStyle) since — unlike the outer
+  // shape — this one doesn't need to blur anything behind it, just read as
+  // a solid accent, so it's drawn entirely in the same SVG rather than a
+  // second clip-path+backdrop-filter div. EP_INNER_MIN_W folds its own
+  // footprint into the width-minimisation formula below as a 4th
+  // candidate, so an outer triangle never shrinks so far (from very short
+  // abbreviated text) that this fixed-size inner one would poke out past
+  // its sloped sides.
+  const EP_INNER_R=6.5,EP_INNER_W=EP_INNER_R*1.9,EP_INNER_H=EP_INNER_R*2.1;
+  const EP_INNER_MIN_W=(()=>{
+    const avail=EP_INNER_H/TRI2_H;
+    const denom=avail/2-0.01;
+    return (EP_INNER_W/2)/denom;
+  })();
   const EP_MIN_W=34;
   const rawEndpoints=[];
   if(hasReal){
@@ -2459,8 +2507,8 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   let trisHtml='';
   let epGi=0;
   for(const ep of rawEndpoints){
-    const capTxt='$'+fmt(ep.cap,0);
-    const moTxt=(ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo';
+    const capTxt='$'+fmtK(ep.cap);
+    const moTxt=(ep.mo>=0?'+$':'−$')+fmtK(Math.abs(ep.mo))+'/mo';
     const calTxt=cal(dayToCal(ep.day));
     const [cr,cg,cb]=hexToRgb(ep.color);
     // Same lightened-top-stop math as the old canvas drawGlassTriangle's
@@ -2476,7 +2524,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const moW=ctx.measureText(moTxt).width;
     ctx.font='400 6.4px "IBM Plex Mono", monospace';
     const calW=ctx.measureText(calTxt).width;
-    const triW=Math.max(EP_MIN_W,dvEpReqW(capW,EP_Y_CAP),dvEpReqW(moW,EP_Y_MO),dvEpReqW(calW,EP_Y_CAL));
+    const triW=Math.max(EP_MIN_W,EP_INNER_MIN_W,dvEpReqW(capW,EP_Y_CAP),dvEpReqW(moW,EP_Y_MO),dvEpReqW(calW,EP_Y_CAL));
     // Horizontal-only clamp so a triangle near either edge of the plot
     // still sits tip-on-point (translate(-50%,-100%) in CSS handles the
     // centring/bottom-anchor) without spilling past the chart-wrap's
@@ -2486,6 +2534,8 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const anchorX=Math.min(Math.max(ep.x,pd.l+epMargin),pd.l+pw-epMargin);
     const gid='epg'+(epGi++);
     const pts=`0,0 ${triW},0 ${triW/2},${TRI2_H}`;
+    const innerL=triW/2-EP_INNER_W/2,innerR=triW/2+EP_INNER_W/2,innerTop=TRI2_H-EP_INNER_H;
+    const innerPts=`${innerL},${innerTop} ${innerR},${innerTop} ${triW/2},${TRI2_H}`;
     trisHtml+=`<div class="dv-ep-tri" style="left:${anchorX}px;top:${ep.y}px;--eptw:${triW}px;--epth:${TRI2_H}px;--eprgb:${cr},${cg},${cb};--eprgb-hi:${hr},${hg},${hb};">`+
       `<div class="dv-ep-tri-fill"></div>`+
       `<svg class="dv-ep-tri-svg" viewBox="0 0 ${triW} ${TRI2_H}">`+
@@ -2497,6 +2547,18 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
         `<polygon points="${pts}" fill="none" stroke="rgba(${cr},${cg},${cb},.0651)" stroke-width="3.2" stroke-linejoin="round"/>`+
         `<polygon points="${pts}" fill="none" stroke="url(#${gid})" stroke-width="1" stroke-linejoin="round"/>`+
         `<line x1="1.5" y1="0.5" x2="${triW-1.5}" y2="0.5" stroke="rgba(255,255,255,.112)" stroke-width="0.9"/>`+
+        // Nested accent triangle at the tip — same layering order as
+        // drawGlassTriangle used to (glow understrokes stroked first so
+        // their outer half survives past the fill, then the two-pass
+        // fill, then the gradient border on top, then its own specular
+        // highlight) so it reads as the same material, just solid rather
+        // than blurred-glass.
+        `<polygon points="${innerPts}" fill="none" stroke="rgba(${cr},${cg},${cb},.0392)" stroke-width="5" stroke-linejoin="round"/>`+
+        `<polygon points="${innerPts}" fill="none" stroke="rgba(${cr},${cg},${cb},.0651)" stroke-width="3" stroke-linejoin="round"/>`+
+        `<polygon points="${innerPts}" fill="rgba(18,23,33,.82)"/>`+
+        `<polygon points="${innerPts}" fill="rgba(${cr},${cg},${cb},.22)"/>`+
+        `<polygon points="${innerPts}" fill="none" stroke="url(#${gid})" stroke-width="0.8" stroke-linejoin="round"/>`+
+        `<line x1="${innerL+0.5}" y1="${innerTop+0.3}" x2="${innerR-0.5}" y2="${innerTop+0.3}" stroke="rgba(255,255,255,.112)" stroke-width="0.6"/>`+
       `</svg>`+
       `<div class="dv-ep-tri-txt">`+
         `<span class="dv-ep-cap">${capTxt}</span>`+
