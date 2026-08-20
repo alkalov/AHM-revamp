@@ -481,14 +481,20 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .tc-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;white-space:nowrap;}
 .tc-stp{flex:1;}
 /* Share gauges used to be drawn on-canvas inside the race chart itself,
-   docked bottom-right during a hover. With six strategies now instead of
-   three, that many gauges crowded into the chart's own corner read as
-   cluttered - moved into their own fixed-height strip here instead, right
-   above the data table. The table's own flex:1 sizing (see .tbl-scroll)
-   absorbs the height this strip takes, which is what naturally condenses
-   the table's visible row count. */
-.dv-gauge-row{height:64px;flex-shrink:0;padding:4px 10px;background:transparent;}
-#dv-gauge-cv{width:100%;height:100%;display:block;}
+   docked bottom-right during a hover, then later pulled into their own
+   single-row strip above the table. Now a fixed 3-over-3 grid — same
+   grid-template-columns as .sbar elsewhere in the app — of six small
+   canvases, one per strategy slot, that DOUBLES as the table's own
+   strategy selector (see switchTblStrat/dvDrawGaugeGrid), replacing the
+   separate row of plain text buttons that used to sit beneath the table.
+   Positions are permanent (A-F always the same cell) rather than only
+   showing active strategies packed left-to-right, so tapping a slot is a
+   stable target even before that strategy has been simulated. Freed from
+   fitting up to six domes side-by-side in one row, each dome now gets
+   roughly 3x the width plus a taller cell, so they read as genuinely
+   bigger rather than just rearranged. */
+.dv-gauge-grid{height:132px;flex-shrink:0;padding:4px 8px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:0;background:transparent;}
+.dv-gauge-cell{width:100%;height:100%;display:block;cursor:pointer;touch-action:manipulation;}
 /* ── Table tab: flat split-screen, no nested scroll chains ── */
 .dv-half{flex:1 1 0;min-height:0;display:flex;flex-direction:column;border-bottom:1px solid #232b3d;overflow:hidden;}
 .dv-half:last-child{border-bottom:none;}
@@ -727,19 +733,16 @@ canvas.spark{width:100%;height:34px;display:block;}
           <span class="dv-dt-cal" id="dv-dt-cal"></span>
         </div>
       </div>
-      <div class="dv-gauge-row">
-        <canvas id="dv-gauge-cv"></canvas>
+      <div class="dv-gauge-grid" id="dv-gauge-grid">
+        <canvas class="dv-gauge-cell" id="dv-gauge-cv0" onclick="switchTblStrat(0)"></canvas>
+        <canvas class="dv-gauge-cell" id="dv-gauge-cv1" onclick="switchTblStrat(1)"></canvas>
+        <canvas class="dv-gauge-cell" id="dv-gauge-cv2" onclick="switchTblStrat(2)"></canvas>
+        <canvas class="dv-gauge-cell" id="dv-gauge-cv3" onclick="switchTblStrat(3)"></canvas>
+        <canvas class="dv-gauge-cell" id="dv-gauge-cv4" onclick="switchTblStrat(4)"></canvas>
+        <canvas class="dv-gauge-cell" id="dv-gauge-cv5" onclick="switchTblStrat(5)"></canvas>
       </div>
     </div>
     <div class="dv-half">
-      <div class="sbar">
-        <button class="sbtn on" id="tsb0" onclick="switchTblStrat(0)">A</button>
-        <button class="sbtn sc-b" id="tsb1" onclick="switchTblStrat(1)">B</button>
-        <button class="sbtn sc-c" id="tsb2" onclick="switchTblStrat(2)">C</button>
-        <button class="sbtn sc-d" id="tsb3" onclick="switchTblStrat(3)">D</button>
-        <button class="sbtn sc-e" id="tsb4" onclick="switchTblStrat(4)">E</button>
-        <button class="sbtn sc-f" id="tsb5" onclick="switchTblStrat(5)">F</button>
-      </div>
       <div class="tbl-controls">
         <span class="tc-lbl">Every</span>
         <div class="tc-stp" id="intv-wrap-0"></div>
@@ -1000,7 +1003,7 @@ function switchStrat(n){
   });
   updateDist(n);
 }
-function switchTblStrat(n){activeTblStrat=n;[0,1,2,3,4,5].forEach(i=>{$('tsb'+i).classList.toggle('on',i===n);const iw=$('intv-wrap-'+i);if(iw)iw.style.display=i===n?'flex':'none';});renderTable(n);dvSyncTblScroll();}
+function switchTblStrat(n){activeTblStrat=n;[0,1,2,3,4,5].forEach(i=>{const iw=$('intv-wrap-'+i);if(iw)iw.style.display=i===n?'flex':'none';});renderTable(n);dvSyncTblScroll();dvDrawGaugeGrid(dvSelDay);}
 /* Keep the table scrolled to the same day across A/B/C switches, so
    flipping tabs compares the same point in time instead of landing
    wherever that strategy's own scrollTop last happened to be — each
@@ -2567,81 +2570,56 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   }
 }
 
-/* Share gauges + capital tallies — pulled out of the race chart itself
-   (see .dv-gauge-row above) into their own small canvas so a sixth strategy
-   doesn't crowd the chart's own corner the way three did. Same "one
-   cohesive widget" idea as before (gauge, then its capital number directly
-   underneath, in the strategy's own colour, no separate floating pieces),
-   just laid out as a full-width row instead of a bottom-right dock. Unlike
-   the old dock, this has its own dedicated real estate at all times, so it
-   defaults to each strategy's FINAL day (rather than sitting empty) until
-   the user actually hovers/drags/taps a day — at which point it live-
-   updates to match, same as the main chart's crosshair. */
-function dvDrawGaugeRow(cv,hoverDay){
+/* Share gauges + capital tallies — now a fixed 3-over-3 grid of small
+   canvases (see .dv-gauge-grid above) instead of one canvas drawing a
+   single row. Two things changed for that reason: (1) EVERY strategy
+   slot draws every time, active or not (an unsimulated slot gets a dim,
+   0%-fill placeholder) since a selector needs a stable tap target, not a
+   row that reflows as strategies get simulated; (2) each cell is now its
+   own <canvas>, so "which strategy is selected for the table below" can
+   be a real click target (onclick="switchTblStrat(i)" right on the
+   canvas) instead of a separate row of text buttons underneath — the rig
+   this replaces. Same "one cohesive widget" idea as before (gauge, then
+   its capital number directly underneath, in the strategy's own colour),
+   just with a glass selection ring added around whichever dome is
+   currently backing the table, using that strategy's own colour as the
+   ring tint — the canvas equivalent of the old .sbtn.on coloured
+   underline, since there's no button left to underline. Share fill
+   fraction is still scaled against the shared max across ALL active
+   strategies (dvDrawGaugeGrid computes this once, not per-cell) so the
+   domes stay comparable to each other at a glance, exactly as the old
+   row did — only the layout and the click-to-select behaviour are new. */
+function dvDrawGaugeCell(i,pt,shRange,leaderCap){
+  const cv=$('dv-gauge-cv'+i);
   if(!cv||!cv.getContext)return;
-  const active=[0,1,2,3,4,5].filter(i=>simResults[i]&&simResults[i].rows&&simResults[i].rows.length>1);
   const dpr=window.devicePixelRatio||1;
   const W=cv.offsetWidth,H=cv.offsetHeight;if(!W||!H)return;
   cv.width=W*dpr;cv.height=H*dpr;
   const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
   ctx.clearRect(0,0,W,H);
-  if(!active.length){
-    ctx.fillStyle='#4d5a6e';ctx.font='9px IBM Plex Mono';ctx.textAlign='center';
-    ctx.fillText('Share gauges appear once a strategy is simulated',W/2,H/2);
-    return;
-  }
-  const series=active.map(i=>{
-    const rows=simResults[i].rows;
-    const acct0=simResults[i].acct0;
-    const pts=rows.map(r=>({day:r.day,sh:r.shares,cap:acct0+r.cumPnl,cumPnl:r.cumPnl}));
-    return{idx:i,pts,color:STRAT_COLORS[i],label:STRAT_LABELS[i]};
-  });
-  const allShares=series.flatMap(s=>s.pts.map(p=>p.sh));
-  const dataMaxSh=allShares.length?Math.max(...allShares):0;
-  const shRange=Math.max(dataMaxSh*1.2,1);
-  const day=hoverDay!=null?hoverDay:Math.max(...series.map(s=>s.pts[s.pts.length-1].day));
-  const hoverPts=[];
-  for(const s of series){
-    const ownFinalDay=s.pts[s.pts.length-1].day;
-    const clampedDay=Math.min(day,ownFinalDay);
-    let pt=null;
-    for(const p of s.pts){if(p.day<=clampedDay)pt=p;else break;}
-    if(pt)hoverPts.push({color:s.color,label:s.label,cap:pt.cap,sh:pt.sh});
-  }
-  const n=hoverPts.length;
-  // Margin/gap pulled in to a hairline (just enough that domes read as
-  // distinct circles, not fused into one shape) so the gauges claim as
-  // much of the row as the space allows — basically touching the panel's
-  // own edges and each other, per spec, rather than leaving visible
-  // breathing room on either side.
-  const marginX=3;
-  const availW=W-marginX*2;
-  const gGap=3;
-  const gY=H-16; // dome base, leaves room for the capital tally below it
-  // No letter row above the gauge any more — the strategy letter now
-  // prefixes the capital tally text below instead (see txt below), and
-  // the gauge claims that reclaimed headroom. Sized to fill whatever
-  // space it actually has — bounded only by the row's own height and how
-  // many gauges need to fit side by side — rather than an arbitrary cap.
-  const rMaxByHeight=gY-4;
-  const rMaxByWidth=(availW-(n-1)*gGap)/(n*2);
-  const gR=Math.max(13,Math.min(rMaxByHeight,rMaxByWidth));
-  const rowW=n*gR*2+(n-1)*gGap;
-  const startX=(W-rowW)/2+gR;
-  const gX=hoverPts.map((hp,i)=>startX+i*(gR*2+gGap));
-  const leaderCap=n?Math.max(...hoverPts.map(hp=>hp.cap)):null;
+  const selected=activeTblStrat===i;
+  const [r0,g0,b0]=hexToRgb(STRAT_COLORS[i]);
+  const cx=W/2,gY=H-15;
+  const gR=Math.max(13,Math.min(gY-3,W/2-3));
   ctx.textAlign='center';
-  for(let i=0;i<n;i++){
-    const hp=hoverPts[i];
-    const [r,g,b]=hexToRgb(hp.color);
-    dvGlassGauge(ctx,gX[i],gY,gR,hp.sh/shRange,[r,g,b],hp.sh);
-    const txt=hp.label+'  $'+fmt(hp.cap,0);
-    ctx.font='700 7.2px IBM Plex Mono';
-    ctx.fillStyle=`rgba(${r},${g},${b},.9)`;
-    ctx.fillText(txt,gX[i],gY+11);
-    if(hp.cap>=leaderCap){
+  if(!pt){
+    // Not yet simulated — still drawn (dim, 0%-fill) so the grid position
+    // never moves once a sim finishes, and it's still a valid tap target.
+    dvGlassGauge(ctx,cx,gY,gR,0,[100,110,126],0);
+    ctx.save();ctx.globalAlpha=.55;
+    ctx.font='700 8px IBM Plex Mono';ctx.fillStyle='rgba(163,173,190,.75)';
+    ctx.fillText(STRAT_LABELS[i]+'  —',cx,gY+11);
+    ctx.restore();
+  }else{
+    dvGlassGauge(ctx,cx,gY,gR,pt.sh/shRange,[r0,g0,b0],pt.sh);
+    const txt=STRAT_LABELS[i]+'  $'+fmt(pt.cap,0);
+    const tallySize=Math.max(7.2,Math.min(10.5,gR*.2));
+    ctx.font=`700 ${tallySize}px IBM Plex Mono`;
+    ctx.fillStyle=`rgba(${r0},${g0},${b0},.9)`;
+    ctx.fillText(txt,cx,gY+tallySize+4);
+    if(leaderCap!=null&&pt.cap>=leaderCap){
       const tw=ctx.measureText(txt).width;
-      const mx=gX[i]+tw/2+8,my=gY+8;
+      const mx=cx+tw/2+8,my=gY+tallySize+1;
       ctx.beginPath();
       ctx.moveTo(mx,my-3.2);
       ctx.lineTo(mx-3,my+2.4);
@@ -2651,11 +2629,47 @@ function dvDrawGaugeRow(cv,hoverDay){
       ctx.fill();
     }
   }
+  if(selected){
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx-gR-2,gY);
+    ctx.arc(cx,gY,gR+2,Math.PI,2*Math.PI,false);
+    ctx.lineWidth=1.6;
+    const ringRgb=pt?`${r0},${g0},${b0}`:'226,230,237';
+    ctx.strokeStyle=`rgba(${ringRgb},.85)`;
+    ctx.shadowColor=`rgba(${ringRgb},.55)`;
+    ctx.shadowBlur=6;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+function dvDrawGaugeGrid(hoverDay){
+  const active=[0,1,2,3,4,5].filter(i=>simResults[i]&&simResults[i].rows&&simResults[i].rows.length>1);
+  const series=active.map(i=>{
+    const rows=simResults[i].rows;
+    const acct0=simResults[i].acct0;
+    const pts=rows.map(r=>({day:r.day,sh:r.shares,cap:acct0+r.cumPnl}));
+    return{idx:i,pts};
+  });
+  const allShares=series.flatMap(s=>s.pts.map(p=>p.sh));
+  const dataMaxSh=allShares.length?Math.max(...allShares):0;
+  const shRange=Math.max(dataMaxSh*1.2,1);
+  const curPts=new Map();
+  for(const s of series){
+    const ownFinalDay=s.pts[s.pts.length-1].day;
+    const day=hoverDay!=null?Math.min(hoverDay,ownFinalDay):ownFinalDay;
+    let pt=null;
+    for(const p of s.pts){if(p.day<=day)pt=p;else break;}
+    if(pt)curPts.set(s.idx,pt);
+  }
+  const capsNow=[...curPts.values()].map(p=>p.cap);
+  const leaderCap=capsNow.length?Math.max(...capsNow):null;
+  for(let i=0;i<6;i++)dvDrawGaugeCell(i,curPts.get(i)||null,shRange,leaderCap);
 }
 
 function dvRedrawChart(){
   const cv=$('dv-cv');if(cv)dvDrawRaceChart(cv,null,dvSelDay);
-  const gcv=$('dv-gauge-cv');if(gcv)dvDrawGaugeRow(gcv,dvSelDay);
+  dvDrawGaugeGrid(dvSelDay);
 }
 
 /* Axis-lock the table scroll: touch devices (iOS Safari especially)
@@ -3904,11 +3918,10 @@ function wireGlobalResize(){
         const cv=$(id);
         if(cv&&cv._cs)_drawChart(cv,cv._cs.equity,cv._cs.acct0,cv._simRgb);
       });
-      // Table tab combined race chart + its share-gauge row
+      // Table tab combined race chart + its share-gauge grid
       const dvCv=$('dv-cv');
       if(dvCv)dvDrawRaceChart(dvCv,null,dvSelDay);
-      const dvGcv=$('dv-gauge-cv');
-      if(dvGcv)dvDrawGaugeRow(dvGcv,dvSelDay);
+      dvDrawGaugeGrid(dvSelDay);
     },150);
   };
   window.addEventListener('resize',onResize);
