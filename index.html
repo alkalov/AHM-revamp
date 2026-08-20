@@ -546,7 +546,7 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
   white-space:nowrap;
 }
 .dv-ep-yr{font-size:6.4px;font-weight:500;line-height:1.2;color:rgba(255,255,255,.82);}
-.chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,.08);}
+.chart-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:0 8px;border-top:1px solid rgba(255,255,255,.06);padding:8px 12px 9px;}
 .cm{padding:7px 10px;border-right:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);}
 .cm:nth-child(even){border-right:none;}
 .cm:nth-last-child(-n+2){border-bottom:none;}
@@ -558,6 +558,13 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .cmv{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
 .cms{font-size:8px;color:#4d5a6e;margin-top:2px;}
 .cmv.go{color:#34d399;}.cmv.stop{color:#f87171;}.cmv.amb{color:#fbbf24;}.cmv.steel{color:#60a5fa;}
+/* .chart-metrics scoped overrides: the shared .cm/.cml/.cmv/.cms classes above
+   stay untouched (diag-tiles reuses them at their original size/border), this
+   tab's own 4-across row goes smaller/borderless via descendant selectors. */
+.chart-metrics .cm{padding:0;border:none;min-width:0;}
+.chart-metrics .cml{font-size:6.3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chart-metrics .cmv{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chart-metrics .cms{font-size:6.8px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .diag{margin:8px 0;border-radius:3px;overflow:hidden;display:none;border:1px solid #232b3d;}
 .diag.show{display:block;}
 .diag-hd{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #232b3d;}
