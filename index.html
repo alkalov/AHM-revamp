@@ -2118,96 +2118,49 @@ function dvStrategyRapidGrowth(pts){
   return null;
 }
 function dvFindRapidGrowth(series){
-  // Cross-strategy winner, defined as "whoever pulled ahead of the whole
-  // field and never gave the lead back" — NOT each one's own self-relative
-  // hit (dvStrategyRapidGrowth, still used as-is by the Sim-tab per-
-  // strategy marker and the Diagnostics "Rapid Growth Threshold" row,
-  // both genuinely single-strategy questions with nothing to compare
-  // against).
+  // Cross-strategy winner, defined as "whoever gets to rapid/compounding
+  // growth FIRST" — explicitly NOT "whoever ends up with the most
+  // capital" (see below). Reuses dvStrategyRapidGrowth (the same self-
+  // relative, single-strategy detector the Sim-tab per-strategy marker
+  // and the Diagnostics "Rapid Growth Threshold" row already use) once
+  // per active strategy, then simply takes whichever hit the earliest
+  // day. Nothing about final/endpoint capital enters this at all — a
+  // strategy that takes off on day 40 and then merely holds its pace
+  // still beats one that's richer by the end but didn't visibly
+  // compound until day 200.
   //
-  // An earlier version of this compared every strategy's rolling growth
-  // RATE head-to-head against the others and fired the instant one was
-  // 1.5x ahead of the rest. Real testing (8 live multi-strategy runs)
-  // showed that comparison firing on day 1-13 of races lasting 400-500+
-  // days almost every time, with the "winner" it picked barely correlated
-  // with who actually finished on top. The reason: capital is smallest
-  // right at the start, so a short lucky/unlucky early stretch produces
-  // the LARGEST relative rate swings of the entire run — and a rolling
-  // window that returns on the first day it clears a threshold has no way
-  // to tell a real breakaway from that opening noise. No amount of
-  // re-tuning the window size or the multiplier fixes this: the noise is
-  // structurally worst exactly where the scan starts looking.
-  //
-  // This version compares CAPITAL directly (a cumulative, history-
-  // dependent quantity that barely reshuffles day-to-day once strategies
-  // separate) instead of a narrow differenced rate, and requires the lead
-  // to hold all the way to the end rather than accepting the first
-  // instant it appears. Concretely: find who's actually ahead at the very
-  // last day (the one outcome that's unambiguous), then walk backward day
-  // by day for as long as that same strategy — or tied group, see below —
-  // was ALREADY the leader, and mark the earliest such day. An early
-  // false lead flips harmlessly during that walk (it wasn't held to the
-  // end, so it's just skipped over); no threshold to mistune, no window
-  // size to pick.
+  // Two earlier designs both anchored to ENDPOINT capital instead, and
+  // both got retired for it, not for bugs in their tie-handling:
+  //   - v1 compared every strategy's rolling RATE head-to-head and fired
+  //     the instant one pulled 1.5x ahead of the rest — this actually
+  //     wasn't endpoint-anchored, but real testing (8 live runs) showed
+  //     it firing on day 1-13 of 400-500+ day races almost every time,
+  //     since capital is smallest right at the start and produces the
+  //     LARGEST relative rate swings purely from noise.
+  //   - v2 (the direct predecessor of this version) explicitly defined
+  //     the winner as "whoever is ahead at the very last day," then
+  //     walked backward to find how far that lead held — i.e. it started
+  //     from endpoint capital by construction. That's exactly the piece
+  //     this round's request rules out: the marker isn't asking "who
+  //     wins," it's asking "who got to rapid growth fastest," and those
+  //     are different questions with different answers.
   if(!series.length)return null;
-  if(series.length===1){
-    const hit=dvStrategyRapidGrowth(series[0].pts);
-    return hit?{...hit,idx:series[0].idx,color:series[0].color}:null;
-  }
-  // Every strategy's sim loop starts its own day counter at 1 and
-  // increments by exactly 1 per row (see the `while(...){day++;...}` in
-  // _sim) — so day is a dense, shared integer axis across strategies and
-  // a day->cap lookup can be built per strategy without reconciling
-  // different day scales.
-  const capAt=series.map(s=>{const m=new Map();for(const p of s.pts)m.set(p.day,p.cap);return m;});
-  const finalDay=series.map(s=>s.pts[s.pts.length-1].day);
-  const finalCap=series.map(s=>s.pts[s.pts.length-1].cap);
-  const maxDay=Math.max(...finalDay);
-  // A strategy that already finished holds its own final capital flat for
-  // every later day — it has already arrived, so later days are only
-  // asking whether anyone still running has caught up to that fixed mark.
-  function capNow(si,day){return day>=finalDay[si]?finalCap[si]:capAt[si].get(day);}
-  // Everyone within 2% of the day's own top capital counts as jointly
-  // leading — a real photo finish, not the 10% tolerance the (since
-  // retired) dvGroupEndpoints used for a different job, merging
-  // overlapping endpoint labels. Reused at 10% here first, but live testing across several
-  // strategies run with the same default settings showed final capitals
-  // routinely landing within 1-2% of each other from ordinary day-to-day
-  // randomness alone — a 10% band called EVERY one of those runs a tie,
-  // which just hides a real (if narrow) leader behind "nobody won."
-  //
-  // Capital closeness alone isn't enough once more strategies are in
-  // play, though: with 6 strategies drawn from similar settings, their
-  // final capitals often ALL land within 2% of each other purely by
-  // chance even though their finish days are spread across a much wider
-  // window (one real run had all 6 within 1.7% on capital but 109 days
-  // apart on when they actually finished). Averaging a "tie" like that
-  // produces a marker that floats over no real point on any curve. So a
-  // strategy only counts as part of the tie if it ALSO finished within a
-  // day-window of the day's current top performer's own finish day — a
-  // real photo finish has to be close in both dollars and time.
-  function leaderSetAt(day){
-    const caps=series.map((s,si)=>({si,cap:capNow(si,day)}));
-    const top=Math.max(...caps.map(o=>o.cap));
-    const tol=Math.max(Math.abs(top)*0.02,1);
-    const topSi=caps.find(o=>o.cap===top).si;
-    const dayTol=Math.max(maxDay*0.1,5);
-    return new Set(caps.filter(o=>top-o.cap<=tol&&Math.abs(finalDay[o.si]-finalDay[topSi])<=dayTol).map(o=>o.si));
-  }
-  const sameSet=(a,b)=>a.size===b.size&&[...a].every(x=>b.has(x));
-  const finalSet=leaderSetAt(maxDay);
-  let hitDay=maxDay;
-  for(let d=maxDay-1;d>=1;d--){
-    if(sameSet(leaderSetAt(d),finalSet))hitDay=d;
-    else break;
-  }
-  if(finalSet.size===1){
-    const si=[...finalSet][0];
-    return{day:hitDay,cap:capNow(si,hitDay),idx:series[si].idx,color:series[si].color};
-  }
-  const tiedIdxs=[...finalSet];
-  const cap=tiedIdxs.reduce((a,si)=>a+capNow(si,hitDay),0)/tiedIdxs.length;
-  return{day:hitDay,cap,idx:null,color:'#e2e6ed',tiedIdxs:tiedIdxs.map(si=>series[si].idx)};
+  const hits=series.map(s=>{
+    const hit=dvStrategyRapidGrowth(s.pts);
+    return hit?{day:hit.day,cap:hit.cap,idx:s.idx,color:s.color}:null;
+  }).filter(Boolean);
+  if(!hits.length)return null;
+  const minDay=Math.min(...hits.map(h=>h.day));
+  const winners=hits.filter(h=>h.day===minDay);
+  if(winners.length===1)return winners[0];
+  // Two (or more) strategies' own rolling windows both crossed their
+  // 1.5x-of-self-average threshold on the exact same day — a genuine
+  // simultaneous tie, not a near-miss to be tolerance-banded. Same
+  // "average it, leave it uncoloured" treatment used everywhere else a
+  // tie comes up in this chart (endpoint merges, the old leader-set
+  // logic) rather than arbitrarily crowning one of them.
+  const cap=winners.reduce((a,h)=>a+h.cap,0)/winners.length;
+  return{day:minDay,cap,idx:null,color:'#e2e6ed',tiedIdxs:winners.map(h=>h.idx)};
 }
 // Near-plateau monthly rate: average daily capital growth over just the
 // TRAILING slice of a strategy's run (last ~15%, min 5 points), times 21
