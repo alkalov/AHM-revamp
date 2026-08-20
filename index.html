@@ -1454,6 +1454,21 @@ function updateVolWindowSummary(tab){
 
 function sharpe(pnls,acct){const n=pnls.length;if(n<2)return null;const r=pnls.map(p=>p/acct);const m=r.reduce((a,b)=>a+b,0)/n;const sd=Math.sqrt(r.reduce((a,v)=>a+(v-m)**2,0)/(n-1));return sd>0?(m/sd)*Math.sqrt(252):null;}
 function sharpeStr(s){if(!s||isNaN(s))return'—';if(s>=2)return s.toFixed(2)+' ★';if(s>=1)return s.toFixed(2)+' ✓';if(s>=.5)return s.toFixed(2)+' ~';return s.toFixed(2)+' ✗';}
+// Sortino: same shape as sharpe() (daily returns as %-of-account, annualized
+// via sqrt(252)) but the denominator only counts downside — deviations of
+// days below a 0% target (MAR), squared and averaged over ALL days (not just
+// losing ones), per the standard semi-deviation definition. A strategy with
+// no losing days ever returns null (nothing to penalize), same as sharpe()'s
+// null on zero variance — callers fall back to 0, this app's established
+// "insufficient signal" convention.
+function sortino(pnls,acct){const n=pnls.length;if(n<2||acct<=0)return null;const r=pnls.map(p=>p/acct);const m=r.reduce((a,b)=>a+b,0)/n;const downSq=r.reduce((a,v)=>a+(v<0?v*v:0),0);const dd=Math.sqrt(downSq/n);return dd>0?(m/dd)*Math.sqrt(252):null;}
+// Calmar: annualized return over max drawdown, both as %-of-starting-capital
+// — recomputes MDD from the rows' own cumPnl trail (same peak-to-trough scan
+// as the sim-time MDD calc above _sim(), just not sharing that call site so
+// this stays a pure function of already-stored data). Null (-> 0 fallback)
+// when there's no drawdown to divide by, matching sortino()/sharpe()'s null
+// convention rather than returning Infinity.
+function calmar(rows,acct){const n=rows.length;if(n<1||acct<=0)return null;const last=rows[n-1].cumPnl;const annPct=(last/acct)*100/n*252;let peak=0,mdd=0;for(const row of rows){if(row.cumPnl>peak)peak=row.cumPnl;const dd=peak-row.cumPnl;if(dd>mdd)mdd=dd;}const mddPct=(mdd/acct)*100;return mddPct>0?annPct/mddPct:null;}
 
 function updateFrictionBreakdown(tab){
   const s=tab===0?'':'_'+tab;
@@ -3758,6 +3773,8 @@ function renderStratComparison(){
       {lbl:'R:R Ratio',get:r=>r.c.avgL>0?r.c.avgP/r.c.avgL:0,fmt:v=>v.toFixed(2)+':1',better:'higher'},
       {lbl:'Friction / Day',get:r=>r.c.frDay,fmt:v=>'$'+fmt(v),better:'lower'},
       {lbl:'Sharpe',get:r=>{const pnls=r.rows.map(e=>e.dayPnl);return sharpe(pnls,r.acct0)||0;},fmt:v=>v.toFixed(2),better:'higher'},
+      {lbl:'Sortino',get:r=>{const pnls=r.rows.map(e=>e.dayPnl);return sortino(pnls,r.acct0)||0;},fmt:v=>v.toFixed(2),better:'higher'},
+      {lbl:'Calmar',get:r=>calmar(r.rows,r.acct0)||0,fmt:v=>v.toFixed(2),better:'higher'},
     ];
     // Redesign: was 7 metric-rows of full bordered boxes (up to 6 per row,
     // wrapping to 2 rows at 6 strategies) — starred EVERY box whenever
