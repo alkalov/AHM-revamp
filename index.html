@@ -427,47 +427,50 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
        triangle's own taper formula at that same height, so the two
        silhouettes coincide exactly and the accent reads as the outer
        triangle's own lower portion turning solid, not a separate shape.
-       That height itself sits `epGap` below the bottom of the last line
-       of text, where epGap (1% of the triangle's own width) is the
-       SAME distance the widest line of text keeps from the outer
-       sides — matching breathing room on both axes.
+       That height itself sits 1% of the triangle's own width below the
+       bottom of the last line of text — the SAME distance the widest
+       line of text keeps from the outer sides — matching breathing room
+       on the third edge too, and it's also exactly the vertical midpoint
+       of the whole shape: the tip zone mirrors the content zone's own
+       height, an even top-half/bottom-half split rather than an
+       arbitrary fixed height (see dvSolveEpTri).
      .dv-ep-tri-txt — the info cluster, unclipped and unblurred so its
        text stays crisp, positioned to sit inside the triangle's wide
-       upper portion. Order is monthly, then capital, then date/time —
-       date always last, with no spaces in it ("1y6mo" not "1y 6mo") —
-       the shares line is dropped entirely (the share gauges elsewhere
-       already cover that).
-   Width is auto-fit PER INSTANCE (height stays the fixed TRI2_H — the
-   3-line text block's own height never changes, only each line's content
-   does) rather than one constant for every triangle: JS measures each of
-   the 3 lines' actual rendered width (ctx.measureText, same font/weight/
-   size as the CSS) and solves for the smallest top-edge width whose
-   sloped sides still clear every line at its own vertical position with
-   ~1% of the triangle's own width as headroom — so the text basically
-   touches the sides instead of floating in a lot of empty margin. Because
-   the sides taper and the widest line (usually the monthly value, not
-   the capital line above it) isn't at the very top, the binding
-   constraint is normally that middle line, not whichever line is
-   literally widest in isolation — the math checks all three and takes
-   the largest requirement, so nothing clips even though the two
-   non-binding lines end up with more than 1% to spare (an unavoidable
-   consequence of a straight-sided triangle, not a bug). Capital/monthly
-   figures feed this formula already K-abbreviated (fmtK — "$22.6K" /
-   "+$1.9K/mo" rather than "$22,570" / "+$1,924/mo") specifically so the
-   measured widths, and therefore the solved-for triangle width, come out
-   as small as the text can honestly make them. The tip's accent zone no
-   longer has its own width requirement to fold into this formula (see
-   above — it's always exactly as wide as the outer triangle already is
-   at its own height), so nothing else changes here. Anchored via
-   translate(-50%,-100%) so JS only ever has to set left/top to the
-   triangle's own tip — the exact data-point coordinate, matching what
-   drawGlassTriangle used to receive directly. No more merging nearby
-   endpoints into one averaged, uncoloured triangle either — every
-   strategy (and the real-portfolio overlay) always gets its own, in its
-   own colour; the dark frosted fill reads clearly even when triangles
-   land on top of each other, so the old dvGroupEndpoints workaround
-   (built when labels were transparent fillText and any overlap was
-   unreadable) no longer earns its complexity. */
+       upper portion. Just two lines now: monthly, then date/time — the
+       capital line and the shares line are both gone (the share gauges
+       elsewhere already cover shares, and capital was redundant with the
+       monthly figure once that figure was decided to be enough on its
+       own). Date has no spaces in it ("1y6mo" not "1y 6mo"); monthly
+       drops its "+" on a gain (the row's own position already reads as
+       "the monthly number") and its "/mo" suffix, keeping only the "−"
+       on a loss since that sign is the one that's actually information.
+   Both width AND height are auto-fit PER INSTANCE now (not just width
+   against a fixed height) — JS measures each of the 2 lines' actual
+   rendered width (ctx.measureText, same font/weight/size as the CSS)
+   and dvSolveEpTri iterates to the smallest top-edge width, and the
+   shortest matching height, whose sloped sides still clear both lines
+   at their own vertical position with ~1% of the triangle's own FINAL
+   width as headroom on every edge — top, left, right, and the gap
+   before the tip — so the text basically touches the sides instead of
+   floating in empty margin, and the box holds no more height than the
+   two lines plus that padding plus a matching tip need. Width and
+   height are solved together because they depend on each other (a
+   shorter box tapers faster, which can demand a wider top edge for the
+   same text, which in turn changes how tall a mirrored tip needs to be)
+   — the iteration converges in a handful of rounds for any input.
+   Monthly feeds this formula already K-abbreviated (fmtK — "$1.9K"
+   rather than "$1,924") specifically so the measured width, and
+   therefore the solved-for triangle size, comes out as small as the
+   text can honestly make it. Anchored via translate(-50%,-100%) so JS
+   only ever has to set left/top to the triangle's own tip — the exact
+   data-point coordinate, matching what drawGlassTriangle used to
+   receive directly. No more merging nearby endpoints into one averaged,
+   uncoloured triangle either — every strategy (and the real-portfolio
+   overlay) always gets its own, in its own colour; the dark frosted
+   fill reads clearly even when triangles land on top of each other, so
+   the old dvGroupEndpoints workaround (built when labels were
+   transparent fillText and any overlap was unreadable) no longer earns
+   its complexity. */
 .dv-ep-tri{
   position:absolute;left:0;top:0;
   width:var(--eptw);height:var(--epth);
@@ -488,16 +491,17 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .dv-ep-tri-txt{
   position:absolute;inset:0;
   display:flex;flex-direction:column;align-items:center;
-  padding-top:6px;gap:.5px;
+  padding-top:var(--eptop);gap:.5px;
   font-family:'IBM Plex Mono',monospace;
   white-space:nowrap;
 }
 /* Text sizing matches the original canvas labels exactly (LBL_SIZE 7.2px
-   for capital/mo, CAL_SIZE 6.4px for the calendar line, only the mo line
-   bold) — the triangle borrows the daytally's MATERIAL (glass/blur/
+   for the mo line, CAL_SIZE 6.4px for the calendar line, only the mo
+   line bold) — the triangle borrows the daytally's MATERIAL (glass/blur/
    border) and per-strategy tint, not its typographic proportions, which
-   were sized for a fixed 55.8px circle showing one emphasised number. */
-.dv-ep-cap{font-size:7.2px;font-weight:400;line-height:1.2;color:rgba(var(--eprgb),.95);}
+   were sized for a fixed 55.8px circle showing one emphasised number.
+   --eptop (top padding) is set inline per instance, same 1%-of-final-
+   width formula as the left/right headroom, not a fixed constant. */
 .dv-ep-mo{font-size:7.2px;font-weight:700;line-height:1.2;color:rgba(255,255,255,.88);}
 .dv-ep-cal{font-size:6.4px;font-weight:400;line-height:1.2;color:rgba(var(--eprgb),.72);}
 .chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,.08);}
@@ -2447,8 +2451,8 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   }
 
   // ── Endpoints: one enlarged upside-down glass triangle per curve,
-  // marking its final point AND holding its own stat cluster (capital,
-  // monthly value, time — see .dv-ep-tri) — the small decorative canvas
+  // marking its final point AND holding its own stat cluster (monthly
+  // value, then time — see .dv-ep-tri) — the small decorative canvas
   // triangle and the separate floating HTML bubble above it have been
   // folded into this single shape. Still a real HTML element rather than
   // boxless canvas text/strokes; only an HTML element can use
@@ -2465,26 +2469,43 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   // were transparent canvas fillText; a solid dark frosted triangle
   // reads fine even stacked on another one, so the workaround no longer
   // earns its complexity.
-  const TRI2_H=58;
-  const EP_TXT_PADTOP=6,EP_TXT_GAP=.5;
-  // Row Y-positions are keyed by SLOT (1st/2nd/3rd line rendered), not by
-  // which value lives there — monthly and capital are both 7.2px and
-  // interchangeable slot-wise; only the date line (always 3rd/last) is
-  // the smaller 6.4px size.
-  const EP_Y_L1=EP_TXT_PADTOP+7.2*1.2;
-  const EP_Y_L2=EP_Y_L1+EP_TXT_GAP+7.2*1.2;
-  const EP_Y_L3=EP_Y_L2+EP_TXT_GAP+6.4*1.2;
-  // Smallest top-edge width whose sloped sides still clear a line of
-  // width `textW` sitting at vertical position `yBot` (the bottom of
-  // that line's own band — the narrowest point within it), leaving ~1%
-  // of the FINAL triangle width as headroom on each side. Solved from
-  // halfWidthAt(yBot) = (W/2)(1-yBot/H) >= textW/2 + 0.01*W.
-  const dvEpReqW=(textW,yBot)=>{
-    const avail=1-yBot/TRI2_H;
-    const denom=avail/2-0.01;
-    return denom>0?(textW/2)/denom:Infinity;
+  //
+  // Both dimensions are auto-fit per instance now, not just width. The
+  // two remaining lines (monthly, date/time) fix a constant text-block
+  // height; top padding and the gap before the tip both sit at 1% of the
+  // triangle's own FINAL width — same headroom formula as the left/right
+  // sides below, just applied to the other two edges — and the tip zone
+  // (the flush lower portion that reads as a solid colour point) is sized
+  // to mirror the content zone's own height, so the shape splits evenly
+  // into "text half" / "point half" instead of using an arbitrary fixed
+  // height. Because that final height then feeds back into how much
+  // width the taper needs at each line's position, dvSolveEpTri iterates
+  // a few rounds to a stable (width, height) pair rather than solving
+  // either one first.
+  const EP_LINE_MO_H=7.2*1.2,EP_ROW_GAP=.5,EP_LINE_CAL_H=6.4*1.2;
+  const EP_MIN_W=22;
+  const dvSolveEpTri=(moW,calW)=>{
+    let triW=EP_MIN_W;
+    for(let it=0;it<14;it++){
+      const topPad=0.01*triW;
+      const y1=topPad+EP_LINE_MO_H;
+      const y2=y1+EP_ROW_GAP+EP_LINE_CAL_H;
+      const innerTop=y2+0.01*triW;
+      const H=innerTop*2;
+      const req=(textW,yBot)=>{
+        const avail=1-yBot/H;
+        const denom=avail/2-0.01;
+        return denom>0?(textW/2)/denom:EP_MIN_W;
+      };
+      triW=Math.max(EP_MIN_W,req(moW,y1),req(calW,y2));
+    }
+    const topPad=0.01*triW;
+    const y1=topPad+EP_LINE_MO_H;
+    const y2=y1+EP_ROW_GAP+EP_LINE_CAL_H;
+    const innerTop=y2+0.01*triW;
+    const H=innerTop*2;
+    return {triW,H,topPad,innerTop};
   };
-  const EP_MIN_W=34;
   const rawEndpoints=[];
   if(hasReal){
     const lastR=realPts[realPts.length-1];
@@ -2498,12 +2519,17 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   let trisHtml='';
   let epGi=0;
   for(const ep of rawEndpoints){
-    const capTxt='$'+fmtK(ep.cap);
-    const moTxt=(ep.mo>=0?'+$':'−$')+fmtK(Math.abs(ep.mo))+'/mo';
+    // No "+" on a positive monthly figure — the row's own position
+    // already reads as "the monthly number", so the sign would be
+    // redundant; a loss still gets its "−" since that's the one case
+    // where the sign itself is the information. No "/mo" suffix either,
+    // same reasoning. Capital is dropped entirely: monthly rate + time
+    // are the two figures a glass triangle carries now.
+    const moTxt=(ep.mo>=0?'$':'−$')+fmtK(Math.abs(ep.mo));
     // No spaces in the date line ("1y6mo" not "1y 6mo") — shared cal()
     // is used as-is everywhere else in the app (Diagnostics, milestone
     // table); the space-strip is scoped to just this triangle line, one
-    // more small width saving on top of the K-abbreviated $ lines above.
+    // more small width saving on top of the K-abbreviated $ line above.
     const calTxt=cal(dayToCal(ep.day)).replace(/\s+/g,'');
     const [cr,cg,cb]=hexToRgb(ep.color);
     // Same lightened-top-stop math as the old canvas drawGlassTriangle's
@@ -2513,15 +2539,11 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     // Measure each line with the exact font/weight/size the CSS uses so
     // the triangle can be sized snugly around THIS endpoint's own text
     // instead of a one-size-fits-all guess.
-    ctx.font='400 7.2px "IBM Plex Mono", monospace';
-    const capW=ctx.measureText(capTxt).width;
     ctx.font='700 7.2px "IBM Plex Mono", monospace';
     const moW=ctx.measureText(moTxt).width;
     ctx.font='400 6.4px "IBM Plex Mono", monospace';
     const calW=ctx.measureText(calTxt).width;
-    // Row order is now monthly / capital / date top-to-bottom (date is
-    // always the 3rd/last slot).
-    const triW=Math.max(EP_MIN_W,dvEpReqW(moW,EP_Y_L1),dvEpReqW(capW,EP_Y_L2),dvEpReqW(calW,EP_Y_L3));
+    const {triW,H,topPad,innerTop}=dvSolveEpTri(moW,calW);
     // Horizontal-only clamp so a triangle near either edge of the plot
     // still sits tip-on-point (translate(-50%,-100%) in CSS handles the
     // centring/bottom-anchor) without spilling past the chart-wrap's
@@ -2530,25 +2552,19 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const epMargin=triW/2+2;
     const anchorX=Math.min(Math.max(ep.x,pd.l+epMargin),pd.l+pw-epMargin);
     const gid='epg'+(epGi++);
-    const pts=`0,0 ${triW},0 ${triW/2},${TRI2_H}`;
-    // The tip's coloured "inner triangle" is no longer a separately-sized
-    // shape inset inside the outer one (that left a visible gap between
-    // the two sets of sloped sides — not flush). Instead its top edge
-    // sits wherever the OUTER triangle's own taper already is at that
-    // height, so the two silhouettes coincide exactly: the inner shape is
-    // simply the outer triangle's own lower portion, solid-filled instead
-    // of blurred glass. That top edge is placed the same distance below
-    // the bottom of the last line of text (the date) as the sides of the
-    // widest text line sit from the outer sides — both are `epGap`, so
-    // the vertical and horizontal breathing room match.
-    const epGap=0.01*triW;
-    const innerTop=EP_Y_L3+epGap;
-    const innerHalfW=(triW/2)*(1-innerTop/TRI2_H);
+    const pts=`0,0 ${triW},0 ${triW/2},${H}`;
+    // The tip's coloured "inner triangle" top edge sits wherever the
+    // OUTER triangle's own taper already is at innerTop (the vertical
+    // midpoint — see dvSolveEpTri), so the two silhouettes coincide
+    // exactly: the inner shape is simply the outer triangle's own lower
+    // half, solid-filled instead of blurred glass, not a separate shape
+    // with a gap.
+    const innerHalfW=(triW/2)*(1-innerTop/H);
     const innerL=triW/2-innerHalfW,innerR=triW/2+innerHalfW;
-    const innerPts=`${innerL},${innerTop} ${innerR},${innerTop} ${triW/2},${TRI2_H}`;
-    trisHtml+=`<div class="dv-ep-tri" style="left:${anchorX}px;top:${ep.y}px;--eptw:${triW}px;--epth:${TRI2_H}px;--eprgb:${cr},${cg},${cb};--eprgb-hi:${hr},${hg},${hb};">`+
+    const innerPts=`${innerL},${innerTop} ${innerR},${innerTop} ${triW/2},${H}`;
+    trisHtml+=`<div class="dv-ep-tri" style="left:${anchorX}px;top:${ep.y}px;--eptw:${triW}px;--epth:${H}px;--eptop:${topPad}px;--eprgb:${cr},${cg},${cb};--eprgb-hi:${hr},${hg},${hb};">`+
       `<div class="dv-ep-tri-fill"></div>`+
-      `<svg class="dv-ep-tri-svg" viewBox="0 0 ${triW} ${TRI2_H}">`+
+      `<svg class="dv-ep-tri-svg" viewBox="0 0 ${triW} ${H}">`+
         `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">`+
           `<stop offset="0" stop-color="rgb(${hr},${hg},${hb})" stop-opacity=".92"/>`+
           `<stop offset="1" stop-color="rgb(${cr},${cg},${cb})" stop-opacity=".85"/>`+
@@ -2572,7 +2588,6 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       `</svg>`+
       `<div class="dv-ep-tri-txt">`+
         `<span class="dv-ep-mo">${moTxt}</span>`+
-        `<span class="dv-ep-cap">${capTxt}</span>`+
         `<span class="dv-ep-cal">${calTxt}</span>`+
       `</div>`+
       `</div>`;
