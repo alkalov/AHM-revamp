@@ -378,7 +378,13 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
   backdrop-filter:blur(7px) saturate(1.3);
   -webkit-backdrop-filter:blur(7px) saturate(1.3);
   border:1px solid rgba(255,255,255,.12);
-  pointer-events:none;opacity:0;transition:opacity .12s ease;z-index:3;
+  /* Was a near-instant .12s snap; now an elegant fade in both directions
+     (same rule handles show and hide, so they're always symmetric by
+     construction) tied to scroll activity rather than to whether a day
+     happens to be selected — see dvWireTableScroll's idle timer, which
+     removes .show a beat after scrolling stops and restores it the
+     moment scrolling resumes. */
+  pointer-events:none;opacity:0;transition:opacity .6s ease;z-index:3;
 }
 .dv-daytally.show{opacity:1;}
 .dv-dt-label{font-size:5.85px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(226,230,237,.55);line-height:1;}
@@ -2062,20 +2068,26 @@ function dvPlateauMoRate(pts){
 // canvas text — real typography plus a CSS opacity transition for the
 // fade-in, which canvas text can't do cheaply. Only touches the DOM
 // (and re-triggers the fade) when the underlying point actually changes,
-// so hover-driven redraws don't replay the fade on every frame.
-let _rgLastKey=null;
+// so hover-driven redraws don't replay the fade on every frame. It's not
+// meant to sit there permanently once it's made its point - it fades in,
+// holds for a 10-second read, then fades back out at the exact same
+// speed (both directions share the one `transition:opacity 7s ease`
+// rule on .rg-overlay, so there's nothing extra to keep in sync here).
+let _rgLastKey=null,_rgHideTimer=null;
 function dvUpdateRapidOverlay(rapid,dayToCal,series){
   const el=$('rg-overlay');
   if(!el)return;
-  if(!rapid){el.classList.remove('show');_rgLastKey=null;return;}
+  if(!rapid){el.classList.remove('show');_rgLastKey=null;clearTimeout(_rgHideTimer);return;}
   const key=rapid.idx+'_'+rapid.day;
   if(key===_rgLastKey)return;
   _rgLastKey=key;
   const timeEl=$('rg-time');
   if(timeEl)timeEl.textContent=cal(dayToCal(rapid.day));
+  clearTimeout(_rgHideTimer);
   el.classList.remove('show');
   void el.offsetWidth; // force reflow so the opacity transition re-triggers
   requestAnimationFrame(()=>el.classList.add('show'));
+  _rgHideTimer=setTimeout(()=>{el.classList.remove('show');},10000);
 }
 
 // The per-line endpoint figures (shares, capital, near-plateau $/mo,
@@ -2540,7 +2552,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       if(dtCal)dtCal.textContent=cal(st.dayToCal(hoverDay));
       dtEl.style.left=cx+'px';
       dtEl.style.top=dayLabelY+'px';
-      dtEl.classList.add('show');
+      dvShowDayTally();
     }
     // Collect the live point on each curve at this day. The small lens
     // marker stays right on the curve (spatially meaningful); the
@@ -2563,6 +2575,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     }
   }else if(dtEl){
     dtEl.classList.remove('show');
+    clearTimeout(_dtHideTimer);
   }
 }
 
@@ -2688,12 +2701,33 @@ function initTableAxisLock(){
   el.addEventListener('touchcancel',release,{passive:true});
 }
 
+// Shows the floating day-count circle and arms a short "went idle" timer
+// that fades it back out (elegantly, via the CSS transition on
+// .dv-daytally — see that rule) once nothing has re-shown it for half a
+// second. Every raw scroll tick calls this directly (not just the ticks
+// that actually change the selected day), so continuous scrolling within
+// a single row's pixel range keeps it lit instead of fading mid-scroll;
+// it's only true inactivity - no scroll events at all for 500ms - that
+// lets the timer run out. dvDrawRaceChart's own hover/selection redraw
+// path calls this too, so any way a day becomes "current" keeps the same
+// show-then-idle-out behaviour rather than leaving the badge pinned on
+// screen indefinitely once a day happens to be selected.
+let _dtHideTimer=null;
+function dvShowDayTally(){
+  const el=$('dv-daytally');
+  if(!el||dvSelDay==null)return;
+  el.classList.add('show');
+  clearTimeout(_dtHideTimer);
+  _dtHideTimer=setTimeout(()=>{el.classList.remove('show');},500);
+}
+
 // Live crosshair while scrolling the table — throttled to animation-frame
 // rate so it tracks continuously without hammering the CPU on every pixel.
 function dvWireTableScroll(){
   const scroller=$('tbl-scroll');if(!scroller)return;
   let ticking=false;
   scroller.addEventListener('scroll',()=>{
+    dvShowDayTally();
     if(ticking)return;
     ticking=true;
     requestAnimationFrame(()=>{
