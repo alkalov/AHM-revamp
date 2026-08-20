@@ -746,26 +746,38 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
    the tab (still the first thing on #scr-sim, nothing reordered), just
    flush like .sbar below it rather than a distinct floating "window",
    with a plain divider taking over the separation job the shadow/margin
-   used to do. What used to make the OUTER box read as special (green
-   tint, glassy depth) now lives on the stepper itself instead: same
-   pooled-colour-light + backdrop-blur + specular-top-highlight recipe
-   .dv-rg-bubble/.dv-ep-tri-fill use elsewhere in this app (ellipse
-   radial gradient bright-top to dark-bottom, translucent enough that the
-   page's own ambient blur shows through rather than an opaque fill),
-   just with fixed green rgb instead of a per-instance custom prop since
-   there's only ever one of these. Needs !important + the #gc-stepper ID
-   scope to beat the shared .stp{background...!important} rule further
-   up the sheet, same trick #gc-stepper .stp-val already relies on for
-   its font-size override just below. */
+   used to do. Round 66: recoloured the stepper's own glass neutral
+   (round 65's colour tint called out as ugly on sight). Round 67: "ugly
+   and bulky either way its size" plus "green accents are out of place" -
+   two separate complaints, fixed separately. (1) Bulk: 58px height/28px
+   value/48px buttons was a deliberate 1.8x oversizing from when this was
+   first pulled out as a hero field: dialled back to 44px/22px/40px,
+   still bigger than the app's normal 32px steppers (this field earns
+   SOME extra weight as the one shared value every strategy compares
+   against) but nowhere near double any more. (2) Colour: every remaining
+   green reference in this section (icon stroke, +/- glyphs, $ unit, the
+   stepper's internal zone dividers) swapped for this app's own already-
+   established generic accent (--accent-solid/--glow-rgb, #38bdf8 blue)
+   instead of the one-off green — matches the app-wide design rule this
+   session's own memory already states ("blue/cyan accent...everywhere,
+   strategy colours the one exception, always functional not
+   decorative") and matches Apple's actual Liquid Glass material spec
+   researched for this round: colour "informed by surrounding content"
+   rather than a fixed tint, glass itself thin/neutral, any accent colour
+   reserved for genuinely functional elements (here: the +/- controls and
+   unit label) not decoration. The glass surface itself (background
+   gradient/blur/border/shadow) stays the neutral white/grey from round
+   66 - only the surrounding UI chrome's colour changed here. */
 .global-capital{padding:14px 16px 12px;border-bottom:1px solid #232b3d;}
 .gc-hd{display:flex;align-items:center;gap:7px;padding:0 0 10px;}
 .gc-hd span{font-family:'Cabinet Grotesk',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#e2e6ed;}
 .gc-body{padding:0;}
 #gc-stepper .stp{
-  height:58px;border-radius:6px;overflow:hidden;
-  /* Neutral liquid, not a green one — same pooled-top/dark-bottom ellipse
-     shape as the recipe this was built from, just white/grey rather than
-     tinted, so the frost/liquid material reads without adding colour. */
+  height:44px;border-radius:6px;overflow:hidden;
+  /* Neutral liquid, not a tinted one — same pooled-top/dark-bottom
+     ellipse shape as the recipe this was built from, kept colourless so
+     the frost/liquid material reads on its own, per Liquid Glass's own
+     "adapts to content, isn't a fixed brand tint" principle. */
   background:
     radial-gradient(ellipse 120% 85% at 50% 0%,rgba(255,255,255,.18) 0%,rgba(255,255,255,.07) 48%,rgba(0,0,0,.14) 100%)
     !important;
@@ -774,10 +786,10 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
   border:1px solid rgba(255,255,255,.16) !important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.05);
 }
-#gc-stepper .stp-btn{width:48px;height:58px;font-size:22px;background:rgba(52,211,153,.07);color:#34d399;border-right:1px solid rgba(52,211,153,.18);}
-#gc-stepper .stp-btn:last-child{border-right:none;border-left:1px solid rgba(52,211,153,.18);}
-#gc-stepper .stp-val{font-family:'IBM Plex Mono',monospace;font-size:28px !important;font-weight:800;color:#e2e6ed;background:transparent;}
-#gc-stepper .stp-unit{font-size:14px;font-weight:700;color:#34d399;background:transparent;padding-right:12px;}
+#gc-stepper .stp-btn{width:40px;height:44px;font-size:18px;background:rgba(var(--glow-rgb),.07);color:var(--accent-solid);border-right:1px solid rgba(var(--glow-rgb),.18);}
+#gc-stepper .stp-btn:last-child{border-right:none;border-left:1px solid rgba(var(--glow-rgb),.18);}
+#gc-stepper .stp-val{font-family:'IBM Plex Mono',monospace;font-size:22px !important;font-weight:800;color:#e2e6ed;background:transparent;}
+#gc-stepper .stp-unit{font-size:12px;font-weight:700;color:var(--accent-solid);background:transparent;padding-right:12px;}
 .tbl-empty{padding:32px;text-align:center;font-size:10px;color:#4d5a6e;}
 .log-body{padding:8px 16px;}
 .log-info{font-size:9px;color:#4d5a6e;text-align:center;margin-bottom:6px;letter-spacing:.07em;}
@@ -942,7 +954,7 @@ canvas.spark{width:100%;height:34px;display:block;}
   <div class="screen active" id="scr-sim">
     <div class="global-capital">
       <div class="gc-hd">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         <span>Starting Capital</span>
         <button class="ib" onclick="openInfo('globalcap')" style="margin-left:4px;">?</button>
       </div>
