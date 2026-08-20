@@ -390,24 +390,35 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .dv-dt-label{font-size:5.85px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(226,230,237,.55);line-height:1;}
 .dv-dt-num{font-size:14.4px;font-weight:700;line-height:1.05;}
 .dv-dt-cal{font-size:7.2px;font-weight:500;color:rgba(226,230,237,.72);line-height:1;}
-/* Endpoint info clusters — same glass material as .dv-daytally (radial
-   top-light highlight + backdrop-filter frost + a hairline border) but a
-   rounded square instead of a circle, always fully visible (no .show/
-   opacity/transition — these are static chart annotations, not a
-   scroll-driven readout), and tinted in each strategy's own colour
-   instead of neutral white/grey. --eprgb (set inline per instance, e.g.
-   "231,124,58") stands in for the literal 255,255,255 the daytally uses,
-   so the exact same gradient stops/border alpha produce a colour-matched
-   glass panel per strategy rather than N hand-written variants. Width is
-   intentionally NOT fixed like the daytally's 55.8px circle — content
-   varies (an extra shares line, longer $ values) so the box hugs its own
-   text via padding instead. Anchored bottom-center via translate(-50%,
-   -100%) so JS only has to set left/top to the triangle's own tip x and
-   its flat top edge y (y-TRI_H) for a true flush fit, no manual height
-   math on this end. */
+/* Endpoint info clusters — same glass FILL material as .dv-daytally
+   (radial top-light highlight + backdrop-filter frost), always fully
+   visible (no .show/opacity/transition — these are static chart
+   annotations, not a scroll-driven readout), tinted in each strategy's
+   own colour instead of neutral white/grey. The OUTLINE, though, matches
+   drawGlassTriangle's border recipe instead of the daytally's flat hairline
+   — same two-stop gradient stroke (brighter top fading to the strategy's
+   true colour at the bottom) plus a soft colour-matched glow just outside
+   the edge, so the bubble reads as the same material as the triangle it
+   sits on rather than a different kind of glass. --eprgb is the base/
+   bottom colour (e.g. "231,124,58"); --eprgb-hi is that same colour
+   lightened by +70 per channel for the gradient's top stop — the exact
+   arithmetic drawGlassTriangle itself uses (Math.min(255,c+70)), just
+   computed in JS once per bubble instead of per canvas frame. Plain
+   rectangle rather than the earlier rounded square: border-image (needed
+   for a gradient-coloured border) doesn't respect border-radius reliably
+   across browsers, and a hard-edged box is arguably a closer match to a
+   hard-edged triangle anyway. Width is intentionally NOT fixed like the
+   daytally's 55.8px circle — content varies (an extra shares line, longer
+   $ values) so the box hugs its own text instead; left/right padding is
+   2% (resolved against .chart-wrap's own width, its containing block)
+   rather than a flat px guess, so the box sits a consistent 2%-of-chart-
+   width away from whichever line of text is widest, on both sides, at any
+   screen size. Anchored bottom-center via translate(-50%,-100%) so JS only
+   has to set left/top to the triangle's own tip x and its flat top edge y
+   (y-TRI_H) for a true flush fit, no manual height math on this end. */
 .dv-ep-bubble{
   position:absolute;left:0;top:0;transform:translate(-50%,-100%);
-  padding:4px 8px 3.5px;border-radius:10px;box-sizing:border-box;
+  padding:4px 2% 3.5px;box-sizing:border-box;
   display:flex;flex-direction:column;align-items:center;
   gap:.5px;
   font-family:'IBM Plex Mono',monospace;
@@ -417,7 +428,9 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
     rgba(18,23,33,.4);
   backdrop-filter:blur(7px) saturate(1.3);
   -webkit-backdrop-filter:blur(7px) saturate(1.3);
-  border:1px solid rgba(var(--eprgb),.28);
+  border:.8px solid transparent;
+  border-image:linear-gradient(to bottom, rgba(var(--eprgb-hi),.92), rgba(var(--eprgb),.85)) 1;
+  box-shadow:0 0 3px 1px rgba(var(--eprgb),.06),0 0 5px 2px rgba(var(--eprgb),.04);
   pointer-events:none;z-index:2;
 }
 /* Text sizing matches the pre-bubble canvas labels exactly (LBL_SIZE
@@ -481,20 +494,14 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .tc-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;white-space:nowrap;}
 .tc-stp{flex:1;}
 /* Share gauges used to be drawn on-canvas inside the race chart itself,
-   docked bottom-right during a hover, then later pulled into their own
-   single-row strip above the table. Now a fixed 3-over-3 grid — same
-   grid-template-columns as .sbar elsewhere in the app — of six small
-   canvases, one per strategy slot, that DOUBLES as the table's own
-   strategy selector (see switchTblStrat/dvDrawGaugeGrid), replacing the
-   separate row of plain text buttons that used to sit beneath the table.
-   Positions are permanent (A-F always the same cell) rather than only
-   showing active strategies packed left-to-right, so tapping a slot is a
-   stable target even before that strategy has been simulated. Freed from
-   fitting up to six domes side-by-side in one row, each dome now gets
-   roughly 3x the width plus a taller cell, so they read as genuinely
-   bigger rather than just rearranged. */
-.dv-gauge-grid{height:132px;flex-shrink:0;padding:4px 8px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:0;background:transparent;}
-.dv-gauge-cell{width:100%;height:100%;display:block;cursor:pointer;touch-action:manipulation;}
+   docked bottom-right during a hover. With six strategies now instead of
+   three, that many gauges crowded into the chart's own corner read as
+   cluttered - moved into their own fixed-height strip here instead, right
+   above the data table. The table's own flex:1 sizing (see .tbl-scroll)
+   absorbs the height this strip takes, which is what naturally condenses
+   the table's visible row count. */
+.dv-gauge-row{height:64px;flex-shrink:0;padding:4px 10px;background:transparent;}
+#dv-gauge-cv{width:100%;height:100%;display:block;}
 /* ── Table tab: flat split-screen, no nested scroll chains ── */
 .dv-half{flex:1 1 0;min-height:0;display:flex;flex-direction:column;border-bottom:1px solid #232b3d;overflow:hidden;}
 .dv-half:last-child{border-bottom:none;}
@@ -733,16 +740,19 @@ canvas.spark{width:100%;height:34px;display:block;}
           <span class="dv-dt-cal" id="dv-dt-cal"></span>
         </div>
       </div>
-      <div class="dv-gauge-grid" id="dv-gauge-grid">
-        <canvas class="dv-gauge-cell" id="dv-gauge-cv0" onclick="switchTblStrat(0)"></canvas>
-        <canvas class="dv-gauge-cell" id="dv-gauge-cv1" onclick="switchTblStrat(1)"></canvas>
-        <canvas class="dv-gauge-cell" id="dv-gauge-cv2" onclick="switchTblStrat(2)"></canvas>
-        <canvas class="dv-gauge-cell" id="dv-gauge-cv3" onclick="switchTblStrat(3)"></canvas>
-        <canvas class="dv-gauge-cell" id="dv-gauge-cv4" onclick="switchTblStrat(4)"></canvas>
-        <canvas class="dv-gauge-cell" id="dv-gauge-cv5" onclick="switchTblStrat(5)"></canvas>
+      <div class="dv-gauge-row">
+        <canvas id="dv-gauge-cv"></canvas>
       </div>
     </div>
     <div class="dv-half">
+      <div class="sbar">
+        <button class="sbtn on" id="tsb0" onclick="switchTblStrat(0)">A</button>
+        <button class="sbtn sc-b" id="tsb1" onclick="switchTblStrat(1)">B</button>
+        <button class="sbtn sc-c" id="tsb2" onclick="switchTblStrat(2)">C</button>
+        <button class="sbtn sc-d" id="tsb3" onclick="switchTblStrat(3)">D</button>
+        <button class="sbtn sc-e" id="tsb4" onclick="switchTblStrat(4)">E</button>
+        <button class="sbtn sc-f" id="tsb5" onclick="switchTblStrat(5)">F</button>
+      </div>
       <div class="tbl-controls">
         <span class="tc-lbl">Every</span>
         <div class="tc-stp" id="intv-wrap-0"></div>
@@ -1003,7 +1013,7 @@ function switchStrat(n){
   });
   updateDist(n);
 }
-function switchTblStrat(n){activeTblStrat=n;[0,1,2,3,4,5].forEach(i=>{const iw=$('intv-wrap-'+i);if(iw)iw.style.display=i===n?'flex':'none';});renderTable(n);dvSyncTblScroll();dvDrawGaugeGrid(dvSelDay);}
+function switchTblStrat(n){activeTblStrat=n;[0,1,2,3,4,5].forEach(i=>{$('tsb'+i).classList.toggle('on',i===n);const iw=$('intv-wrap-'+i);if(iw)iw.style.display=i===n?'flex':'none';});renderTable(n);dvSyncTblScroll();}
 /* Keep the table scrolled to the same day across A/B/C switches, so
    flipping tabs compares the same point in time instead of landing
    wherever that strategy's own scrollTop last happened to be — each
@@ -2071,21 +2081,37 @@ function dvStrategyRapidGrowth(pts){
   return null;
 }
 function dvFindRapidGrowth(series){
-  // Head-to-head across the active strategies — NOT each one's own
-  // earliest self-relative hit (dvStrategyRapidGrowth, still used as-is
-  // by the Sim-tab per-strategy marker and the Diagnostics "Rapid Growth
-  // Threshold" row, both genuinely single-strategy questions with nothing
-  // to compare against). A self-relative bar isn't comparable ACROSS
-  // strategies: a strategy compounding steadily fast every single day
-  // never beats its own whole-run average by 1.5x anywhere (nothing in
-  // its own history is faster than its history), so it silently scored no
-  // hit at all under the old approach — while a mostly flat strategy with
-  // one lumpy early stretch cleared its own much-lower bar easily and won
-  // "FASTEST PATH" by default. Fixed by comparing every strategy's own
-  // rolling rate directly against what every OTHER active strategy is
-  // doing over that same day range, and marking the earliest day one
-  // strategy is decisively (1.5x) ahead of the best of the rest — a bar
-  // that's actually about winning the race, not about beating its own past.
+  // Cross-strategy winner, defined as "whoever pulled ahead of the whole
+  // field and never gave the lead back" — NOT each one's own self-relative
+  // hit (dvStrategyRapidGrowth, still used as-is by the Sim-tab per-
+  // strategy marker and the Diagnostics "Rapid Growth Threshold" row,
+  // both genuinely single-strategy questions with nothing to compare
+  // against).
+  //
+  // An earlier version of this compared every strategy's rolling growth
+  // RATE head-to-head against the others and fired the instant one was
+  // 1.5x ahead of the rest. Real testing (8 live multi-strategy runs)
+  // showed that comparison firing on day 1-13 of races lasting 400-500+
+  // days almost every time, with the "winner" it picked barely correlated
+  // with who actually finished on top. The reason: capital is smallest
+  // right at the start, so a short lucky/unlucky early stretch produces
+  // the LARGEST relative rate swings of the entire run — and a rolling
+  // window that returns on the first day it clears a threshold has no way
+  // to tell a real breakaway from that opening noise. No amount of
+  // re-tuning the window size or the multiplier fixes this: the noise is
+  // structurally worst exactly where the scan starts looking.
+  //
+  // This version compares CAPITAL directly (a cumulative, history-
+  // dependent quantity that barely reshuffles day-to-day once strategies
+  // separate) instead of a narrow differenced rate, and requires the lead
+  // to hold all the way to the end rather than accepting the first
+  // instant it appears. Concretely: find who's actually ahead at the very
+  // last day (the one outcome that's unambiguous), then walk backward day
+  // by day for as long as that same strategy — or tied group, see below —
+  // was ALREADY the leader, and mark the earliest such day. An early
+  // false lead flips harmlessly during that walk (it wasn't held to the
+  // end, so it's just skipped over); no threshold to mistune, no window
+  // size to pick.
   if(!series.length)return null;
   if(series.length===1){
     const hit=dvStrategyRapidGrowth(series[0].pts);
@@ -2097,54 +2123,41 @@ function dvFindRapidGrowth(series){
   // a day->cap lookup can be built per strategy without reconciling
   // different day scales.
   const capAt=series.map(s=>{const m=new Map();for(const p of s.pts)m.set(p.day,p.cap);return m;});
-  const maxDay=Math.max(...series.map(s=>s.pts[s.pts.length-1].day));
-  // One shared window sized off the LONGEST-running strategy, not each
-  // strategy's own 10%-of-itself (the original per-strategy sizing) —
-  // otherwise a strategy that finishes fast gets a smaller, noisier
-  // window than a slow one and the "who's fastest" comparison is biased
-  // by window size before the rates are even compared.
-  const win=Math.max(5,Math.floor(maxDay/10));
-  function rateAt(si,day){
-    const cap=capAt[si];const a=cap.get(day-win),b=cap.get(day);
-    return(a==null||b==null)?null:(b-a)/win;
+  const finalDay=series.map(s=>s.pts[s.pts.length-1].day);
+  const finalCap=series.map(s=>s.pts[s.pts.length-1].cap);
+  const maxDay=Math.max(...finalDay);
+  // A strategy that already finished holds its own final capital flat for
+  // every later day — it has already arrived, so later days are only
+  // asking whether anyone still running has caught up to that fixed mark.
+  function capNow(si,day){return day>=finalDay[si]?finalCap[si]:capAt[si].get(day);}
+  // Everyone within 2% of the day's own top capital counts as jointly
+  // leading — a real photo finish, not the 10% tolerance dvGroupEndpoints
+  // uses elsewhere for a different job (avoiding overlapping chart
+  // labels). Reused at 10% here first, but live testing across several
+  // strategies run with the same default settings showed final capitals
+  // routinely landing within 1-2% of each other from ordinary day-to-day
+  // randomness alone — a 10% band called EVERY one of those runs a tie,
+  // which just hides a real (if narrow) leader behind "nobody won."
+  function leaderSetAt(day){
+    const caps=series.map((s,si)=>({si,cap:capNow(si,day)}));
+    const top=Math.max(...caps.map(o=>o.cap));
+    const tol=Math.max(Math.abs(top)*0.02,1);
+    return new Set(caps.filter(o=>top-o.cap<=tol).map(o=>o.si));
   }
-  for(let day=win;day<=maxDay;day++){
-    const valid=[];
-    for(let si=0;si<series.length;si++){
-      const r=rateAt(si,day);
-      if(r!=null)valid.push({r,si});
-    }
-    if(valid.length<2)continue; // need at least 2 still-running strategies to call one "ahead"
-    valid.sort((a,b)=>b.r-a.r);
-    const top=valid[0];
-    if(top.r<=0)continue;
-    // Group the leading cluster first (everyone within 10% of the TOP
-    // rate — sorted descending, so this is always a contiguous prefix of
-    // `valid`), THEN compare that cluster against the best rate OUTSIDE
-    // it. Comparing top-vs-runner-up directly (an earlier version of this
-    // fix did that) breaks the moment two strategies are genuinely
-    // neck-and-neck for the lead: the runner-up IS the other leader, so
-    // "1.5x the runner-up" becomes an unreachable bar and two strategies
-    // clearly crushing the rest of the field never registers a hit at
-    // all. Splitting into cluster-vs-outside fixes that: the tie between
-    // co-leaders is exactly the signal to average, not the thing blocking
-    // detection of them both beating everyone else.
-    const tol=Math.abs(top.r)*0.1;
-    let splitAt=1;
-    while(splitAt<valid.length&&top.r-valid[splitAt].r<=tol)splitAt++;
-    const tied=valid.slice(0,splitAt),outside=valid.slice(splitAt);
-    if(!outside.length)continue; // everyone still running is in the tie — nothing to be "ahead of" yet
-    const bar=Math.max(outside[0].r*1.5,0);
-    if(top.r<=bar)continue;
-    const hitDay=day-win;
-    if(tied.length===1){
-      const s=series[top.si];
-      return{day:hitDay,cap:capAt[top.si].get(hitDay),idx:s.idx,color:s.color};
-    }
-    const cap=tied.reduce((a,o)=>a+capAt[o.si].get(hitDay),0)/tied.length;
-    return{day:hitDay,cap,idx:null,color:'#e2e6ed',tiedIdxs:tied.map(o=>series[o.si].idx)};
+  const sameSet=(a,b)=>a.size===b.size&&[...a].every(x=>b.has(x));
+  const finalSet=leaderSetAt(maxDay);
+  let hitDay=maxDay;
+  for(let d=maxDay-1;d>=1;d--){
+    if(sameSet(leaderSetAt(d),finalSet))hitDay=d;
+    else break;
   }
-  return null;
+  if(finalSet.size===1){
+    const si=[...finalSet][0];
+    return{day:hitDay,cap:capNow(si,hitDay),idx:series[si].idx,color:series[si].color};
+  }
+  const tiedIdxs=[...finalSet];
+  const cap=tiedIdxs.reduce((a,si)=>a+capNow(si,hitDay),0)/tiedIdxs.length;
+  return{day:hitDay,cap,idx:null,color:'#e2e6ed',tiedIdxs:tiedIdxs.map(si=>series[si].idx)};
 }
 // Near-plateau monthly rate: average daily capital growth over just the
 // TRAILING slice of a strategy's run (last ~15%, min 5 points), times 21
@@ -2494,9 +2507,13 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const calTxt=cal(dayToCal(grp.day));
     const shTxt=grp.sh!=null?Math.round(grp.sh).toLocaleString()+' sh':null;
     const [cr,cg,cb]=grp.color?hexToRgb(grp.color):[163,173,190];
+    // Same lightened-top-stop math as drawGlassTriangle's own border
+    // gradient (Math.min(255,c+70)), so the bubble's outline is the same
+    // material as the triangle it sits on, not just a similarly-shaped one.
+    const hr=Math.min(255,cr+70),hg=Math.min(255,cg+70),hb=Math.min(255,cb+70);
     const anchorX=Math.min(Math.max(grp.x,pd.l+EP_MARGIN),pd.l+pw-EP_MARGIN);
     const bubTop=grp.y-TRI_H;
-    bubblesHtml+=`<div class="dv-ep-bubble" style="left:${anchorX}px;top:${bubTop}px;--eprgb:${cr},${cg},${cb};">`+
+    bubblesHtml+=`<div class="dv-ep-bubble" style="left:${anchorX}px;top:${bubTop}px;--eprgb:${cr},${cg},${cb};--eprgb-hi:${hr},${hg},${hb};">`+
       (shTxt!=null?`<span class="dv-ep-sh">${shTxt}</span>`:'')+
       `<span class="dv-ep-cap">${capTxt}</span>`+
       `<span class="dv-ep-mo">${moTxt}</span>`+
@@ -2570,56 +2587,81 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   }
 }
 
-/* Share gauges + capital tallies — now a fixed 3-over-3 grid of small
-   canvases (see .dv-gauge-grid above) instead of one canvas drawing a
-   single row. Two things changed for that reason: (1) EVERY strategy
-   slot draws every time, active or not (an unsimulated slot gets a dim,
-   0%-fill placeholder) since a selector needs a stable tap target, not a
-   row that reflows as strategies get simulated; (2) each cell is now its
-   own <canvas>, so "which strategy is selected for the table below" can
-   be a real click target (onclick="switchTblStrat(i)" right on the
-   canvas) instead of a separate row of text buttons underneath — the rig
-   this replaces. Same "one cohesive widget" idea as before (gauge, then
-   its capital number directly underneath, in the strategy's own colour),
-   just with a glass selection ring added around whichever dome is
-   currently backing the table, using that strategy's own colour as the
-   ring tint — the canvas equivalent of the old .sbtn.on coloured
-   underline, since there's no button left to underline. Share fill
-   fraction is still scaled against the shared max across ALL active
-   strategies (dvDrawGaugeGrid computes this once, not per-cell) so the
-   domes stay comparable to each other at a glance, exactly as the old
-   row did — only the layout and the click-to-select behaviour are new. */
-function dvDrawGaugeCell(i,pt,shRange,leaderCap){
-  const cv=$('dv-gauge-cv'+i);
+/* Share gauges + capital tallies — pulled out of the race chart itself
+   (see .dv-gauge-row above) into their own small canvas so a sixth strategy
+   doesn't crowd the chart's own corner the way three did. Same "one
+   cohesive widget" idea as before (gauge, then its capital number directly
+   underneath, in the strategy's own colour, no separate floating pieces),
+   just laid out as a full-width row instead of a bottom-right dock. Unlike
+   the old dock, this has its own dedicated real estate at all times, so it
+   defaults to each strategy's FINAL day (rather than sitting empty) until
+   the user actually hovers/drags/taps a day — at which point it live-
+   updates to match, same as the main chart's crosshair. */
+function dvDrawGaugeRow(cv,hoverDay){
   if(!cv||!cv.getContext)return;
+  const active=[0,1,2,3,4,5].filter(i=>simResults[i]&&simResults[i].rows&&simResults[i].rows.length>1);
   const dpr=window.devicePixelRatio||1;
   const W=cv.offsetWidth,H=cv.offsetHeight;if(!W||!H)return;
   cv.width=W*dpr;cv.height=H*dpr;
   const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
   ctx.clearRect(0,0,W,H);
-  const selected=activeTblStrat===i;
-  const [r0,g0,b0]=hexToRgb(STRAT_COLORS[i]);
-  const cx=W/2,gY=H-15;
-  const gR=Math.max(13,Math.min(gY-3,W/2-3));
+  if(!active.length){
+    ctx.fillStyle='#4d5a6e';ctx.font='9px IBM Plex Mono';ctx.textAlign='center';
+    ctx.fillText('Share gauges appear once a strategy is simulated',W/2,H/2);
+    return;
+  }
+  const series=active.map(i=>{
+    const rows=simResults[i].rows;
+    const acct0=simResults[i].acct0;
+    const pts=rows.map(r=>({day:r.day,sh:r.shares,cap:acct0+r.cumPnl,cumPnl:r.cumPnl}));
+    return{idx:i,pts,color:STRAT_COLORS[i],label:STRAT_LABELS[i]};
+  });
+  const allShares=series.flatMap(s=>s.pts.map(p=>p.sh));
+  const dataMaxSh=allShares.length?Math.max(...allShares):0;
+  const shRange=Math.max(dataMaxSh*1.2,1);
+  const day=hoverDay!=null?hoverDay:Math.max(...series.map(s=>s.pts[s.pts.length-1].day));
+  const hoverPts=[];
+  for(const s of series){
+    const ownFinalDay=s.pts[s.pts.length-1].day;
+    const clampedDay=Math.min(day,ownFinalDay);
+    let pt=null;
+    for(const p of s.pts){if(p.day<=clampedDay)pt=p;else break;}
+    if(pt)hoverPts.push({color:s.color,label:s.label,cap:pt.cap,sh:pt.sh});
+  }
+  const n=hoverPts.length;
+  // Margin/gap pulled in to a hairline (just enough that domes read as
+  // distinct circles, not fused into one shape) so the gauges claim as
+  // much of the row as the space allows — basically touching the panel's
+  // own edges and each other, per spec, rather than leaving visible
+  // breathing room on either side.
+  const marginX=3;
+  const availW=W-marginX*2;
+  const gGap=3;
+  const gY=H-16; // dome base, leaves room for the capital tally below it
+  // No letter row above the gauge any more — the strategy letter now
+  // prefixes the capital tally text below instead (see txt below), and
+  // the gauge claims that reclaimed headroom. Sized to fill whatever
+  // space it actually has — bounded only by the row's own height and how
+  // many gauges need to fit side by side — rather than an arbitrary cap.
+  const rMaxByHeight=gY-4;
+  const rMaxByWidth=(availW-(n-1)*gGap)/(n*2);
+  const gR=Math.max(13,Math.min(rMaxByHeight,rMaxByWidth));
+  const rowW=n*gR*2+(n-1)*gGap;
+  const startX=(W-rowW)/2+gR;
+  const gX=hoverPts.map((hp,i)=>startX+i*(gR*2+gGap));
+  const leaderCap=n?Math.max(...hoverPts.map(hp=>hp.cap)):null;
   ctx.textAlign='center';
-  if(!pt){
-    // Not yet simulated — still drawn (dim, 0%-fill) so the grid position
-    // never moves once a sim finishes, and it's still a valid tap target.
-    dvGlassGauge(ctx,cx,gY,gR,0,[100,110,126],0);
-    ctx.save();ctx.globalAlpha=.55;
-    ctx.font='700 8px IBM Plex Mono';ctx.fillStyle='rgba(163,173,190,.75)';
-    ctx.fillText(STRAT_LABELS[i]+'  —',cx,gY+11);
-    ctx.restore();
-  }else{
-    dvGlassGauge(ctx,cx,gY,gR,pt.sh/shRange,[r0,g0,b0],pt.sh);
-    const txt=STRAT_LABELS[i]+'  $'+fmt(pt.cap,0);
-    const tallySize=Math.max(7.2,Math.min(10.5,gR*.2));
-    ctx.font=`700 ${tallySize}px IBM Plex Mono`;
-    ctx.fillStyle=`rgba(${r0},${g0},${b0},.9)`;
-    ctx.fillText(txt,cx,gY+tallySize+4);
-    if(leaderCap!=null&&pt.cap>=leaderCap){
+  for(let i=0;i<n;i++){
+    const hp=hoverPts[i];
+    const [r,g,b]=hexToRgb(hp.color);
+    dvGlassGauge(ctx,gX[i],gY,gR,hp.sh/shRange,[r,g,b],hp.sh);
+    const txt=hp.label+'  $'+fmt(hp.cap,0);
+    ctx.font='700 7.2px IBM Plex Mono';
+    ctx.fillStyle=`rgba(${r},${g},${b},.9)`;
+    ctx.fillText(txt,gX[i],gY+11);
+    if(hp.cap>=leaderCap){
       const tw=ctx.measureText(txt).width;
-      const mx=cx+tw/2+8,my=gY+tallySize+1;
+      const mx=gX[i]+tw/2+8,my=gY+8;
       ctx.beginPath();
       ctx.moveTo(mx,my-3.2);
       ctx.lineTo(mx-3,my+2.4);
@@ -2629,47 +2671,11 @@ function dvDrawGaugeCell(i,pt,shRange,leaderCap){
       ctx.fill();
     }
   }
-  if(selected){
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(cx-gR-2,gY);
-    ctx.arc(cx,gY,gR+2,Math.PI,2*Math.PI,false);
-    ctx.lineWidth=1.6;
-    const ringRgb=pt?`${r0},${g0},${b0}`:'226,230,237';
-    ctx.strokeStyle=`rgba(${ringRgb},.85)`;
-    ctx.shadowColor=`rgba(${ringRgb},.55)`;
-    ctx.shadowBlur=6;
-    ctx.stroke();
-    ctx.restore();
-  }
-}
-function dvDrawGaugeGrid(hoverDay){
-  const active=[0,1,2,3,4,5].filter(i=>simResults[i]&&simResults[i].rows&&simResults[i].rows.length>1);
-  const series=active.map(i=>{
-    const rows=simResults[i].rows;
-    const acct0=simResults[i].acct0;
-    const pts=rows.map(r=>({day:r.day,sh:r.shares,cap:acct0+r.cumPnl}));
-    return{idx:i,pts};
-  });
-  const allShares=series.flatMap(s=>s.pts.map(p=>p.sh));
-  const dataMaxSh=allShares.length?Math.max(...allShares):0;
-  const shRange=Math.max(dataMaxSh*1.2,1);
-  const curPts=new Map();
-  for(const s of series){
-    const ownFinalDay=s.pts[s.pts.length-1].day;
-    const day=hoverDay!=null?Math.min(hoverDay,ownFinalDay):ownFinalDay;
-    let pt=null;
-    for(const p of s.pts){if(p.day<=day)pt=p;else break;}
-    if(pt)curPts.set(s.idx,pt);
-  }
-  const capsNow=[...curPts.values()].map(p=>p.cap);
-  const leaderCap=capsNow.length?Math.max(...capsNow):null;
-  for(let i=0;i<6;i++)dvDrawGaugeCell(i,curPts.get(i)||null,shRange,leaderCap);
 }
 
 function dvRedrawChart(){
   const cv=$('dv-cv');if(cv)dvDrawRaceChart(cv,null,dvSelDay);
-  dvDrawGaugeGrid(dvSelDay);
+  const gcv=$('dv-gauge-cv');if(gcv)dvDrawGaugeRow(gcv,dvSelDay);
 }
 
 /* Axis-lock the table scroll: touch devices (iOS Safari especially)
@@ -3918,10 +3924,11 @@ function wireGlobalResize(){
         const cv=$(id);
         if(cv&&cv._cs)_drawChart(cv,cv._cs.equity,cv._cs.acct0,cv._simRgb);
       });
-      // Table tab combined race chart + its share-gauge grid
+      // Table tab combined race chart + its share-gauge row
       const dvCv=$('dv-cv');
       if(dvCv)dvDrawRaceChart(dvCv,null,dvSelDay);
-      dvDrawGaugeGrid(dvSelDay);
+      const dvGcv=$('dv-gauge-cv');
+      if(dvGcv)dvDrawGaugeRow(dvGcv,dvSelDay);
     },150);
   };
   window.addEventListener('resize',onResize);
