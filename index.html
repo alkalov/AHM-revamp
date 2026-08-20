@@ -420,10 +420,17 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
   border:1px solid rgba(var(--eprgb),.28);
   pointer-events:none;z-index:2;
 }
-.dv-ep-sh{font-size:6.2px;font-weight:500;letter-spacing:.02em;color:rgba(226,230,237,.65);line-height:1.2;}
-.dv-ep-cap{font-size:9.4px;font-weight:700;line-height:1.2;color:rgba(var(--eprgb),.95);}
-.dv-ep-mo{font-size:8.4px;font-weight:700;line-height:1.2;color:rgba(255,255,255,.88);}
-.dv-ep-cal{font-size:7.2px;font-weight:500;line-height:1.2;color:rgba(var(--eprgb),.72);}
+/* Text sizing matches the pre-bubble canvas labels exactly (LBL_SIZE
+   7.2px for shares/capital/mo, CAL_SIZE 6.4px for the calendar line, only
+   the mo line bold) rather than the daytally's own scale (small label ->
+   big headline number -> medium calendar) — the bubble borrows the
+   daytally's MATERIAL (glass/blur/border) and per-strategy tint, not its
+   typographic proportions, which were sized for a fixed 55.8px circle
+   showing one emphasised number, not a 4-line stat stack. */
+.dv-ep-sh{font-size:7.2px;font-weight:400;color:rgba(226,230,237,.7);line-height:1.2;}
+.dv-ep-cap{font-size:7.2px;font-weight:400;line-height:1.2;color:rgba(var(--eprgb),.95);}
+.dv-ep-mo{font-size:7.2px;font-weight:700;line-height:1.2;color:rgba(255,255,255,.88);}
+.dv-ep-cal{font-size:6.4px;font-weight:400;line-height:1.2;color:rgba(var(--eprgb),.72);}
 .chart-metrics{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,.08);}
 .cm{padding:7px 10px;border-right:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);}
 .cm:nth-child(even){border-right:none;}
@@ -2061,29 +2068,80 @@ function dvStrategyRapidGrowth(pts){
   return null;
 }
 function dvFindRapidGrowth(series){
-  // Every active strategy's own earliest rapid-growth hit, checked
-  // individually via dvStrategyRapidGrowth (never against some blended/
-  // combined curve). Strategies that land within 10% of the single
-  // earliest day are close enough to call a practical tie — rather than
-  // crowning one arbitrary "winner" off what's essentially noise, their
-  // day/cap get averaged into one marker. That averaged marker is left
-  // uncoloured (neutral, same convention as the real-log line) rather
-  // than blended, since it no longer speaks for one specific strategy —
-  // don't colour-code an average. A clear single earliest point (nothing
-  // else within 10%) still returns that one strategy's own true colour.
-  const hits=[];
-  for(const s of series){
-    const hit=dvStrategyRapidGrowth(s.pts);
-    if(hit)hits.push({...hit,idx:s.idx,color:s.color});
+  // Head-to-head across the active strategies — NOT each one's own
+  // earliest self-relative hit (dvStrategyRapidGrowth, still used as-is
+  // by the Sim-tab per-strategy marker and the Diagnostics "Rapid Growth
+  // Threshold" row, both genuinely single-strategy questions with nothing
+  // to compare against). A self-relative bar isn't comparable ACROSS
+  // strategies: a strategy compounding steadily fast every single day
+  // never beats its own whole-run average by 1.5x anywhere (nothing in
+  // its own history is faster than its history), so it silently scored no
+  // hit at all under the old approach — while a mostly flat strategy with
+  // one lumpy early stretch cleared its own much-lower bar easily and won
+  // "FASTEST PATH" by default. Fixed by comparing every strategy's own
+  // rolling rate directly against what every OTHER active strategy is
+  // doing over that same day range, and marking the earliest day one
+  // strategy is decisively (1.5x) ahead of the best of the rest — a bar
+  // that's actually about winning the race, not about beating its own past.
+  if(!series.length)return null;
+  if(series.length===1){
+    const hit=dvStrategyRapidGrowth(series[0].pts);
+    return hit?{...hit,idx:series[0].idx,color:series[0].color}:null;
   }
-  if(!hits.length)return null;
-  const minDay=Math.min(...hits.map(h=>h.day));
-  const tol=Math.max(minDay*0.1,1);
-  const tied=hits.filter(h=>h.day-minDay<=tol);
-  if(tied.length===1)return tied[0];
-  const day=tied.reduce((a,h)=>a+h.day,0)/tied.length;
-  const cap=tied.reduce((a,h)=>a+h.cap,0)/tied.length;
-  return{day,cap,idx:null,color:'#e2e6ed',tiedIdxs:tied.map(h=>h.idx)};
+  // Every strategy's sim loop starts its own day counter at 1 and
+  // increments by exactly 1 per row (see the `while(...){day++;...}` in
+  // _sim) — so day is a dense, shared integer axis across strategies and
+  // a day->cap lookup can be built per strategy without reconciling
+  // different day scales.
+  const capAt=series.map(s=>{const m=new Map();for(const p of s.pts)m.set(p.day,p.cap);return m;});
+  const maxDay=Math.max(...series.map(s=>s.pts[s.pts.length-1].day));
+  // One shared window sized off the LONGEST-running strategy, not each
+  // strategy's own 10%-of-itself (the original per-strategy sizing) —
+  // otherwise a strategy that finishes fast gets a smaller, noisier
+  // window than a slow one and the "who's fastest" comparison is biased
+  // by window size before the rates are even compared.
+  const win=Math.max(5,Math.floor(maxDay/10));
+  function rateAt(si,day){
+    const cap=capAt[si];const a=cap.get(day-win),b=cap.get(day);
+    return(a==null||b==null)?null:(b-a)/win;
+  }
+  for(let day=win;day<=maxDay;day++){
+    const valid=[];
+    for(let si=0;si<series.length;si++){
+      const r=rateAt(si,day);
+      if(r!=null)valid.push({r,si});
+    }
+    if(valid.length<2)continue; // need at least 2 still-running strategies to call one "ahead"
+    valid.sort((a,b)=>b.r-a.r);
+    const top=valid[0];
+    if(top.r<=0)continue;
+    // Group the leading cluster first (everyone within 10% of the TOP
+    // rate — sorted descending, so this is always a contiguous prefix of
+    // `valid`), THEN compare that cluster against the best rate OUTSIDE
+    // it. Comparing top-vs-runner-up directly (an earlier version of this
+    // fix did that) breaks the moment two strategies are genuinely
+    // neck-and-neck for the lead: the runner-up IS the other leader, so
+    // "1.5x the runner-up" becomes an unreachable bar and two strategies
+    // clearly crushing the rest of the field never registers a hit at
+    // all. Splitting into cluster-vs-outside fixes that: the tie between
+    // co-leaders is exactly the signal to average, not the thing blocking
+    // detection of them both beating everyone else.
+    const tol=Math.abs(top.r)*0.1;
+    let splitAt=1;
+    while(splitAt<valid.length&&top.r-valid[splitAt].r<=tol)splitAt++;
+    const tied=valid.slice(0,splitAt),outside=valid.slice(splitAt);
+    if(!outside.length)continue; // everyone still running is in the tie — nothing to be "ahead of" yet
+    const bar=Math.max(outside[0].r*1.5,0);
+    if(top.r<=bar)continue;
+    const hitDay=day-win;
+    if(tied.length===1){
+      const s=series[top.si];
+      return{day:hitDay,cap:capAt[top.si].get(hitDay),idx:s.idx,color:s.color};
+    }
+    const cap=tied.reduce((a,o)=>a+capAt[o.si].get(hitDay),0)/tied.length;
+    return{day:hitDay,cap,idx:null,color:'#e2e6ed',tiedIdxs:tied.map(o=>series[o.si].idx)};
+  }
+  return null;
 }
 // Near-plateau monthly rate: average daily capital growth over just the
 // TRAILING slice of a strategy's run (last ~15%, min 5 points), times 21
