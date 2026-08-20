@@ -422,15 +422,30 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
        together: capital, then monthly value, then time — in that
        top-to-bottom order — with the shares line dropped entirely (the
        share gauges elsewhere already cover that).
-   Triangle size is fixed (not auto-fit like the old bubble's width) at
-   TRI2_W×TRI2_H — generous enough that even the widest line (the monthly
-   value, typically longer than the capital figure once it carries its
-   +$/−$ sign and "/mo" suffix) still clears the sloped sides with room to
-   spare at its own vertical position; verified empirically against real
-   multi-strategy runs rather than derived from font-metrics alone.
-   Anchored via translate(-50%,-100%) so JS only ever has to set left/top
-   to the triangle's own tip — the exact data-point coordinate, matching
-   what drawGlassTriangle used to receive directly. */
+   Width is auto-fit PER INSTANCE (height stays the fixed TRI2_H — the
+   3-line text block's own height never changes, only each line's content
+   does) rather than one constant for every triangle: JS measures each of
+   the 3 lines' actual rendered width (ctx.measureText, same font/weight/
+   size as the CSS) and solves for the smallest top-edge width whose
+   sloped sides still clear every line at its own vertical position with
+   ~1% of the triangle's own width as headroom — so the text basically
+   touches the sides instead of floating in a lot of empty margin. Because
+   the sides taper and the widest line (usually the monthly value, not
+   the capital line above it) isn't at the very top, the binding
+   constraint is normally that middle line, not whichever line is
+   literally widest in isolation — the math checks all three and takes
+   the largest requirement, so nothing clips even though the two
+   non-binding lines end up with more than 1% to spare (an unavoidable
+   consequence of a straight-sided triangle, not a bug). Anchored via
+   translate(-50%,-100%) so JS only ever has to set left/top to the
+   triangle's own tip — the exact data-point coordinate, matching what
+   drawGlassTriangle used to receive directly. No more merging nearby
+   endpoints into one averaged, uncoloured triangle either — every
+   strategy (and the real-portfolio overlay) always gets its own, in its
+   own colour; the dark frosted fill reads clearly even when triangles
+   land on top of each other, so the old dvGroupEndpoints workaround
+   (built when labels were transparent fillText and any overlap was
+   unreadable) no longer earns its complexity. */
 .dv-ep-tri{
   position:absolute;left:0;top:0;
   width:var(--eptw);height:var(--epth);
@@ -2072,9 +2087,9 @@ function dvFindRapidGrowth(series){
   // asking whether anyone still running has caught up to that fixed mark.
   function capNow(si,day){return day>=finalDay[si]?finalCap[si]:capAt[si].get(day);}
   // Everyone within 2% of the day's own top capital counts as jointly
-  // leading — a real photo finish, not the 10% tolerance dvGroupEndpoints
-  // uses elsewhere for a different job (avoiding overlapping chart
-  // labels). Reused at 10% here first, but live testing across several
+  // leading — a real photo finish, not the 10% tolerance the (since
+  // retired) dvGroupEndpoints used for a different job, merging
+  // overlapping endpoint labels. Reused at 10% here first, but live testing across several
   // strategies run with the same default settings showed final capitals
   // routinely landing within 1-2% of each other from ordinary day-to-day
   // randomness alone — a 10% band called EVERY one of those runs a tie,
@@ -2166,34 +2181,12 @@ function dvUpdateRapidOverlay(rapid,dayToCal,series){
 // (via each entry's own index) — display position itself is driven by
 // each (merged) entry's own screen x/y, this ordering is just for stable
 // iteration.
-function dvGroupEndpoints(endpoints){
-  const withIdx=endpoints.map((e,i)=>({...e,_i:i}));
-  const sorted=[...withIdx].sort((a,b)=>a.cap-b.cap);
-  const groups=[];
-  for(const ep of sorted){
-    const last=groups[groups.length-1];
-    if(last){
-      const ref=last[0].cap;
-      const tol=Math.max(Math.abs(ref)*0.1,1);
-      if(Math.abs(ep.cap-ref)<=tol){last.push(ep);continue;}
-    }
-    groups.push([ep]);
-  }
-  const out=groups.map(g=>{
-    const order=Math.min(...g.map(h=>h._i));
-    if(g.length===1)return{...g[0],_order:order,members:[g[0]._i]};
-    const x=g.reduce((a,h)=>a+h.x,0)/g.length;
-    const y=g.reduce((a,h)=>a+h.y,0)/g.length;
-    const cap=g.reduce((a,h)=>a+h.cap,0)/g.length;
-    const mo=g.reduce((a,h)=>a+h.mo,0)/g.length;
-    const day=g.reduce((a,h)=>a+h.day,0)/g.length;
-    const shVals=g.filter(h=>h.sh!=null).map(h=>h.sh);
-    const sh=shVals.length?shVals.reduce((a,b)=>a+b,0)/shVals.length:null;
-    return{x,y,cap,mo,day,sh,color:null,merged:true,count:g.length,_order:order,members:g.map(h=>h._i)};
-  });
-  out.sort((a,b)=>a._order-b._order);
-  return out;
-}
+// dvGroupEndpoints (sorted-by-capital 10%-tolerance merge into one
+// averaged, uncoloured entry) used to live here. Retired once endpoint
+// triangles became solid dark frosted shapes rather than transparent
+// canvas fillText — nothing readable was left to protect by merging
+// overlapping ones, so every strategy just gets its own triangle now
+// (see the endpoint-building loop in dvDrawRaceChart).
 /* Shared "glass tube" curve material — path builder + stroke renderer.
    Originally built as a closure inside dvDrawRaceChart for the Race to
    Goal chart; pulled out to global scope (same reasoning as drawGlassRing
@@ -2429,12 +2422,30 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   // the same material .dv-daytally already uses. Placement stays
   // unconditional — every triangle sits tip-down on its own data point,
   // nothing dodges anything else — a solid frosted shape reads fine
-  // landing on top of a curve or another triangle. Triangles/lines
-  // finishing within 10% of each other's capital still merge into one
-  // averaged, uncoloured triangle centred over the group
-  // (dvGroupEndpoints) — that merge/averaging behaviour is a separate
-  // concern from positioning/shape and is unchanged.
-  const TRI2_W=112,TRI2_H=58;
+  // landing on top of a curve or another triangle. Every strategy (and
+  // the real-portfolio overlay) always gets its OWN triangle in its own
+  // colour now — no more merging close-together endpoints into one
+  // averaged, uncoloured shape (dvGroupEndpoints, retired). That
+  // averaging existed to keep overlapping labels readable back when they
+  // were transparent canvas fillText; a solid dark frosted triangle
+  // reads fine even stacked on another one, so the workaround no longer
+  // earns its complexity.
+  const TRI2_H=58;
+  const EP_TXT_PADTOP=6,EP_TXT_GAP=.5;
+  const EP_Y_CAP=EP_TXT_PADTOP+7.2*1.2;
+  const EP_Y_MO=EP_Y_CAP+EP_TXT_GAP+7.2*1.2;
+  const EP_Y_CAL=EP_Y_MO+EP_TXT_GAP+6.4*1.2;
+  // Smallest top-edge width whose sloped sides still clear a line of
+  // width `textW` sitting at vertical position `yBot` (the bottom of
+  // that line's own band — the narrowest point within it), leaving ~1%
+  // of the FINAL triangle width as headroom on each side. Solved from
+  // halfWidthAt(yBot) = (W/2)(1-yBot/H) >= textW/2 + 0.01*W.
+  const dvEpReqW=(textW,yBot)=>{
+    const avail=1-yBot/TRI2_H;
+    const denom=avail/2-0.01;
+    return denom>0?(textW/2)/denom:Infinity;
+  };
+  const EP_MIN_W=34;
   const rawEndpoints=[];
   if(hasReal){
     const lastR=realPts[realPts.length-1];
@@ -2445,31 +2456,39 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     const last=s.pts[s.pts.length-1];
     rawEndpoints.push({x:xS(last.day),y:yS(last.cap),color:s.color,cap:last.cap,mo:dvPlateauMoRate(s.pts),day:last.day});
   }
-  const labelGroups=dvGroupEndpoints(rawEndpoints);
-  // Horizontal-only clamp so a triangle near either edge of the plot
-  // still sits tip-on-point (translate(-50%,-100%) in CSS handles the
-  // centring/bottom-anchor) without spilling past the chart-wrap's
-  // border — margin is half the fixed triangle width (+2px) rather than
-  // the old auto-fit-width bubble's flat guess, since every triangle is
-  // now the same size.
-  const EP_MARGIN=TRI2_W/2+2;
   let trisHtml='';
   let epGi=0;
-  for(const grp of labelGroups){
-    const capTxt='$'+fmt(grp.cap,0);
-    const moTxt=(grp.mo>=0?'+$':'−$')+fmt(Math.abs(grp.mo),0)+'/mo';
-    const calTxt=cal(dayToCal(grp.day));
-    const [cr,cg,cb]=grp.color?hexToRgb(grp.color):[163,173,190];
+  for(const ep of rawEndpoints){
+    const capTxt='$'+fmt(ep.cap,0);
+    const moTxt=(ep.mo>=0?'+$':'−$')+fmt(Math.abs(ep.mo),0)+'/mo';
+    const calTxt=cal(dayToCal(ep.day));
+    const [cr,cg,cb]=hexToRgb(ep.color);
     // Same lightened-top-stop math as the old canvas drawGlassTriangle's
     // own border gradient (Math.min(255,c+70)), so the outline reads as
     // the same material the equity curves themselves use.
     const hr=Math.min(255,cr+70),hg=Math.min(255,cg+70),hb=Math.min(255,cb+70);
-    const anchorX=Math.min(Math.max(grp.x,pd.l+EP_MARGIN),pd.l+pw-EP_MARGIN);
+    // Measure each line with the exact font/weight/size the CSS uses so
+    // the triangle can be sized snugly around THIS endpoint's own text
+    // instead of a one-size-fits-all guess.
+    ctx.font='400 7.2px "IBM Plex Mono", monospace';
+    const capW=ctx.measureText(capTxt).width;
+    ctx.font='700 7.2px "IBM Plex Mono", monospace';
+    const moW=ctx.measureText(moTxt).width;
+    ctx.font='400 6.4px "IBM Plex Mono", monospace';
+    const calW=ctx.measureText(calTxt).width;
+    const triW=Math.max(EP_MIN_W,dvEpReqW(capW,EP_Y_CAP),dvEpReqW(moW,EP_Y_MO),dvEpReqW(calW,EP_Y_CAL));
+    // Horizontal-only clamp so a triangle near either edge of the plot
+    // still sits tip-on-point (translate(-50%,-100%) in CSS handles the
+    // centring/bottom-anchor) without spilling past the chart-wrap's
+    // border — margin is half THIS triangle's own auto-fit width, since
+    // every instance can now be a different size.
+    const epMargin=triW/2+2;
+    const anchorX=Math.min(Math.max(ep.x,pd.l+epMargin),pd.l+pw-epMargin);
     const gid='epg'+(epGi++);
-    const pts=`0,0 ${TRI2_W},0 ${TRI2_W/2},${TRI2_H}`;
-    trisHtml+=`<div class="dv-ep-tri" style="left:${anchorX}px;top:${grp.y}px;--eptw:${TRI2_W}px;--epth:${TRI2_H}px;--eprgb:${cr},${cg},${cb};--eprgb-hi:${hr},${hg},${hb};">`+
+    const pts=`0,0 ${triW},0 ${triW/2},${TRI2_H}`;
+    trisHtml+=`<div class="dv-ep-tri" style="left:${anchorX}px;top:${ep.y}px;--eptw:${triW}px;--epth:${TRI2_H}px;--eprgb:${cr},${cg},${cb};--eprgb-hi:${hr},${hg},${hb};">`+
       `<div class="dv-ep-tri-fill"></div>`+
-      `<svg class="dv-ep-tri-svg" viewBox="0 0 ${TRI2_W} ${TRI2_H}">`+
+      `<svg class="dv-ep-tri-svg" viewBox="0 0 ${triW} ${TRI2_H}">`+
         `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">`+
           `<stop offset="0" stop-color="rgb(${hr},${hg},${hb})" stop-opacity=".92"/>`+
           `<stop offset="1" stop-color="rgb(${cr},${cg},${cb})" stop-opacity=".85"/>`+
@@ -2477,7 +2496,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
         `<polygon points="${pts}" fill="none" stroke="rgba(${cr},${cg},${cb},.0392)" stroke-width="5.5" stroke-linejoin="round"/>`+
         `<polygon points="${pts}" fill="none" stroke="rgba(${cr},${cg},${cb},.0651)" stroke-width="3.2" stroke-linejoin="round"/>`+
         `<polygon points="${pts}" fill="none" stroke="url(#${gid})" stroke-width="1" stroke-linejoin="round"/>`+
-        `<line x1="1.5" y1="0.5" x2="${TRI2_W-1.5}" y2="0.5" stroke="rgba(255,255,255,.112)" stroke-width="0.9"/>`+
+        `<line x1="1.5" y1="0.5" x2="${triW-1.5}" y2="0.5" stroke="rgba(255,255,255,.112)" stroke-width="0.9"/>`+
       `</svg>`+
       `<div class="dv-ep-tri-txt">`+
         `<span class="dv-ep-cap">${capTxt}</span>`+
