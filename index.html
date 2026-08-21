@@ -284,24 +284,47 @@ tr.sel-day{transition:background .5s ease;}
    circle cluster's lopsided 3-over-2 grid with one balanced row and
    reclaims the vertical space the circ-hint line used to take (no
    idle-state hint needed — a segmented control reads as tappable on
-   its own). Icon rests at the same near-black it always resolved to
-   in the old .circ-btn (confirmed via computed style: rgb(0,0,0),
-   the button element's own default, not an explicit rule) — made
-   explicit here so the "invisible until picked" look doesn't depend
-   on an unstated UA default. Selected segment fills solid with THIS
-   strategy's identity colour (#sp0-#sp5, same accent set the tab bar
-   above already uses) and flips icon+label to dark-on-colour, the
-   same contrast move .sbtn.on already makes one screen up — unlike
+   its own). Icon originally rested at the same near-black the old
+   .circ-btn always resolved to ("invisible until picked" restraint)
+   — reverted per follow-up feedback ("black logos are hard to read")
+   to the app's own generic blue/cyan accent plus a slight drop-shadow
+   glow at rest, same --glow-rgb this app already uses for every other
+   resting-glow accent; a literal "blue theme" ask, so this is ONE
+   colour for all six strategy panes' idle icons, not each strategy's
+   own identity colour (that stays reserved for the selected fill,
+   below). Selected segment fills solid with THIS strategy's identity
+   colour (#sp0-#sp5, same accent set the tab bar above already uses)
+   and flips icon+label to dark-on-colour, the same contrast move
+   .sbtn.on already makes one screen up — already legible against the
+   bright fill, so untouched by this round's icon-colour fix — unlike
    the old circles, the label never hides, since nothing else on
    screen names which category's fields are open below. */
 .seg-bar{display:flex;gap:3px;border-radius:14px;padding:4px;background:rgba(18,23,33,.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border:1px solid rgba(255,255,255,.09);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 6px 18px -8px rgba(0,0,0,.5);}
 .seg-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:9px 2px;border-radius:10px;background:none;border:none;cursor:pointer;touch-action:manipulation;position:relative;transition:background .28s ease,box-shadow .28s ease;}
-.seg-ic{display:flex;color:#000;}
+.seg-ic{display:flex;color:var(--accent-solid);filter:drop-shadow(0 0 3px rgba(var(--glow-rgb),.55));}
 .seg-ic svg{width:16px;height:16px;transition:color .2s ease;}
 .seg-btn .ovr-badge{position:absolute;top:1px;right:3px;font-size:6px;padding:1px 3px;}
 .seg-lbl{font-family:'Cabinet Grotesk',sans-serif;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#e2e6ed;transition:color .2s ease;}
-.seg-btn.sel .seg-ic{color:#0a0d13;}
+.seg-btn.sel .seg-ic{color:#0a0d13;filter:none;}
 .seg-btn.sel .seg-lbl{color:#0a0d13;font-weight:800;}
+/* "a little more reflective quality in the section body" — the panel
+   that opens below (.circ-panel-inner, holding WIN RATE/BREAKEVEN/etc
+   for Core, R:R OVERRIDE/etc for Overrides...) shares its glass recipe
+   with many other cards app-wide via the shared frost list up top
+   (.fc/.chart-panel/.diag/.vs-card/etc), so this layers extra shine on
+   TOP of that shared rule scoped to #scr-sim specifically — Journal's
+   and Stats' own opened panels (same .circ-panel-inner class) are
+   untouched. Adds a bright top-down ellipse sheen (the same "reflects
+   more light up top, fades out" recipe #gc-stepper .stp already uses
+   for its own liquid-glass surface) layered above the existing
+   diagonal gloss rather than replacing it, plus a brighter top-edge
+   specular line via box-shadow. */
+#scr-sim .circ-panel-inner{
+  background-image:
+    radial-gradient(ellipse 140% 60% at 50% 0%,rgba(255,255,255,.22) 0%,rgba(255,255,255,.06) 55%,transparent 82%),
+    linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,0) 60%) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.07),0 10px 28px -10px rgba(0,0,0,.55);
+}
 
 .fc{background:#10141c;border:1px solid #232b3d;border-left-width:2px;border-radius:3px;padding:8px 10px;margin-bottom:5px;}
 .fc.off{opacity:.22;pointer-events:none;}
