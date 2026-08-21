@@ -4374,14 +4374,15 @@ const INFO={
 const SDEFS=[['minP',15,'t'],['maxP',30,'t'],['minL',5,'t'],['maxL',15,'t'],['minWR',55,'%'],['maxWR',65,'%'],['minBE',10,'%'],['maxBE',20,'%'],['minT',2,''],['maxT',5,''],['sh',100,''],['goal',500,''],['minPr',43,''],['maxPr',47,''],['spread',1,'t'],['slip',1,'t'],['buf',1,''],['cap',0,'t'],['disc',85,'%'],['bf',3,'%'],['bs',2,'%'],['gf',3,'%'],['gs_',2,'%'],['minPB',3,'t'],['maxPB',8,'t'],['minEO',1,'t'],['maxEO',4,'t'],['minSw',15,'t'],['maxSw',40,'t'],['rrSlider',0,''],['tickSz',1,'¢'],['minDp',-2,'%'],['maxDp',3,'%'],['bias',50,'%'],['intv',5,''],['volCeil',0,'sh'],['vwFH_min',60000,'/m'],['vwFH_max',120000,'/m'],['vwMD_min',15000,'/m'],['vwMD_max',40000,'/m'],['vwLH_min',30000,'/m'],['vwLH_max',70000,'/m'],['partRate',10,'%']];
 
 // Round 78: CSV/Restart got icons so their action reads at a glance
-// instead of relying on the label alone. Round 83: Restart was renamed
-// from "Clear" back when clearStrategy() reset a tab to shipped
-// defaults; it's since been narrowed to restartStrategy() (see its own
-// comment below) which only clears results, not settings — "Restart"
-// still reads correctly for that ("start the calculation over"), so
-// the label didn't need to change again.
+// instead of relying on the label alone. Round 83: renamed from "Clear"
+// to "Restart" when clearStrategy() was narrowed down to
+// restartStrategy() (see its own comment below), which only clears
+// results, not settings. Round 84: relabeled again to "Reset" per
+// explicit request; function/icon renamed to resetStrategy()/RESET_ICON
+// to match. Note the button still only clears results, never settings —
+// that hasn't changed, only the word on it.
 const DOWNLOAD_ICON=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
-const RESTART_ICON=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>`;
+const RESET_ICON=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>`;
 function buildPanes(){
   [0,1,2,3,4,5].forEach(n=>{
     const pane=$('sp'+n);if(!pane)return;
@@ -4497,7 +4498,7 @@ function buildPanes(){
       <div class="sim-row">
         <button class="sim-btn ${SCLS}" onclick="simulate(${n})">Simulate</button>
         <button class="exp-btn" onclick="exportData(${n})">${DOWNLOAD_ICON}<span>CSV</span></button>
-        <button class="exp-btn" onclick="restartStrategy(${n})" title="Remove Strategy ${L} from calculations">${RESTART_ICON}<span>Restart</span></button>
+        <button class="exp-btn" onclick="resetStrategy(${n})" title="Remove Strategy ${L} from calculations">${RESET_ICON}<span>Reset</span></button>
       </div>
       <div class="mode-row">
         <span class="mode-lbl">Sim Mode</span>
@@ -4534,7 +4535,7 @@ function buildPanes(){
   });
 }
 
-// Restarts one strategy tab's CALCULATION, not its configuration: clears
+// Resets one strategy tab's CALCULATION, not its configuration: clears
 // that tab's last simulation run (results, chart, Diagnostics, chart-
 // metrics tiles, rapid-growth callout) so it drops out of Strategy
 // Comparison and the Table race chart exactly as if it had never been
@@ -4545,7 +4546,7 @@ function buildPanes(){
 // results, which is real, frustrating data loss for something the user
 // just wanted to re-run. Now it only clears what a fresh Simulate click
 // would regenerate anyway; settings survive untouched.
-function restartStrategy(tab){
+function resetStrategy(tab){
   const L=STRAT_LABELS[tab];
   if(!confirm('Remove Strategy '+L+' from the comparison? Its results will be cleared — your settings stay as they are, and you can re-simulate anytime.'))return;
   const s=tab===0?'':'_'+tab;
