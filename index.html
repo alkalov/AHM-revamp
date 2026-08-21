@@ -154,13 +154,13 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
    class (initPressBloom below) since CSS :active alone is unreliable
    for quick taps on mobile Safari/Chrome — kept here too as a bonus
    for desktop mouse/trackpad. */
-.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.tog,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn{
+.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.tog,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close{
   transition:box-shadow .18s ease,transform .12s ease,background .18s ease,color .15s ease;
 }
 .sim-btn:active,.j-save-btn:active,.sess-btn:active,.exp-btn:active,.guide-btn:active,
-.ib:active,.stp-btn:active,.nb:active,.sbtn:active,.scale-btn:active,.circ-btn:active,.seg-btn:active,.dv-tbtn:active,
+.ib:active,.stp-btn:active,.nb:active,.sbtn:active,.scale-btn:active,.circ-btn:active,.seg-btn:active,.dv-tbtn:active,.tc-qbtn:active,.tc-close:active,
 .sim-btn.pressed,.j-save-btn.pressed,.sess-btn.pressed,.exp-btn.pressed,.guide-btn.pressed,
-.ib.pressed,.stp-btn.pressed,.nb.pressed,.sbtn.pressed,.scale-btn.pressed,.circ-btn.pressed,.seg-btn.pressed,.dv-tbtn.pressed{
+.ib.pressed,.stp-btn.pressed,.nb.pressed,.sbtn.pressed,.scale-btn.pressed,.circ-btn.pressed,.seg-btn.pressed,.dv-tbtn.pressed,.tc-qbtn.pressed,.tc-close.pressed{
   box-shadow:0 0 14px 1px rgba(var(--glow-rgb),.15);
   transform:scale(.97);
 }
@@ -808,9 +808,9 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .dnote{font-size:9px;color:#4d5a6e;}
 .disc{margin:8px 16px 16px;}
 .disc p{font-size:9px;color:#4d5a6e;line-height:1.6;}
-.tbl-controls{display:flex;gap:8px;padding:8px 16px;border-bottom:1px solid #232b3d;align-items:center;background:#10141c;}
+.tbl-controls{display:flex;gap:6px;padding:5px 16px;border-bottom:1px solid #232b3d;align-items:center;background:#10141c;}
 .tc-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;white-space:nowrap;}
-.tc-stp{flex:1;}
+.tc-stp{flex:none;}
 /* "the header for the table will also be updated to reflect the sim
    section" — this interval stepper already shares its underlying glass
    recipe with every other .stp in the app (the shared rule up top:
@@ -823,7 +823,38 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    .circ-panel-inner already use, scoped to #scr-tbl so every other .stp
    in the app (dense settings fields, meant to stay compact) is
    untouched. */
-#scr-tbl .tc-stp .stp{border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.14);}
+#scr-tbl .tc-stp .stp{border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.14);width:auto;}
+#scr-tbl .tc-stp .stp-val{width:34px;flex:none;font-size:13px !important;height:28px;}
+#scr-tbl .tc-stp .stp-btn{width:26px;height:26px;font-size:13px;}
+/* "the increment bar takes up so much space, any ideas?" — measured
+   first: the always-visible stepper's own .tc-stp{flex:1} stretched a
+   single 1-3 digit value across the ENTIRE remaining row width (320px
+   measured for one character), the single biggest wasted-space
+   offender on this screen, at 51px tall. Replaced the default view
+   with a segmented quick-pick (.tc-quick/.tc-qbtn) reusing the Sim
+   tab's seg-btn capsule language (round 69) rather than inventing a
+   new visual vocabulary - four common intervals as one-tap chips.
+   Tapping the trailing "···" chip reveals the ORIGINAL stepper
+   (#intv-wrap-{tab}, untouched JS/data path - same mkStp/clampStp/LIM
+   plumbing, same save/load persistence via SDEFS - see tcOpenCustom/
+   tcCloseCustom) instead of building a second custom-value input from
+   scratch; .tc-close collapses it back to the quick-pick. That chip
+   also mirrors back whatever custom value is actually active (e.g.
+   "17") rather than just showing "···" once the user has one dialled
+   in, so the custom state stays glanceable without opening it. .tc-stp
+   and its inner .stp/.stp-val/.stp-btn also dropped their flex:1/fixed
+   36x32 sizing for content-hugging widths (scoped under #scr-tbl since
+   .stp/.stp-btn are shared app-wide) - the rare expanded/custom state
+   is now proportioned like the rest of this redesign instead of
+   reverting to the old oversized control. Row height measured 51px
+   baseline -> 36px with the quick-pick showing (30% shorter), buying
+   back a visible extra table row (confirmed via Playwright). */
+.tc-quick{display:flex;align-items:center;gap:3px;background:rgba(12,15,22,.44);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:2px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
+.tc-qbtn{border:none;background:transparent;color:#7d8699;font-size:9.5px;font-weight:600;padding:4px 8px;border-radius:7px;cursor:pointer;touch-action:manipulation;}
+.tc-qbtn.on{background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(56,189,248,1) 55%);color:#0a0d13;font-weight:800;box-shadow:0 2px 8px -2px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+.tc-qbtn-custom{color:#4d5a6e;letter-spacing:.04em;padding:4px 7px;min-width:14px;text-align:center;}
+.tc-qbtn-custom.on{background:rgba(56,189,248,.16);color:var(--accent-solid);box-shadow:none;font-weight:700;}
+.tc-close{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #232b3d;border-radius:5px;color:#4d5a6e;font-size:10px;cursor:pointer;touch-action:manipulation;}
 /* Share gauges used to be drawn on-canvas inside the race chart itself,
    docked bottom-right during a hover. With six strategies now instead of
    three, that many gauges crowded into the chart's own corner read as
@@ -1140,12 +1171,20 @@ canvas.spark{width:100%;height:34px;display:block;}
       </div>
       <div class="tbl-controls">
         <span class="tc-lbl">Every</span>
-        <div class="tc-stp" id="intv-wrap-0"></div>
+        <div class="tc-quick" id="tc-quick">
+          <button class="tc-qbtn" data-v="1" onclick="tcQuickPick(1)">1</button>
+          <button class="tc-qbtn" data-v="5" onclick="tcQuickPick(5)">5</button>
+          <button class="tc-qbtn" data-v="10" onclick="tcQuickPick(10)">10</button>
+          <button class="tc-qbtn" data-v="20" onclick="tcQuickPick(20)">20</button>
+          <button class="tc-qbtn tc-qbtn-custom" id="tc-qcustom" onclick="tcOpenCustom()">···</button>
+        </div>
+        <div class="tc-stp" id="intv-wrap-0" style="display:none;"></div>
         <div class="tc-stp" id="intv-wrap-1" style="display:none;"></div>
         <div class="tc-stp" id="intv-wrap-2" style="display:none;"></div>
         <div class="tc-stp" id="intv-wrap-3" style="display:none;"></div>
         <div class="tc-stp" id="intv-wrap-4" style="display:none;"></div>
         <div class="tc-stp" id="intv-wrap-5" style="display:none;"></div>
+        <button class="tc-close" id="tc-close" onclick="tcCloseCustom()" style="display:none;">✕</button>
         <span class="tc-lbl">days</span>
       </div>
       <div class="tbl-scroll" id="tbl-scroll">
@@ -1396,7 +1435,7 @@ function switchScreen(n){
   SCREENS.forEach(s=>{const sc=$('scr-'+s),nb=$('nb-'+s);if(sc)sc.classList.toggle('active',s===n);if(nb)nb.classList.toggle('on',s===n);});
   activeScreen=n;
   if(n==='log'){$('jdate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});renderJournal();}
-  if(n==='tbl')renderTable(activeTblStrat);
+  if(n==='tbl'){renderTable(activeTblStrat);tcSyncQuickUI(activeTblStrat);}
   if(n==='stats')onReal();
 }
 
@@ -1433,7 +1472,52 @@ function updateStratTab(tab){
     stat.textContent=statTxt;
   });
 }
-function switchTblStrat(n){activeTblStrat=n;[0,1,2,3,4,5].forEach(i=>{$('tsb'+i).classList.toggle('on',i===n);const iw=$('intv-wrap-'+i);if(iw)iw.style.display=i===n?'flex':'none';});renderTable(n);dvSyncTblScroll();}
+/* Table tab's interval control: default view is a segmented quick-pick
+   (.tc-quick, "1/5/10/20/···"), not the raw stepper - see the CSS
+   comment above #scr-tbl .tc-stp .stp for the full rationale. The
+   underlying per-tab steppers (#intv-wrap-0..5) still exist exactly as
+   built by wirePanes()/mkStp - tcOpenCustom/tcCloseCustom just toggle
+   which one is visible, same as switchTblStrat always did; tcCustomOpen
+   tracks whether the user currently has that raw stepper open so a tab
+   switch while it's open follows them to the new tab's own stepper
+   instead of snapping back to the quick-pick. */
+let tcCustomOpen=false;
+const TC_PRESETS=[1,5,10,20];
+function tcSyncQuickUI(tab){
+  const fid='intv'+(tab===0?'':'_'+tab);
+  const v=parseFloat($(fid)?.value)||1;
+  const isPreset=TC_PRESETS.includes(v);
+  document.querySelectorAll('#tc-quick .tc-qbtn:not(.tc-qbtn-custom)').forEach(b=>{
+    b.classList.toggle('on',+b.dataset.v===v);
+  });
+  const cb=$('tc-qcustom');
+  if(cb){cb.classList.toggle('on',!isPreset);cb.textContent=isPreset?'···':String(v);}
+}
+function tcQuickPick(v){
+  const tab=activeTblStrat;
+  const fid='intv'+(tab===0?'':'_'+tab);
+  const inp=$(fid);if(!inp)return;
+  inp.value=v;
+  clampStp(fid,tab);
+  tcSyncQuickUI(tab);
+  renderTable(tab);
+}
+function tcOpenCustom(){
+  tcCustomOpen=true;
+  const q=$('tc-quick'),cl=$('tc-close'),iw=$('intv-wrap-'+activeTblStrat);
+  if(q)q.style.display='none';
+  if(cl)cl.style.display='flex';
+  if(iw)iw.style.display='flex';
+}
+function tcCloseCustom(){
+  tcCustomOpen=false;
+  const q=$('tc-quick'),cl=$('tc-close'),iw=$('intv-wrap-'+activeTblStrat);
+  if(q)q.style.display='flex';
+  if(cl)cl.style.display='none';
+  if(iw)iw.style.display='none';
+  tcSyncQuickUI(activeTblStrat);
+}
+function switchTblStrat(n){activeTblStrat=n;[0,1,2,3,4,5].forEach(i=>{$('tsb'+i).classList.toggle('on',i===n);const iw=$('intv-wrap-'+i);if(iw)iw.style.display=(tcCustomOpen&&i===n)?'flex':'none';});tcSyncQuickUI(n);renderTable(n);dvSyncTblScroll();}
 /* Keep the table scrolled to the same day across A/B/C switches, so
    flipping tabs compares the same point in time instead of landing
    wherever that strategy's own scrollTop last happened to be — each
@@ -4406,11 +4490,12 @@ function wirePanes(){
   [0,1,2,3,4,5].forEach(tab=>{
     const iw=$('intv-wrap-'+tab);if(!iw)return;
     const el=mkStp('intv',tab,'');iw.replaceWith(el);el.id='intv-wrap-'+tab;
-    if(tab!==0)el.style.display='none';
+    el.style.display='none';
     const inp=el.querySelector('.stp-val');
-    if(inp){inp.addEventListener('change',()=>renderTable(activeTblStrat));inp.addEventListener('blur',()=>renderTable(activeTblStrat));}
-    el.querySelectorAll('.stp-btn').forEach(b=>b.addEventListener('pointerup',()=>setTimeout(()=>renderTable(activeTblStrat),60)));
+    if(inp){inp.addEventListener('change',()=>{renderTable(activeTblStrat);tcSyncQuickUI(activeTblStrat);});inp.addEventListener('blur',()=>{renderTable(activeTblStrat);tcSyncQuickUI(activeTblStrat);});}
+    el.querySelectorAll('.stp-btn').forEach(b=>b.addEventListener('pointerup',()=>setTimeout(()=>{renderTable(activeTblStrat);tcSyncQuickUI(activeTblStrat);},60)));
   });
+  tcSyncQuickUI(0);
   dvWireTableScroll();
   initTableAxisLock();
   const gcEl=$('gc-stepper');
@@ -4472,7 +4557,7 @@ async function load(){
    at page-load or gets created later by buildPanes/buildJournalCircles/
    buildStatsCircle — no per-element wiring needed. */
 function initPressBloom(){
-  const SEL='.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn';
+  const SEL='.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close';
   const press=e=>{const t=e.target.closest(SEL);if(t)t.classList.add('pressed');};
   const release=e=>{const t=e.target.closest(SEL);if(t)setTimeout(()=>t.classList.remove('pressed'),120);};
   document.addEventListener('pointerdown',press,{passive:true});
