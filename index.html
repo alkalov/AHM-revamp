@@ -61,7 +61,7 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
    applies cleanly to flex/table containers too without needing
    position/overflow tricks on each one. */
 .fc,.chart-panel,.diag,.grade-card,.jsec,.vs-card,.gauge-row,.wrc,
-.circ-panel-inner,.stats-inp,.stats-grid .sg,.log-info,.inp-grp,
+.circ-panel-inner,.stats-inp,.stats-grid .sg,.inp-grp,
 .spark-cell,.jhist,.friction-breakdown,.sbar,.tbl-controls,.dv-half,
 .mbox,.ibox,.global-capital,.sc-s,.mode-row,.sim-row,.tb-card{
   background-color:rgba(18,23,33,.42) !important;
@@ -90,12 +90,23 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
 }
 /* Nav-chrome bars: always-visible, thinner blur than floating cards
    so they read as a stable frame rather than another glass pane. */
-.topbar,.bnav{
+.topbar{
   background-color:rgba(16,20,28,.7) !important;
   background-image:linear-gradient(135deg,rgba(255,255,255,.045),rgba(255,255,255,0) 45%) !important;
   -webkit-backdrop-filter:blur(14px);
   backdrop-filter:blur(14px);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.055),inset 0 0 0 1px rgba(255,255,255,.02);
+}
+/* Round 78: the floating island reads more transparent than the rest
+   of the nav-chrome family on purpose — thead/.slbl below sit at .48,
+   this is deliberately lighter (.38) since it floats over content
+   instead of sitting flush against an edge. box-shadow (incl. the
+   elevation drop-shadow) stays owned by the later layout .bnav rule. */
+.bnav{
+  background-color:rgba(16,20,28,.38) !important;
+  background-image:linear-gradient(135deg,rgba(255,255,255,.045),rgba(255,255,255,0) 45%) !important;
+  -webkit-backdrop-filter:blur(18px);
+  backdrop-filter:blur(18px);
 }
 .slbl,.dv-diag,thead{
   background-color:rgba(18,23,33,.48) !important;
@@ -433,9 +444,17 @@ tr.sel-day{transition:background .5s ease;}
 .sim-btn.sc-d{background:#84cc16;color:#0a0d13;}
 .sim-btn.sc-e{background:#ef4444;color:#0a0d13;}
 .sim-btn.sc-f{background:#ec4899;color:#0a0d13;}
-.exp-btn{height:42px;padding:0 12px;background:transparent;border:1px solid #232b3d;color:#4d5a6e;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:3px;touch-action:manipulation;}
+.exp-btn{height:42px;padding:0 12px;background:transparent;border:1px solid #232b3d;color:#4d5a6e;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:3px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:5px;}
+.exp-btn svg{flex-shrink:0;}
 .exp-btn:active{border-color:var(--accent-solid);color:var(--accent-solid);}
-.mode-row{padding:5px 16px 7px;border-bottom:1px solid #232b3d;display:flex;align-items:center;gap:8px;background:#10141c;}
+/* Round 78: Randomise Daily is the only mode that models real day-to-day
+   trade variance (see the c.mode==='rand' branches in the sim engine) —
+   "Use Midpoints" collapses every day to the same deterministic average,
+   which is the opposite of what this app is for. So it's kept as the
+   sole functional mode (already the default, and reset-to-defaults
+   already re-selects it) but the picker itself is hidden — nothing here
+   for a user to change, on purpose. */
+.mode-row{padding:5px 16px 7px;border-bottom:1px solid #232b3d;align-items:center;gap:8px;background:#10141c;display:none;}
 .mode-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;white-space:nowrap;}
 .mode-sel{flex:1;background:#161b26;border:1px solid #232b3d;color:#8892a4;font-family:'IBM Plex Mono',monospace;font-size:11px !important;height:28px;padding:0 7px;outline:none;border-radius:3px;}
 .chart-panel{margin:8px 0;background:#10141c;border:1px solid #232b3d;border-radius:3px;overflow:hidden;}
@@ -978,7 +997,10 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 #gc-stepper .stp-unit{font-size:12px;font-weight:700;color:var(--accent-solid);background:transparent;padding-right:12px;}
 .tbl-empty{padding:32px;text-align:center;font-size:10px;color:#4d5a6e;}
 .log-body{padding:8px 16px;}
-.log-info{font-size:9px;color:#4d5a6e;text-align:center;margin-bottom:6px;letter-spacing:.07em;}
+/* Round 78: was boxed via the shared card-glass list (a window around
+   one line of meta-text); now just accent-colored text so it stands
+   out without needing a container. */
+.log-info{font-size:9px;font-weight:600;color:var(--accent-solid);text-align:center;margin-bottom:6px;letter-spacing:.07em;}
 .inp-grp{background:#10141c;border-radius:3px;margin:0 -16px 7px;overflow:hidden;border:1px solid #232b3d;}
 .tb-card{border:1px solid #232b3d;border-radius:3px;padding:7px 10px;margin:0 -16px 7px;}
 .inp-row{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-bottom:1px solid #1c2333;}
@@ -1012,7 +1034,8 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 .jnote{width:100%;background:#161b26;border:1px solid #232b3d;color:#e2e6ed;font-family:'IBM Plex Mono',monospace;font-size:14px;padding:7px 10px;outline:none;border-radius:3px;resize:none;min-height:56px;line-height:1.5;}
 .jnote:focus{border-color:var(--accent-solid);}
 .jnotes-wrap{padding:7px 12px;}
-.j-save-btn{width:100%;height:36px;background:transparent;border:1px solid rgba(56,189,248,.35);color:var(--accent-solid);font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;border-radius:3px;margin-bottom:8px;touch-action:manipulation;}
+.j-save-btn{width:100%;height:36px;background:transparent;border:1px solid rgba(56,189,248,.35);color:var(--accent-solid);font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;border-radius:3px;margin-bottom:8px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:6px;}
+.j-save-btn svg{flex-shrink:0;}
 .j-save-btn:active{background:rgba(56,189,248,.1);}
 .spark-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px;}
 .spark-cell{background:#10141c;padding:7px 9px;border-radius:3px;border:1px solid #232b3d;}
@@ -1273,7 +1296,7 @@ canvas.spark{width:100%;height:34px;display:block;}
         <div class="grade-big" id="sd-grade">—</div>
       </div>
 
-      <button class="j-save-btn" onclick="exportLogCSV()" style="border-color:#60a5fa;color:#60a5fa;">Export Log + Journal CSV</button>
+      <button class="j-save-btn" onclick="exportLogCSV()" style="border-color:#60a5fa;color:#60a5fa;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Export Log + Journal CSV</span></button>
       <div class="spark-grid" id="spark-grid" style="display:none;"></div>
       <div class="jhist" id="jhist"><div class="jhist-hd">History</div><div class="jentry" style="color:#4d5a6e;font-size:10px;text-align:center;padding:14px;">No entries yet.</div></div>
     </div>
@@ -1316,7 +1339,7 @@ canvas.spark{width:100%;height:34px;display:block;}
       <div class="stats-grid">
         <div class="sg"><div class="sgl">YTD Return</div><div class="sgv" id="rYTD">—</div></div>
       </div>
-      <button class="j-save-btn" onclick="exportLogCSV()" style="border-color:#60a5fa;color:#60a5fa;margin-top:4px;">Export Log + Journal CSV</button>
+      <button class="j-save-btn" onclick="exportLogCSV()" style="border-color:#60a5fa;color:#60a5fa;margin-top:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Export Log + Journal CSV</span></button>
     </div>
   </div>
 
@@ -4316,6 +4339,12 @@ const INFO={
 
 const SDEFS=[['minP',15,'t'],['maxP',30,'t'],['minL',5,'t'],['maxL',15,'t'],['minWR',55,'%'],['maxWR',65,'%'],['minBE',10,'%'],['maxBE',20,'%'],['minT',2,''],['maxT',5,''],['sh',100,''],['goal',500,''],['minPr',43,''],['maxPr',47,''],['spread',1,'t'],['slip',1,'t'],['buf',1,''],['cap',0,'t'],['disc',85,'%'],['bf',3,'%'],['bs',2,'%'],['gf',3,'%'],['gs_',2,'%'],['minPB',3,'t'],['maxPB',8,'t'],['minEO',1,'t'],['maxEO',4,'t'],['minSw',15,'t'],['maxSw',40,'t'],['rrSlider',0,''],['tickSz',1,'¢'],['minDp',-2,'%'],['maxDp',3,'%'],['bias',50,'%'],['intv',5,''],['volCeil',0,'sh'],['vwFH_min',60000,'/m'],['vwFH_max',120000,'/m'],['vwMD_min',15000,'/m'],['vwMD_max',40000,'/m'],['vwLH_min',30000,'/m'],['vwLH_max',70000,'/m'],['partRate',10,'%']];
 
+// Round 78: CSV/Restart got icons so their action reads at a glance
+// instead of relying on the label alone. Restart also renamed from
+// "Clear" — clearStrategy() resets to shipped defaults, it doesn't
+// wipe to blank, so "Restart" is the more honest word for what it does.
+const DOWNLOAD_ICON=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+const RESTART_ICON=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>`;
 function buildPanes(){
   [0,1,2,3,4,5].forEach(n=>{
     const pane=$('sp'+n);if(!pane)return;
@@ -4430,8 +4459,8 @@ function buildPanes(){
       ${circHtml}
       <div class="sim-row">
         <button class="sim-btn ${SCLS}" onclick="simulate(${n})">Simulate</button>
-        <button class="exp-btn" onclick="exportData(${n})">CSV</button>
-        <button class="exp-btn" onclick="clearStrategy(${n})" title="Reset Strategy ${L} to defaults">Clear</button>
+        <button class="exp-btn" onclick="exportData(${n})">${DOWNLOAD_ICON}<span>CSV</span></button>
+        <button class="exp-btn" onclick="clearStrategy(${n})" title="Reset Strategy ${L} to defaults">${RESTART_ICON}<span>Restart</span></button>
       </div>
       <div class="mode-row">
         <span class="mode-lbl">Sim Mode</span>
