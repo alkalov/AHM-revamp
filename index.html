@@ -19,7 +19,7 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 input[type=number]{-moz-appearance:textfield;}
 ::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-thumb{background:var(--accent-solid);opacity:.5;border-radius:2px;}
-html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'Inter',sans-serif;font-size:13px;overflow:hidden;}
+html,body{height:100%;background:#04060a;color:#e2e6ed;font-family:'Inter',sans-serif;font-size:13px;overflow:hidden;}
 
 /* ══════════════════════════════════════════════════════════════
    GLASS / GLOSS / GLOW SYSTEM
@@ -34,10 +34,17 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'Inter',sans-
    so those blooms diffuse visibly through it, with a diagonal gloss
    sheen and inset highlight/shadow giving each surface real depth.
    ══════════════════════════════════════════════════════════════ */
+/* Round 89: deepened to match the onboarding wizard's own near-black
+   (#04060a, was #0a0d13) plus one added top-down ellipse glow (same
+   shape as the wizard's aw-root gradient) layered in front of the
+   existing three colour blooms - gives the same sense of a light
+   source receding into real depth that the wizard had, instead of
+   just a flat dark navy behind the glass cards. */
 @media (prefers-reduced-motion:no-preference){
   body::before{
     content:'';position:fixed;inset:-10%;z-index:0;pointer-events:none;
     background:
+      radial-gradient(ellipse 140% 60% at 50% -10%, rgba(56,189,248,.09) 0%, transparent 55%),
       radial-gradient(circle at 12% 6%, rgba(59,130,246,.34) 0%, transparent 45%),
       radial-gradient(circle at 90% 22%, rgba(34,211,238,.30) 0%, transparent 42%),
       radial-gradient(circle at 40% 95%, rgba(34,211,238,.14) 0%, transparent 48%);
@@ -47,7 +54,9 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'Inter',sans-
 @media (prefers-reduced-motion:reduce){
   body::before{
     content:'';position:fixed;inset:-10%;z-index:0;pointer-events:none;
-    background:radial-gradient(circle at 20% 20%, rgba(56,189,248,.08) 0%, transparent 50%);
+    background:
+      radial-gradient(ellipse 140% 60% at 50% -10%, rgba(56,189,248,.07) 0%, transparent 55%),
+      radial-gradient(circle at 20% 20%, rgba(56,189,248,.08) 0%, transparent 50%);
     filter:blur(60px);
   }
 }
@@ -62,8 +71,8 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'Inter',sans-
    position/overflow tricks on each one. */
 .fc,.chart-panel,.diag,.grade-card,.jsec,.vs-card,.gauge-row,.wrc,
 .circ-panel-inner,.stats-inp,.stats-grid .sg,.inp-grp,
-.spark-cell,.jhist,.friction-breakdown,.sbar,.tbl-controls,.dv-half,
-.mbox,.ibox,.global-capital,.sc-s,.mode-row,.sim-row,.tb-card{
+.spark-cell,.jhist,.friction-breakdown,.tbl-controls,.dv-half,
+.mbox,.ibox,.sc-s,.mode-row,.tb-card{
   background-color:rgba(18,23,33,.42) !important;
   background-image:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,0) 55%) !important;
   -webkit-backdrop-filter:blur(26px) saturate(1.7);
@@ -228,8 +237,8 @@ tr.sel-day{transition:background .5s ease;}
 .nb span{display:none;}
 .nb-pip{position:absolute;top:4px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--accent);display:none;z-index:2;}
 .nb-pip.on{display:block;}
-.slbl{padding:5px 16px 4px;font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.2em;border-bottom:1px solid #232b3d;background:#0a0d13;position:sticky;top:0;z-index:20;}
-.sbar{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #232b3d;background:#10141c;}
+.slbl{padding:5px 16px 4px;font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.2em;border-bottom:1px solid #232b3d;background:#04060a;position:sticky;top:0;z-index:20;}
+.sbar{display:grid;grid-template-columns:repeat(3,1fr);}
 .sbtn{flex:1;height:34px;background:none;border:none;border-bottom:1px solid transparent;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#4d5a6e;cursor:pointer;transition:color .12s,border-color .12s;}
 .sbtn.on{color:#38bdf8;border-color:#38bdf8;}
 .sbtn.on.sc-b{color:#fb923c;border-color:#fb923c;}
@@ -366,7 +375,7 @@ tr.sel-day{transition:background .5s ease;}
    bright fill, so untouched by this round's icon-colour fix — unlike
    the old circles, the label never hides, since nothing else on
    screen names which category's fields are open below. */
-.seg-bar{display:flex;gap:3px;border-radius:14px;padding:4px;background:rgba(18,23,33,.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border:1px solid rgba(255,255,255,.09);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 6px 18px -8px rgba(0,0,0,.5);}
+.seg-bar{display:flex;gap:6px;padding:4px 0;}
 .seg-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:9px 2px;border-radius:10px;background:none;border:none;cursor:pointer;touch-action:manipulation;position:relative;transition:background .28s ease,box-shadow .28s ease;}
 .seg-ic{display:flex;color:var(--accent-solid);filter:drop-shadow(0 0 3px rgba(var(--glow-rgb),.55));}
 .seg-ic svg{width:16px;height:16px;transition:color .2s ease;}
@@ -393,7 +402,7 @@ tr.sel-day{transition:background .5s ease;}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.07),0 10px 28px -10px rgba(0,0,0,.55);
 }
 
-.fc{background:#10141c;border:1px solid #232b3d;border-left-width:2px;border-radius:3px;padding:8px 10px;margin-bottom:5px;}
+.fc{background:#10141c;border:1px solid #232b3d;border-left-width:2px;border-radius:12px;padding:8px 10px;margin-bottom:5px;}
 .fc.off{opacity:.22;pointer-events:none;}
 .fc.off .fc-top{pointer-events:auto;opacity:1;}
 .fc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
@@ -429,7 +438,7 @@ tr.sel-day{transition:background .5s ease;}
 .db-g{background:#34d399;}.db-b{background:#60a5fa;}.db-r{background:#f87171;}
 .dist-labels{display:flex;justify-content:space-between;margin-top:5px;}
 .dist-labels span{font-size:8px;}
-.sim-row{padding:9px 16px;border-bottom:1px solid #232b3d;display:flex;gap:7px;}
+.sim-row{padding:9px 16px;display:flex;gap:7px;}
 .sim-btn{
   --rgb:82,181,224;
   flex:1;height:48px;
@@ -444,9 +453,9 @@ tr.sel-day{transition:background .5s ease;}
 .sim-btn.sc-d{--rgb:126,180,44;}
 .sim-btn.sc-e{--rgb:217,89,89;}
 .sim-btn.sc-f{--rgb:215,91,153;}
-.exp-btn{height:42px;padding:0 12px;background:transparent;border:1px solid #232b3d;color:#4d5a6e;font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:7px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:inset 0 1px 0 rgba(255,255,255,.1);}
+.exp-btn{height:42px;padding:0 12px;background:transparent;border:none;color:#4d5a6e;font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:7px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:5px;}
 .exp-btn svg{flex-shrink:0;}
-.exp-btn:active{border-color:var(--accent-solid);color:var(--accent-solid);}
+.exp-btn:active{color:var(--accent-solid);opacity:.72;}
 /* Round 78: Randomise Daily is the only mode that models real day-to-day
    trade variance (see the c.mode==='rand' branches in the sim engine) —
    "Use Midpoints" collapses every day to the same deterministic average,
@@ -457,7 +466,7 @@ tr.sel-day{transition:background .5s ease;}
 .mode-row{padding:5px 16px 7px;border-bottom:1px solid #232b3d;align-items:center;gap:8px;background:#10141c;display:none;}
 .mode-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;white-space:nowrap;}
 .mode-sel{flex:1;background:#161b26;border:1px solid #232b3d;color:#8892a4;font-family:'Inter',sans-serif;font-size:11px !important;height:28px;padding:0 7px;outline:none;border-radius:3px;}
-.chart-panel{margin:8px 0;background:#10141c;border:1px solid #232b3d;border-radius:3px;overflow:hidden;}
+.chart-panel{margin:8px 0;background:#10141c;border:1px solid #232b3d;border-radius:12px;overflow:hidden;}
 .chart-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 12px 3px;}
 .chart-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;}
 .chart-tt{font-size:10px;color:#34d399;min-height:14px;text-align:right;font-weight:500;}
@@ -789,7 +798,7 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .chart-metrics .cml{font-size:6.3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .chart-metrics .cmv{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .chart-metrics .cms{font-size:6.8px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.diag{margin:8px 0;border-radius:3px;overflow:hidden;display:none;border:1px solid #232b3d;}
+.diag{margin:8px 0;border-radius:12px;overflow:hidden;display:none;border:1px solid #232b3d;}
 .diag.show{display:block;}
 .diag-hd{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #232b3d;}
 .diag-title{font-family:'Inter',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
@@ -975,7 +984,7 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
    unit label) not decoration. The glass surface itself (background
    gradient/blur/border/shadow) stays the neutral white/grey from round
    66 - only the surrounding UI chrome's colour changed here. */
-.global-capital{padding:14px 16px 12px;border-bottom:1px solid #232b3d;}
+.global-capital{padding:14px 16px 12px;}
 .gc-hd{display:flex;align-items:center;gap:7px;padding:0 0 10px;}
 .gc-hd span{font-family:'Inter',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#e2e6ed;}
 .gc-body{padding:0;}
@@ -984,7 +993,7 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
    land on a round number, so presets are the fast path; the original
    stepper (#gc-stepper, untouched) is still there for a custom amount,
    just tucked behind "···" instead of always occupying the full row. */
-.cap-quick{display:flex;align-items:center;gap:3px;background:rgba(12,15,22,.44);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:3px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
+.cap-quick{display:flex;align-items:center;gap:6px;padding:3px 0;}
 .cap-qbtn{flex:1;border:none;background:transparent;color:#7d8699;font-family:'Roboto Mono',monospace;font-size:12px;font-weight:700;padding:10px 4px;border-radius:9px;cursor:pointer;touch-action:manipulation;}
 .cap-qbtn.on{background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(56,189,248);color:#0a0d13;font-weight:800;box-shadow:0 2px 8px -2px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
 .cap-qbtn-custom{flex:0 0 36px;color:#4d5a6e;letter-spacing:.02em;font-size:11px;}
@@ -1066,7 +1075,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 .jentry-cell .jk{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;}
 .jentry-note{font-size:9px;color:#4d5a6e;margin-top:4px;border-left:1px solid #232b3d;padding-left:8px;font-style:italic;}
 .stats-body{padding:8px 16px;}
-.vs-card{background:#10141c;border-radius:3px;margin-bottom:7px;overflow:hidden;border:1px solid #232b3d;}
+.vs-card{background:#10141c;border-radius:12px;margin-bottom:7px;overflow:hidden;border:1px solid #232b3d;}
 /* .vs-hd used to paint a solid #161b26 bar over its parent .vs-card,
    which is already in the shared card-glass list (translucent/blurred/
    glossed) — same fix/reasoning as .diag-body above, now applied to
@@ -1157,6 +1166,120 @@ canvas.spark{width:100%;height:34px;display:block;}
 .fb-total .fb-lbl{color:#8892a4;font-weight:600;}
 .fb-total .fb-val{color:#34d399;font-weight:600;}
 .fb-tier{font-size:8px;color:#fbbf24;margin-top:4px;letter-spacing:.04em;}
+</style>
+
+<!-- ══════════════════════════════════════════════════════════════
+     FIRST-RUN WIZARD (round 86, expanded round 87, reworked round 88)
+     — a self-contained onboarding module with its own stylesheet and
+     its own script (below, after the app's own closing </script>),
+     its own localStorage key. Round 86 kept this at ZERO app coupling
+     beyond a read-only existing-user check. Round 87 added real
+     write-back. Round 88 corrected two things about that write-back
+     after direct feedback: (1) the wizard no longer NARRATES the
+     plain-English-to-jargon connection anywhere ("the app calls this
+     X" is gone, and so is the paired said/jargon recap table) — the
+     real field label + value now only ever appear quietly, as an
+     accumulating row of small pills in the footer, so the user makes
+     the connection themselves rather than being told it; (2) the
+     risk:reward question no longer targets the opt-in, default-OFF
+     "R:R Override" field (rrSlider/tog-rr) — it now targets the
+     always-on, always-visible Profit Target and Stop Loss fields
+     (minP/maxP/minL/maxL) that every strategy already uses, via a
+     fixed baseline-stop conversion (rrToTicks in the script below).
+       - READS the app's save key (APP_SK in the script) to detect
+         existing users and skip the wizard for them entirely (round
+         86, unchanged).
+       - READS the app's STRAT_COLORS array (with a hardcoded fallback
+         if that global is ever renamed/removed) purely for palette
+         continuity in the ambient background animation — no behavior
+         depends on it.
+       - WRITES, exactly once, at the final "Enter the Machine" tap:
+         calls the app's own real setter functions (capQuickPick, setV)
+         to apply the four plain-English answers collected in the
+         wizard to Strategy A's real fields, then switches to the real
+         Sim screen. This is the same one-directional path a user's
+         own taps on the real UI would take — the wizard never reads
+         app state back out, never measures live app elements, and
+         never runs this path unless the user reaches the final page
+         and taps Finish (Skip, at any point, bails with zero writes).
+         If the app's field ids or setter functions are ever renamed,
+         applyAnswersToApp() in the script below is the one place that
+         needs updating.
+     ══════════════════════════════════════════════════════════════ -->
+<style>
+.aw-root{position:fixed;inset:0;z-index:1000;overflow:hidden;background:radial-gradient(ellipse 140% 100% at 50% -10%,rgba(56,189,248,.10) 0%,rgba(4,6,10,0) 55%) ,#04060a;display:flex;flex-direction:column;font-family:'Inter',sans-serif;color:#e2e6ed;}
+.aw-skip{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:18px;font-size:11px;color:#5c6779;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;z-index:2;padding:6px 4px;touch-action:manipulation;}
+.aw-track{flex:1;display:flex;transition:transform .32s cubic-bezier(.25,.46,.45,.94);touch-action:pan-y;}
+.aw-page{flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 34px;position:relative;}
+.aw-page.aw-q,.aw-page.aw-recap{justify-content:center;padding-top:calc(20px + env(safe-area-inset-top,0px));padding-bottom:20px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;}
+@supports (justify-content:safe center){.aw-page.aw-q,.aw-page.aw-recap{justify-content:safe center;}}
+.aw-bg{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.aw-bg canvas{width:100%;height:100%;display:block;}
+.aw-bg-dim{opacity:.4;}
+.aw-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;}
+.aw-icon{width:88px;height:88px;border-radius:50%;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.5),rgba(56,189,248,.14) 62%),rgb(15,20,29);border:1px solid rgba(56,189,248,.3);display:flex;align-items:center;justify-content:center;color:var(--accent-solid);box-shadow:0 0 34px -6px rgba(56,189,248,.45),inset 0 1px 0 rgba(255,255,255,.12);margin-bottom:30px;}
+.aw-headline{font-size:23px;font-weight:800;letter-spacing:-.015em;line-height:1.25;margin-bottom:14px;color:#f5f7fa;}
+.aw-body{font-size:13px;line-height:1.65;color:#93a0b4;max-width:300px;}
+.aw-footer{padding:0 28px calc(22px + env(safe-area-inset-bottom,0px));}
+.aw-dots{display:flex;justify-content:center;gap:7px;margin-bottom:22px;}
+.aw-dot{width:6px;height:6px;border-radius:50%;background:#232b3d;transition:width .25s ease,background .25s ease;}
+.aw-dot.on{background:var(--accent-solid);width:20px;border-radius:3px;}
+.aw-nav{display:flex;align-items:center;gap:10px;}
+.aw-back{background:transparent;border:none;color:#5c6779;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:14px 6px;cursor:pointer;touch-action:manipulation;visibility:hidden;}
+.aw-next{flex:1;height:50px;border-radius:12px;background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.4) 0%,rgba(255,255,255,0) 55%),rgb(56,189,248);color:#0a0d13;font-family:'Inter',sans-serif;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border:none;cursor:pointer;touch-action:manipulation;box-shadow:0 6px 20px -6px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.45);}
+
+/* Question pages */
+.aw-qtext{font-size:19px;font-weight:800;line-height:1.32;margin-bottom:18px;color:#f5f7fa;max-width:300px;}
+.aw-preview{min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:4px 0 6px;width:100%;}
+.aw-prev-num{font-family:'Roboto Mono',monospace;font-size:29px;font-weight:700;color:var(--accent-solid);text-shadow:0 0 20px rgba(56,189,248,.35);}
+.aw-prev-bar-wrap{width:190px;height:6px;border-radius:3px;background:#181d29;margin-top:12px;overflow:hidden;}
+.aw-prev-bar{height:100%;background:linear-gradient(90deg,#1c72a8,#38bdf8);border-radius:3px;transition:width .3s ease;}
+.aw-prev-dots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:220px;}
+.aw-prev-dot{width:16px;height:16px;border-radius:50%;background:#232b3d;transition:background .25s,transform .25s;}
+.aw-prev-dot.win{background:#34d399;box-shadow:0 0 8px rgba(52,211,153,.5);}
+.aw-prev-dots-lbl{font-size:10px;color:#8892a4;margin-top:12px;letter-spacing:.02em;font-family:'Roboto Mono',monospace;}
+.aw-prev-rr{display:flex;gap:24px;align-items:flex-end;height:110px;}
+.aw-prev-rr-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+.aw-prev-rr-bar{width:34px;border-radius:6px 6px 0 0;transition:height .3s ease;}
+.aw-prev-rr-bar.risk{background:linear-gradient(180deg,#f87171,#b91c1c);}
+.aw-prev-rr-bar.reward{background:linear-gradient(180deg,#34d399,#059669);}
+.aw-prev-rr-lbl{font-size:9px;color:#8892a4;margin-top:7px;font-family:'Roboto Mono',monospace;}
+.aw-prev-trades{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;max-width:220px;}
+.aw-prev-trade-dot{width:9px;height:16px;border-radius:2px;background:var(--accent-solid);box-shadow:0 0 6px rgba(56,189,248,.5);}
+.aw-prev-trades-lbl{font-size:10px;color:#8892a4;margin-top:12px;font-family:'Roboto Mono',monospace;}
+.aw-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0 4px;max-width:300px;}
+.aw-chip{padding:11px 18px;border-radius:14px;background:rgba(18,23,33,.5);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border:1px solid rgba(255,255,255,.09);color:#c7d0de;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;transition:background .18s,color .18s,transform .12s,border-color .18s;}
+.aw-chip:active{transform:scale(.96);}
+.aw-chip.on{background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(56,189,248);color:#0a0d13;border-color:transparent;box-shadow:0 4px 14px -4px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+/* Footer thread — the ONLY place a real field label + value ever
+   appears. No narrating sentence anywhere: just the app's own label
+   and the resulting value, accumulating one bead per question as the
+   user moves forward. Positional/visual proximity to what they just
+   tapped is the whole mechanism — the connection is theirs to notice,
+   not spelled out. Echoes the "one strategy becomes six" thread motif
+   from the intro's strands background. */
+.aw-thread{display:none;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:14px;min-height:22px;}
+.aw-thread-bead{display:flex;align-items:center;gap:5px;background:rgba(18,23,33,.5);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:4px 8px;opacity:0;animation:awBeadIn .3s ease forwards;}
+@keyframes awBeadIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+.aw-thread-lbl{font-size:8px;color:#5c6779;text-transform:uppercase;letter-spacing:.06em;}
+.aw-thread-val{font-size:10px;color:var(--accent-solid);font-weight:700;font-family:'Roboto Mono',monospace;}
+.aw-thread-burst{gap:10px;}
+.aw-thread-spark{width:8px;height:8px;border-radius:50%;opacity:0;animation:awSpark .5s ease forwards;}
+@keyframes awSpark{0%{opacity:0;transform:scale(.3) translateY(4px);}60%{opacity:1;transform:scale(1.15) translateY(-2px);}100%{opacity:1;transform:scale(1) translateY(0);}}
+
+/* Recap page */
+.aw-recap-title{font-size:19px;font-weight:800;color:#f5f7fa;margin-bottom:18px;}
+.aw-recap-prose{font-size:14px;line-height:1.7;color:#c7d0de;max-width:300px;margin-bottom:6px;}
+.aw-recap-chart-wrap{width:100%;max-width:310px;height:86px;margin-top:20px;border-radius:12px;overflow:hidden;background:rgba(18,23,33,.3);border:1px solid rgba(255,255,255,.06);}
+.aw-recap-chart-wrap canvas{width:100%;height:100%;display:block;}
+.aw-recap-chart-lbl{font-size:9px;color:#5c6779;margin-top:8px;text-align:center;max-width:310px;}
+
+/* One-time spotlight pulse applied to the REAL app's Simulate button
+   right after handoff (added/removed by the wizard's own script, see
+   applyAnswersToApp) - the only wizard-defined rule that ever targets
+   a real app element, and it always self-removes within ~4s. */
+.aw-spotlight{animation:awSpotlight 1.1s ease-in-out 3;box-shadow:0 0 0 4px rgba(56,189,248,.35),0 6px 20px -4px rgba(56,189,248,.7) !important;}
+@keyframes awSpotlight{0%,100%{transform:scale(1);}50%{transform:scale(1.045);}}
 </style>
 </head>
 <body>
@@ -1465,6 +1588,7 @@ const LIM={
   vwMD_min:{min:0,max:2000000,step:1000},vwMD_max:{min:0,max:2000000,step:1000},
   vwLH_min:{min:0,max:2000000,step:1000},vwLH_max:{min:0,max:2000000,step:1000},
   partRate:{min:0.5,max:30,step:0.5},
+  dpm:{min:1,max:21,step:1},
 };
 
 let _ht=null,_hi=null;
@@ -1667,7 +1791,7 @@ function cfg(tab){
     minP:n('minP',15),maxP:n('maxP',30),minL:n('minL',5),maxL:n('maxL',15),
     minWR:n('minWR',55)/100,maxWR:n('maxWR',65)/100,
     minBE:n('minBE',10)/100,maxBE:n('maxBE',20)/100,
-    minT:n('minT',2),maxT:n('maxT',5),
+    minT:n('minT',2),maxT:n('maxT',5),dpm:n('dpm',21),
     rr:n('rrSlider',0)/10,tick:n('tickSz',1)/100,
     minPr:n('minPr',43),maxPr:n('maxPr',47),
     spread:n('spread',1),slip:n('slip',1),
@@ -1690,6 +1814,7 @@ function cfg(tab){
     minWR:on('tog-wr')?r.minWR:(r.minWR+r.maxWR)/2,maxWR:on('tog-wr')?r.maxWR:(r.minWR+r.maxWR)/2,
     minBE:on('tog-be')?r.minBE:0,maxBE:on('tog-be')?r.maxBE:0,
     minT:on('tog-t')?r.minT:Math.round((r.minT+r.maxT)/2),maxT:on('tog-t')?r.maxT:Math.round((r.minT+r.maxT)/2),
+    dpm:on('tog-dpm')?r.dpm:21,
     rr:on('tog-rr')?r.rr:0,tick:on('tog-tk')?r.tick:0.01,
     minPr:on('tog-pr')?r.minPr:45,maxPr:on('tog-pr')?r.maxPr:45,
     spread:on('tog-fees')?r.spread:0,slip:on('tog-sl')?r.slip:0,
@@ -1853,7 +1978,20 @@ function _sim(tab){
     // generated by shares held, not by idle surplus sitting in cash waiting for the
     // next share purchase threshold. This is the correct base for all % calculations.
     const deployedCap=shares*dayPr;
+    // Days You Trade gate: c.dpm caps how many of each simulated month's ~21
+    // trading-day slots are actually active. dpm===21 (the shipped default,
+    // matching every day being a trading day) always resolves true and never
+    // even calls Math.random() here, so day-trading strategies are bit-for-bit
+    // unaffected unless a user dials this down for a swing-trading cadence.
+    const activeDay=c.dpm>=21||Math.random()<(c.dpm/21);
     if(c.dpct){const pv=rf(c.minDp,c.maxDp);dayPct=pv;dayPnl=deployedCap*(pv/100);numTr=0;}
+    else if(!activeDay){
+      // Not one of this month's active trading days — a flat pass-through,
+      // exactly like a real day you never placed a trade. Calendar time
+      // (day/calMo below) still advances, which is what correctly makes a
+      // lower-frequency swing strategy take longer to reach its goal than a
+      // day trader making the same Trades / Day on every session.
+    }
     else{
       isBlowup=c.bf>0&&Math.random()<c.bf;isGood=!isBlowup&&c.gf>0&&Math.random()<c.gf;
       if(isBlowup)dayPnl-=deployedCap*c.bs;if(isGood)dayPnl+=deployedCap*c.gs_;
@@ -1904,7 +2042,7 @@ function _sim(tab){
   const s=tab===0?'':'_'+tab;
   drawChart(equity,acct0,tab);
   function setEl(id,v,cls){const e=$(id+s);if(!e)return;e.textContent=v;if(cls)e.className='cmv '+cls;}
-  setEl('cm-ttg',cal(calMoT),'steel');setEl('cm-ttgs',day.toLocaleString()+' trading days','');
+  setEl('cm-ttg',cal(calMoT),'steel');setEl('cm-ttgs',day.toLocaleString()+' market days','');
   setEl('cm-cap','$'+fmt(acct0+cumPnl),'amb');setEl('cm-caps',pct(retPct)+' total','');
   setEl('cm-ret',pct(retPct),retPct>=0?'go':'stop');setEl('cm-rets',pct(annPct)+' ann.','');
   setEl('cm-ann',pct(annPct)+' p.a.',annPct>=0?'go':'stop');
@@ -4347,6 +4485,7 @@ const INFO={
   profit:{t:'Profit Target',b:'<p>Ticks captured on a win. 15t × 100sh × $0.01 = <b>$15/win</b>. Larger targets take longer to hit and are more exposed to pullbacks.</p>'},
   loss:{t:'Stop Loss',b:'<p>Ticks lost before closing a loser. R:R = Profit Target ÷ Stop Loss.</p>'},
   trades:{t:'Trades / Day',b:'<p>More trades = more edge exposure if EV is positive, more friction drag if EV is thin.</p>'},
+  dpm:{t:'Days You Trade',b:'<p>How many days a month you actually place trades — not every session has to be a trading day. Fits swing and lower-frequency styles: fewer active days, same Trades / Day when you do trade.</p><p>21 (a full trading month) behaves exactly like leaving this untouched. Dial it down and the same trade frequency spreads across more calendar time to reach your goal.</p>'},
   cap:{t:'Daily Loss Cap',b:'<p>Hard limit on tick losses per day. Prevents revenge spirals from appearing in your results. 0 = disabled.</p>'},
   spread:{t:'Bid/Ask Spread',b:'<p>Gap between buy and sell price. Every round trip costs at least 1 tick. For liquid US stocks: usually 1 tick.</p>'},
   slip:{t:'Slippage',b:'<p>Difference between expected and actual fill price. 1 tick is a reasonable conservative estimate for retail scalpers.</p>'},
@@ -4371,7 +4510,7 @@ const INFO={
   vw:{t:'Volume Windows',b:'<p>Custom per ticker — no assumptions baked in. Set typical volume/minute for three session windows: First Hour, Midday, Last Hour.</p><p>Your Participation Rate (%) determines your comfortable share of that flow. If your Starting Shares exceeds what your participation rate allows for a window volume, that window gets a "squeeze" — extra entry offset and slippage applied to trades landing in it, since you are pushing more size into less liquidity than you would comfortably want.</p><p>Trades are distributed across the three windows automatically based on their position in each simulated day trade sequence — early trades skew toward First Hour, late toward Last Hour.</p><p>Works for any ticker: a thin stock and a liquid one just get different volume numbers — the math scales itself.</p>'},
 };
 
-const SDEFS=[['minP',15,'t'],['maxP',30,'t'],['minL',5,'t'],['maxL',15,'t'],['minWR',55,'%'],['maxWR',65,'%'],['minBE',10,'%'],['maxBE',20,'%'],['minT',2,''],['maxT',5,''],['sh',100,''],['goal',500,''],['minPr',43,''],['maxPr',47,''],['spread',1,'t'],['slip',1,'t'],['buf',1,''],['cap',0,'t'],['disc',85,'%'],['bf',3,'%'],['bs',2,'%'],['gf',3,'%'],['gs_',2,'%'],['minPB',3,'t'],['maxPB',8,'t'],['minEO',1,'t'],['maxEO',4,'t'],['minSw',15,'t'],['maxSw',40,'t'],['rrSlider',0,''],['tickSz',1,'¢'],['minDp',-2,'%'],['maxDp',3,'%'],['bias',50,'%'],['intv',5,''],['volCeil',0,'sh'],['vwFH_min',60000,'/m'],['vwFH_max',120000,'/m'],['vwMD_min',15000,'/m'],['vwMD_max',40000,'/m'],['vwLH_min',30000,'/m'],['vwLH_max',70000,'/m'],['partRate',10,'%']];
+const SDEFS=[['minP',15,'t'],['maxP',30,'t'],['minL',5,'t'],['maxL',15,'t'],['minWR',55,'%'],['maxWR',65,'%'],['minBE',10,'%'],['maxBE',20,'%'],['minT',2,''],['maxT',5,''],['dpm',21,''],['sh',100,''],['goal',500,''],['minPr',43,''],['maxPr',47,''],['spread',1,'t'],['slip',1,'t'],['buf',1,''],['cap',0,'t'],['disc',85,'%'],['bf',3,'%'],['bs',2,'%'],['gf',3,'%'],['gs_',2,'%'],['minPB',3,'t'],['maxPB',8,'t'],['minEO',1,'t'],['maxEO',4,'t'],['minSw',15,'t'],['maxSw',40,'t'],['rrSlider',0,''],['tickSz',1,'¢'],['minDp',-2,'%'],['maxDp',3,'%'],['bias',50,'%'],['intv',5,''],['volCeil',0,'sh'],['vwFH_min',60000,'/m'],['vwFH_max',120000,'/m'],['vwMD_min',15000,'/m'],['vwMD_max',40000,'/m'],['vwLH_min',30000,'/m'],['vwLH_max',70000,'/m'],['partRate',10,'%']];
 
 // Round 78: CSV/Restart got icons so their action reads at a glance
 // instead of relying on the label alone. Round 83: renamed from "Clear"
@@ -4409,7 +4548,7 @@ function buildPanes(){
     </div>`;
 
     const core=fc('wr','Win Rate %','#34d399','wr',dph('minWR','maxWR'))+fc('be','Breakeven %','#60a5fa','be',dph('minBE','maxBE'))+roLoss+distCard;
-    const risk=fc('p','Profit Target','#fbbf24','profit',dph('minP','maxP'))+fc('l','Stop Loss','#f87171','loss',dph('minL','maxL'))+fc('t','Trades / Day','#fb923c','trades',dph('minT','maxT'))+fc('cap','Daily Loss Cap','#f87171','cap',ph('cap'));
+    const risk=fc('p','Profit Target','#fbbf24','profit',dph('minP','maxP'))+fc('l','Stop Loss','#f87171','loss',dph('minL','maxL'))+fc('t','Trades / Day','#fb923c','trades',dph('minT','maxT'))+fc('dpm','Days You Trade','#fb923c','dpm',ph('dpm'))+fc('cap','Daily Loss Cap','#f87171','cap',ph('cap'));
 
     const shGoalCard=`<div class="fc" id="fc-sh${s}" style="border-left-color:#fbbf24"><div class="fc-top"><span class="fc-lbl">Starting Shares <button class="ib" onclick="openInfo('sh')">?</button></span></div>${ph('sh')}<div class="fc-note" id="sh-derived-note${s}"></div></div><div class="fc" id="fc-goal${s}" style="border-left-color:#34d399"><div class="fc-top"><span class="fc-lbl">Share Goal <button class="ib" onclick="openInfo('goal')">?</button></span></div>${ph('goal')}</div>`;
 
@@ -4496,8 +4635,8 @@ function buildPanes(){
     pane.innerHTML=`
       ${circHtml}
       <div class="sim-row">
-        <button class="sim-btn ${SCLS}" onclick="simulate(${n})">Simulate</button>
         <button class="exp-btn" onclick="exportData(${n})">${DOWNLOAD_ICON}<span>CSV</span></button>
+        <button class="sim-btn ${SCLS}" onclick="simulate(${n})">Simulate</button>
         <button class="exp-btn" onclick="resetStrategy(${n})" title="Remove Strategy ${L} from calculations">${RESET_ICON}<span>Reset</span></button>
       </div>
       <div class="mode-row">
@@ -4653,7 +4792,7 @@ function capCloseCustom(){
 
 const SK='ahm-v39';
 function getStpIds(){const ids=[];[0,1,2,3,4,5].forEach(t=>{const s=t===0?'':'_'+t;SDEFS.forEach(([id])=>ids.push(id+s));});return ids;}
-const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-volceil','tog-vw'];
+const TOG_BASE=['tog-wr','tog-be','tog-p','tog-l','tog-t','tog-dpm','tog-cap','tog-sp','tog-sl','tog-fees','tog-pr','tog-buf','tog-tk','tog-bd','tog-gd','tog-cs','tog-bias','tog-rr','tog-dp','tog-pb','tog-eo','tog-swing','tog-dist','tog-volceil','tog-vw'];
 function getTogIds(){const ids=[];[0,1,2,3,4,5].forEach(t=>{const s=t===0?'':'_'+t;TOG_BASE.forEach(id=>ids.push(id+s));});return ids;}
 const SEL_BASE=['curve','mode'];
 const REAL_IDS=['rCapS','rCapC','rTrades','rDays','rWR','rBE','rTickW','rTickL','rPnlTotal','rDayPnl'];
@@ -4687,6 +4826,8 @@ async function load(){
     return true;
   }catch(e){return false;}
 }
+
+
 /* Press-bloom trigger: a JS-added/removed .pressed class is the reliable
    mobile trigger for the fast-glow-then-settle button feedback (CSS
    :active alone is unreliable for quick taps on iOS/Android). Delegated
@@ -4756,6 +4897,422 @@ function wireGlobalResize(){
 }
 
 init();
+</script>
+
+<!-- FIRST-RUN WIZARD (round 86, expanded round 87) — own script, runs
+     after the app above has booted. See the style block's header
+     comment for the full coupling rationale (two reads, one guarded
+     one-time write path). -->
+<script>
+(function(){
+'use strict';
+var WK='ahm-wizard-v1-seen';
+// Coupling #1 (round 86): read-only existing-user check.
+var APP_SK='ahm-v39';
+// Coupling #2 (round 87): read-only palette continuity, with a safe
+// fallback if the app's STRAT_COLORS global is ever renamed/removed.
+var PALETTE=(typeof STRAT_COLORS!=='undefined'&&STRAT_COLORS.length)?STRAT_COLORS:['#38bdf8','#fb923c','#a78bfa','#84cc16','#ef4444','#ec4899'];
+
+function shouldShow(){
+  try{
+    if(localStorage.getItem(WK))return false;
+    if(localStorage.getItem(APP_SK))return false;
+    return true;
+  }catch(e){return false;}
+}
+function markSeen(){try{localStorage.setItem(WK,'1');}catch(e){}}
+
+var ICON_CURVE='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 5"/><polyline points="14 5 21 5 21 12"/></svg>';
+var ICON_LAYERS='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>';
+var ICON_FLAG='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"/><path d="M4 4h11l-1.5 4L15 12H4"/></svg>';
+
+// ── Content: 3 intro/bridge pages, 4 plain-English question pages,
+// 1 recap page. Each question is asked purely in plain English — the
+// real field(s) it maps to (q.terms) surface only as small, unlabeled-
+// as-such pills accumulating in the footer thread as the user moves
+// forward. Nothing on screen ever says "this means that" — the recap
+// page reflects the user's own words back at them in prose, and the
+// technical side lives quietly in the thread for them to connect on
+// their own.
+var INTRO=[
+  {kind:'intro',bg:'curve',icon:ICON_CURVE,title:'Test it before you trust it',body:'Run your trading idea through thousands of simulated days before a single real dollar is on the line.'},
+  {kind:'intro',bg:'strands',icon:ICON_LAYERS,title:'Shape up to six strategies',body:'Compare tickers, targets, and risk rules side-by-side — see which idea actually holds up.'},
+  {kind:'bridge',bg:'particles',icon:ICON_FLAG,title:'Let’s build your first one',body:'Four quick questions, plain English — no jargon required. We’ll show you the real setting behind each answer as you go.'}
+];
+// Fixed baseline stop (in ticks) that the risk:reward question's ratio
+// is applied against, matching the shipped default strategy's own
+// Stop Loss midpoint (minL 5 / maxL 15 → avg 10). Profit Target is
+// just that stop scaled by the ratio the user picked. This targets the
+// app's always-on Risk fields (Profit Target / Stop Loss) rather than
+// the opt-in, default-OFF "R:R Override" — every strategy already has
+// a stop and a target, so no toggle ever needs flipping.
+function rrToTicks(ratio){
+  var stop=10;
+  return {stop:stop,profit:Math.round(stop*ratio)};
+}
+var QUESTIONS=[
+  {key:'capital',q:'How much money are you starting with?',
+    chips:[{v:5000,l:'$5,000'},{v:10000,l:'$10,000'},{v:25000,l:'$25,000'},{v:50000,l:'$50,000'}],
+    def:25000,
+    terms:function(v){return [{label:'Starting Capital',value:'$'+v.toLocaleString()}];}},
+  {key:'winrate',q:'How often do you win?',
+    chips:[{v:30,l:'3 in 10'},{v:50,l:'5 in 10'},{v:60,l:'6 in 10'},{v:80,l:'8 in 10'}],
+    def:60,
+    terms:function(v){return [{label:'Win Rate %',value:v+'%'}];}},
+  {key:'rr',q:'For every $1 you risk, how many do you want to make?',
+    chips:[{v:1,l:'$1 → $1'},{v:2,l:'$1 → $2'},{v:3,l:'$1 → $3'}],
+    def:2,
+    terms:function(v){var t=rrToTicks(v);return [{label:'Profit Target',value:t.profit+'t'},{label:'Stop Loss',value:t.stop+'t'}];}},
+  {key:'trades',q:'About how many trades do you make a day?',
+    chips:[{v:1,l:'1'},{v:3,l:'3'},{v:5,l:'5'},{v:10,l:'10'}],
+    def:3,
+    terms:function(v){return [{label:'Trades / Day',value:v+'/day'}];}}
+];
+var PAGES=INTRO.concat(QUESTIONS.map(function(q){return {kind:'question',q:q};})).concat([{kind:'recap'}]);
+var answers={capital:QUESTIONS[0].def,winrate:QUESTIONS[1].def,rr:QUESTIONS[2].def,trades:QUESTIONS[3].def};
+
+// ── Ambient canvas backgrounds ──────────────────────────────────────
+// Small continuous functions of elapsed time t (seconds), built from a
+// few periodic trig terms, so they loop seamlessly forever with no
+// reset/jump logic needed. This stands in for an actual photo/video
+// loop per slide — this build environment has no network access to
+// source real image/video assets, so the background IS the concept in
+// motion instead (a live equity curve, multiplying strategy strands,
+// drifting particles), in the app's own accent-blue/glass language.
+function drawCurve(ctx,w,h,t){
+  ctx.clearRect(0,0,w,h);
+  var midY=h*0.6,amp=h*0.2;
+  ctx.beginPath();
+  for(var i=0;i<=60;i++){
+    var x=i/60*w;
+    var ph=i/60*Math.PI*2*1.3+t*0.6;
+    var y=midY-amp*(0.5*Math.sin(ph)+0.3*Math.sin(ph*2.3+1)+0.2*Math.sin(ph*0.5+2))-(i/60)*h*0.14;
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='rgba(56,189,248,.5)';ctx.lineWidth=2.5;
+  ctx.shadowColor='rgba(56,189,248,.55)';ctx.shadowBlur=14;
+  ctx.stroke();ctx.shadowBlur=0;
+}
+function drawStrands(ctx,w,h,t){
+  ctx.clearRect(0,0,w,h);
+  var midY=h*0.5;
+  // Slow breathing fan-out: every ~52s the six strands drift from
+  // nearly-merged (echoing the single curve on intro page 1 - "one
+  // strategy") out to fully separated ("becomes six"), then back in,
+  // as a continuous ambient loop rather than a one-shot reveal.
+  var fan=0.15+0.85*(0.5+0.5*Math.sin(t*0.12));
+  PALETTE.forEach(function(col,ci){
+    ctx.beginPath();
+    var freq=1.3+ci*0.14,ph=t*0.5+ci*0.8,ampY=h*0.14*(0.6+0.4*Math.sin(ci*1.7));
+    for(var i=0;i<=40;i++){
+      var x=i/40*w;
+      var y=midY+ampY*Math.sin(i/40*Math.PI*2*freq+ph)+(ci-2.5)*h*0.05*fan;
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=col;ctx.globalAlpha=.5;ctx.lineWidth=2;
+    ctx.stroke();ctx.globalAlpha=1;
+  });
+}
+var PARTICLES=null;
+function drawParticles(ctx,w,h,t){
+  if(!PARTICLES){
+    PARTICLES=[];
+    for(var i=0;i<22;i++)PARTICLES.push({x:Math.random(),speed:0.3+Math.random()*0.7,offset:Math.random()*h,r:1+Math.random()*1.8,alpha:.15+Math.random()*.3});
+  }
+  ctx.clearRect(0,0,w,h);
+  PARTICLES.forEach(function(p){
+    var y=h-((t*p.speed*28+p.offset)%(h+30));
+    ctx.beginPath();ctx.arc(p.x*w,y,p.r,0,Math.PI*2);
+    ctx.fillStyle='rgba(56,189,248,'+p.alpha+')';ctx.fill();
+  });
+}
+var bgCanvases=[],rafId=null;
+function startBgLoop(){
+  function frame(){
+    var t=performance.now()/1000;
+    bgCanvases.forEach(function(bc){bc.draw(bc.ctx,bc.w,bc.h,t);});
+    rafId=requestAnimationFrame(frame);
+  }
+  rafId=requestAnimationFrame(frame);
+}
+function stopBgLoop(){if(rafId){cancelAnimationFrame(rafId);rafId=null;}}
+function wireBg(cvEl){
+  var kind=cvEl.dataset.bg;
+  var rect=cvEl.getBoundingClientRect();
+  var dpr=window.devicePixelRatio||1;
+  var w=Math.max(1,rect.width),h=Math.max(1,rect.height);
+  cvEl.width=w*dpr;cvEl.height=h*dpr;
+  var ctx=cvEl.getContext('2d');ctx.scale(dpr,dpr);
+  var draw=kind==='curve'?drawCurve:kind==='strands'?drawStrands:drawParticles;
+  bgCanvases.push({ctx:ctx,w:w,h:h,draw:draw});
+}
+
+// ── Per-question live preview widgets ───────────────────────────────
+function renderPreview(key,el,v){
+  if(key==='capital'){
+    var pct=Math.max(6,Math.round(v/50000*100));
+    el.innerHTML='<div class="aw-prev-num">$'+v.toLocaleString()+'</div><div class="aw-prev-bar-wrap"><div class="aw-prev-bar" style="width:'+pct+'%"></div></div>';
+  }else if(key==='winrate'){
+    var wins=Math.round(v/10),dots='';
+    for(var i=0;i<10;i++)dots+='<div class="aw-prev-dot'+(i<wins?' win':'')+'"></div>';
+    el.innerHTML='<div class="aw-prev-dots">'+dots+'</div><div class="aw-prev-dots-lbl">'+wins+' wins out of 10 trades</div>';
+  }else if(key==='rr'){
+    var riskH=32,rewardH=Math.min(32*v,120);
+    el.innerHTML='<div class="aw-prev-rr"><div class="aw-prev-rr-col"><div class="aw-prev-rr-bar risk" style="height:'+riskH+'px"></div><div class="aw-prev-rr-lbl">RISK $1</div></div><div class="aw-prev-rr-col"><div class="aw-prev-rr-bar reward" style="height:'+rewardH+'px"></div><div class="aw-prev-rr-lbl">REWARD $'+v+'</div></div></div>';
+  }else if(key==='trades'){
+    var show=Math.min(v,10),ticks='';
+    for(var i=0;i<show;i++)ticks+='<div class="aw-prev-trade-dot"></div>';
+    el.innerHTML='<div class="aw-prev-trades">'+ticks+'</div><div class="aw-prev-trades-lbl">'+v+' trade'+(v===1?'':'s')+' a day</div>';
+  }
+}
+
+// ── Build ────────────────────────────────────────────────────────────
+var idx=0,root=null,track=null,backBtn=null,nextBtn=null,skipBtn=null,dotEls=[];
+function pageHtml(p){
+  var pct=(100/PAGES.length);
+  if(p.kind==='intro'||p.kind==='bridge'){
+    return '<div class="aw-page" style="width:'+pct+'%">'+
+      '<div class="aw-bg"><canvas class="aw-bgcv" data-bg="'+p.bg+'"></canvas></div>'+
+      '<div class="aw-content"><div class="aw-icon">'+p.icon+'</div>'+
+      '<div class="aw-headline">'+p.title+'</div>'+
+      '<div class="aw-body">'+p.body+'</div></div></div>';
+  }
+  if(p.kind==='question'){
+    var q=p.q;
+    var chips=q.chips.map(function(c){return '<button class="aw-chip" data-v="'+c.v+'">'+c.l+'</button>';}).join('');
+    return '<div class="aw-page aw-q" style="width:'+pct+'%">'+
+      '<div class="aw-bg aw-bg-dim"><canvas class="aw-bgcv" data-bg="particles"></canvas></div>'+
+      '<div class="aw-content"><div class="aw-qtext">'+q.q+'</div>'+
+      '<div class="aw-preview" id="aw-prev-'+q.key+'"></div>'+
+      '<div class="aw-chips" id="aw-chips-'+q.key+'">'+chips+'</div>'+
+      '</div></div>';
+  }
+  return '<div class="aw-page aw-recap" style="width:'+pct+'%">'+
+    '<div class="aw-content"><div class="aw-recap-title">Here’s your first strategy</div>'+
+    '<div class="aw-recap-prose" id="aw-recap-prose"></div>'+
+    '<div class="aw-recap-chart-wrap"><canvas id="aw-recap-cv"></canvas></div>'+
+    '<div class="aw-recap-chart-lbl">A rough preview — real math kicks in once you hit Simulate</div>'+
+    '</div></div>';
+}
+function build(){
+  root=document.createElement('div');
+  root.className='aw-root';
+  root.innerHTML=
+    '<div class="aw-skip" id="aw-skip">Skip</div>'+
+    '<div class="aw-track" id="aw-track">'+PAGES.map(pageHtml).join('')+'</div>'+
+    '<div class="aw-footer">'+
+      '<div class="aw-dots" id="aw-dots">'+PAGES.map(function(){return '<div class="aw-dot"></div>';}).join('')+'</div>'+
+      '<div class="aw-thread" id="aw-thread"></div>'+
+      '<div class="aw-nav"><button class="aw-back" id="aw-back">Back</button><button class="aw-next" id="aw-next">Next</button></div>'+
+    '</div>';
+  document.body.appendChild(root);
+  track=root.querySelector('#aw-track');
+  track.style.width=(PAGES.length*100)+'%';
+  backBtn=root.querySelector('#aw-back');
+  nextBtn=root.querySelector('#aw-next');
+  skipBtn=root.querySelector('#aw-skip');
+  dotEls=Array.prototype.slice.call(root.querySelectorAll('.aw-dot'));
+
+  root.querySelectorAll('.aw-bgcv').forEach(wireBg);
+  startBgLoop();
+
+  QUESTIONS.forEach(function(q){
+    var wrap=root.querySelector('#aw-chips-'+q.key);
+    var prevEl=root.querySelector('#aw-prev-'+q.key);
+    function select(v){
+      answers[q.key]=v;
+      wrap.querySelectorAll('.aw-chip').forEach(function(b){b.classList.toggle('on',+b.dataset.v===v);});
+      renderPreview(q.key,prevEl,v);
+      renderThread();
+    }
+    wrap.querySelectorAll('.aw-chip').forEach(function(b){
+      // Chips live inside the swipeable track, so a tap must not be
+      // mistaken for the start of a horizontal drag - stop the
+      // pointerdown from bubbling to wireSwipe's track-level listener.
+      // The click event (which select() relies on) still fires
+      // normally since we never call preventDefault.
+      b.addEventListener('pointerdown',function(e){e.stopPropagation();});
+      b.addEventListener('click',function(){select(+b.dataset.v);});
+    });
+    select(q.def);
+  });
+
+  skipBtn.addEventListener('click',function(){finish(false);});
+  backBtn.addEventListener('click',function(){go(idx-1);});
+  nextBtn.addEventListener('click',function(){if(idx>=PAGES.length-1)finish(true);else go(idx+1);});
+  wireSwipe();
+  render();
+}
+function go(i){idx=Math.max(0,Math.min(PAGES.length-1,i));render();}
+function render(){
+  track.style.transform='translateX(-'+(idx*100/PAGES.length)+'%)';
+  dotEls.forEach(function(d,i){d.classList.toggle('on',i===idx);});
+  backBtn.style.visibility=idx===0?'hidden':'visible';
+  var isLast=idx===PAGES.length-1;
+  nextBtn.textContent=isLast?'Enter the Machine':'Next';
+  skipBtn.style.display=isLast?'none':'block';
+  renderThread();
+  if(isLast)renderRecap();
+}
+// The footer thread: one accumulating row of small pills, each just a
+// real field's own label + the value the user's answer produced. No
+// sentence ever explains the connection - the pill simply appears
+// right after the chip that produced it, so proximity in time and
+// place is the only link offered. Shows nothing before the first
+// question, accumulates one question's terms at a time, and shows all
+// of them together once the recap page is reached.
+function renderThread(){
+  var threadEl=root.querySelector('#aw-thread');
+  if(!threadEl)return;
+  var qStart=INTRO.length;
+  var doneCount;
+  if(idx<qStart)doneCount=0;
+  else if(idx<qStart+QUESTIONS.length)doneCount=idx-qStart+1;
+  else doneCount=QUESTIONS.length;
+  threadEl.style.display=doneCount>0?'flex':'none';
+  var html='';
+  for(var i=0;i<doneCount;i++){
+    var q=QUESTIONS[i];
+    q.terms(answers[q.key]).forEach(function(term){
+      html+='<div class="aw-thread-bead"><span class="aw-thread-lbl">'+term.label+'</span><span class="aw-thread-val">'+term.value+'</span></div>';
+    });
+  }
+  threadEl.innerHTML=html;
+}
+function renderRecap(){
+  var proseEl=root.querySelector('#aw-recap-prose');
+  if(!proseEl)return;
+  var a=answers,winIn10=Math.round(a.winrate/10);
+  proseEl.textContent="You're starting with $"+a.capital.toLocaleString()+". You win about "+winIn10+" in 10 trades, aiming to make $"+a.rr+" for every $1 you risk. That's roughly "+a.trades+" trade"+(a.trades===1?'':'s')+" a day.";
+  drawRecapChart();
+}
+function drawRecapChart(){
+  var cv=root.querySelector('#aw-recap-cv');if(!cv)return;
+  var rect=cv.getBoundingClientRect();if(!rect.width||!rect.height)return;
+  var dpr=window.devicePixelRatio||1;
+  cv.width=rect.width*dpr;cv.height=rect.height*dpr;
+  var ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  var w=rect.width,h=rect.height;
+  ctx.clearRect(0,0,w,h);
+  // Deterministic (seeded) so re-rendering the recap page without
+  // changing an answer doesn't jitter the shape - Park-Miller minimal
+  // standard LCG, seeded from the answers themselves. This is a
+  // simplified, self-contained preview - NOT the real tick/share/
+  // friction engine - labelled honestly as a rough preview below.
+  var seed=Math.abs(Math.round(answers.capital*7+answers.winrate*131+answers.rr*997+answers.trades*31))%2147483646+1;
+  function rnd(){seed=seed*16807%2147483647;return(seed-1)/2147483646;}
+  var equity=answers.capital,pts=[equity];
+  for(var d=0;d<30;d++){
+    for(var t=0;t<answers.trades;t++){
+      var riskAmt=equity*0.01;
+      equity+=(rnd()<answers.winrate/100)?riskAmt*answers.rr:-riskAmt;
+      if(equity<1)equity=1;
+    }
+    pts.push(equity);
+  }
+  var minV=Math.min.apply(null,pts),maxV=Math.max.apply(null,pts);
+  var pad=6;
+  ctx.beginPath();
+  pts.forEach(function(v,i){
+    var x=pad+(i/(pts.length-1))*(w-pad*2);
+    var norm=maxV>minV?(v-minV)/(maxV-minV):0.5;
+    var y=h-pad-norm*(h-pad*2);
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle='#38bdf8';ctx.lineWidth=2;ctx.shadowColor='rgba(56,189,248,.5)';ctx.shadowBlur=10;
+  ctx.stroke();ctx.shadowBlur=0;
+  ctx.lineTo(pad+(w-pad*2),h);ctx.lineTo(pad,h);ctx.closePath();
+  var grad=ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,'rgba(56,189,248,.22)');grad.addColorStop(1,'rgba(56,189,248,0)');
+  ctx.fillStyle=grad;ctx.fill();
+}
+function finish(applyData){
+  stopBgLoop();
+  markSeen();
+  if(applyData){
+    burstThread(function(){
+      applyAnswersToApp();
+      if(root){root.remove();root=null;}
+    });
+  }else{
+    if(root){root.remove();root=null;}
+  }
+}
+// The closing "one becomes six" payoff: the accumulated thread pills
+// turn into six sparks, one per real strategy color, right at the
+// moment of handoff into the real app's six-strategy workspace.
+function burstThread(cb){
+  var threadEl=root?root.querySelector('#aw-thread'):null;
+  if(!threadEl){cb();return;}
+  var html='';
+  PALETTE.forEach(function(col,i){
+    html+='<div class="aw-thread-spark" style="background:'+col+';box-shadow:0 0 8px '+col+';animation-delay:'+(i*40)+'ms"></div>';
+  });
+  threadEl.innerHTML=html;
+  threadEl.classList.add('aw-thread-burst');
+  setTimeout(cb,550);
+}
+// Round 87's one write-coupling (refined round 88): calls the app's
+// own real setter functions (the same ones its own live UI uses) to
+// apply the four collected answers to Strategy A, then hands off to
+// the real Sim screen. The risk:reward answer now targets Profit
+// Target/Stop Loss (always-on fields every strategy already has)
+// instead of the opt-in R:R Override, so no toggle ever needs
+// flipping. Wrapped defensively so a future rename in the app never
+// blocks handoff - the wizard just quietly skips whatever step it
+// can't find and still closes normally.
+function applyAnswersToApp(){
+  try{
+    if(typeof capQuickPick==='function')capQuickPick(answers.capital);
+    if(typeof setV==='function'){
+      setV('minWR',0,answers.winrate);setV('maxWR',0,answers.winrate);
+      setV('minT',0,answers.trades);setV('maxT',0,answers.trades);
+      var t=rrToTicks(answers.rr);
+      setV('minL',0,t.stop);setV('maxL',0,t.stop);
+      setV('minP',0,t.profit);setV('maxP',0,t.profit);
+    }
+    if(typeof onSlider==='function')onSlider(0);
+    if(typeof switchScreen==='function')switchScreen('sim');
+    if(typeof switchStrat==='function')switchStrat(0);
+    var simBtn=document.querySelector('#sp0 .sim-btn');
+    if(simBtn){
+      simBtn.classList.add('aw-spotlight');
+      setTimeout(function(){simBtn.classList.remove('aw-spotlight');},4200);
+    }
+  }catch(e){/* never let a data-apply failure block handoff to the real app */}
+}
+function wireSwipe(){
+  var startX=0,dragging=false,deltaX=0,pid=null;
+  track.addEventListener('pointerdown',function(e){
+    dragging=true;startX=e.clientX;deltaX=0;pid=e.pointerId;
+    try{track.setPointerCapture(pid);}catch(err){}
+    track.style.transition='none';
+  });
+  track.addEventListener('pointermove',function(e){
+    if(!dragging)return;
+    deltaX=e.clientX-startX;
+    var base=-(idx*100/PAGES.length);
+    var pct=base+(deltaX/window.innerWidth)*(100/PAGES.length);
+    track.style.transform='translateX('+pct+'%)';
+  });
+  function endDrag(){
+    if(!dragging)return;
+    dragging=false;
+    track.style.transition='';
+    if(deltaX<-50&&idx<PAGES.length-1)idx++;
+    else if(deltaX>50&&idx>0)idx--;
+    render();
+  }
+  track.addEventListener('pointerup',endDrag);
+  track.addEventListener('pointercancel',endDrag);
+}
+
+function boot(){
+  if(!shouldShow())return;
+  build();
+}
+boot();
+})();
 </script>
 </body>
 </html>
