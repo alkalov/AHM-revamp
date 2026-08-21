@@ -217,6 +217,44 @@ tr.sel-day{transition:background .5s ease;}
 .sbtn.on.sc-d{color:#84cc16;border-color:#84cc16;}
 .sbtn.on.sc-e{color:#ef4444;border-color:#ef4444;}
 .sbtn.on.sc-f{color:#ec4899;border-color:#ec4899;}
+/* Sim-tab strategy switcher redesign (mockup-picked: "B" — chip grid with a
+   status ring — plus "C"'s inline mini-stat, then toned down after a live
+   in-app check showed the first pass colouring every simulated tab all the
+   time read as "off theme" — this app's own convention is colour marks only
+   the ONE active/selected thing, everywhere else (circle-button glow, the
+   old plain underline this replaces). Idle tabs — even ones with real sim
+   data — stay neutral chrome; only the small ring dot carries identity +
+   "has this been simulated" state, and colour only fills the whole chip
+   once a tab is actually active, matching .sim-btn's own flat-fill "native
+   control reads as a clean colour disc" treatment one screen down. #scr-sim
+   scoping (not a new class) because .sbar/.sbtn/.sc-b../.sc-f are the EXACT
+   same classes the Table tab's own switcher (#scr-tbl, tsb0..tsb5) reuses —
+   confirmed via grep before touching anything — so an unscoped edit here
+   would have silently redesigned that bar too. */
+#scr-sim .sbar{gap:5px;padding:8px 16px;border-bottom:none;background:transparent;}
+#scr-sim .sbtn{
+  --rgb:56,189,248;
+  height:52px;border-radius:7px;border:1px solid #1c2333;background:rgba(255,255,255,.02);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  font-size:11px;font-weight:600;letter-spacing:.05em;color:#7d8699;
+}
+#scr-sim .sbtn.sc-b{--rgb:251,146,60;}
+#scr-sim .sbtn.sc-c{--rgb:167,139,250;}
+#scr-sim .sbtn.sc-d{--rgb:132,204,22;}
+#scr-sim .sbtn.sc-e{--rgb:239,68,68;}
+#scr-sim .sbtn.sc-f{--rgb:236,72,153;}
+#scr-sim .sb-top{display:flex;align-items:center;gap:6px;}
+#scr-sim .sb-ring{display:inline-block;width:6px;height:6px;border-radius:50%;border:1.4px solid #2a3244;background:transparent;}
+#scr-sim .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
+#scr-sim .sb-stat{font-size:7.3px;font-weight:500;letter-spacing:.02em;color:#4d5a6e;font-variant-numeric:tabular-nums;}
+#scr-sim .sbtn.on{
+  border-color:rgba(var(--rgb),.9);
+  background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(var(--rgb),1) 55%);
+  box-shadow:0 4px 14px -4px rgba(var(--rgb),.5),inset 0 1px 0 rgba(255,255,255,.5);
+}
+#scr-sim .sbtn.on .sb-top{color:#0a0d13;font-weight:800;}
+#scr-sim .sbtn.on .sb-ring{background:#0a0d13;border-color:#0a0d13;}
+#scr-sim .sbtn.on .sb-stat{color:rgba(10,13,19,.75);font-weight:700;}
 .ovr-badge{font-size:7px;background:rgba(251,191,36,.1);color:#fbbf24;padding:1px 6px;border-radius:2px;letter-spacing:.1em;text-transform:uppercase;display:none;border:1px solid rgba(251,191,36,.2);}
 .ovr-badge.on{display:block;}
 
@@ -962,12 +1000,12 @@ canvas.spark{width:100%;height:34px;display:block;}
       <div class="fc-note" style="padding:0 12px 8px;">Shared starting capital across all six strategies — makes A–F directly comparable on the same account size. Each strategy still sets its own ticker, price, and share count.</div>
     </div>
     <div class="sbar">
-      <button class="sbtn on" id="stb0" onclick="switchStrat(0)">A</button>
-      <button class="sbtn sc-b" id="stb1" onclick="switchStrat(1)">B</button>
-      <button class="sbtn sc-c" id="stb2" onclick="switchStrat(2)">C</button>
-      <button class="sbtn sc-d" id="stb3" onclick="switchStrat(3)">D</button>
-      <button class="sbtn sc-e" id="stb4" onclick="switchStrat(4)">E</button>
-      <button class="sbtn sc-f" id="stb5" onclick="switchStrat(5)">F</button>
+      <button class="sbtn on" id="stb0" onclick="switchStrat(0)"><span class="sb-top">A<i class="sb-ring" id="sbr0"></i></span><span class="sb-stat" id="sbs0">—</span></button>
+      <button class="sbtn sc-b" id="stb1" onclick="switchStrat(1)"><span class="sb-top">B<i class="sb-ring" id="sbr1"></i></span><span class="sb-stat" id="sbs1">—</span></button>
+      <button class="sbtn sc-c" id="stb2" onclick="switchStrat(2)"><span class="sb-top">C<i class="sb-ring" id="sbr2"></i></span><span class="sb-stat" id="sbs2">—</span></button>
+      <button class="sbtn sc-d" id="stb3" onclick="switchStrat(3)"><span class="sb-top">D<i class="sb-ring" id="sbr3"></i></span><span class="sb-stat" id="sbs3">—</span></button>
+      <button class="sbtn sc-e" id="stb4" onclick="switchStrat(4)"><span class="sb-top">E<i class="sb-ring" id="sbr4"></i></span><span class="sb-stat" id="sbs4">—</span></button>
+      <button class="sbtn sc-f" id="stb5" onclick="switchStrat(5)"><span class="sb-top">F<i class="sb-ring" id="sbr5"></i></span><span class="sb-stat" id="sbs5">—</span></button>
     </div>
     <div id="sp0"></div>
     <div id="sp1" style="display:none;"></div>
@@ -1279,6 +1317,21 @@ function switchStrat(n){
     $('sp'+i).style.display=i===n?'block':'none';
   });
   updateDist(n);
+}
+// Keeps one strategy tab's ring (has this been simulated?) and mini-stat
+// (final capital, K-abbreviated via fmtK — same convention the endpoint
+// triangle uses) in sync with simResults[tab]. Called after a simulation
+// completes and after Clear Strategy resets one back to empty; the "on"
+// (active) visual state is handled separately by switchStrat above via the
+// same .on class this has always used, so this only ever touches the
+// hasrun/stat side of a tab, never which one looks active.
+function updateStratTab(tab){
+  const ring=$('sbr'+tab),stat=$('sbs'+tab),btn=$('stb'+tab);
+  if(!ring||!stat||!btn)return;
+  const r=simResults[tab];
+  const hasRun=!!(r&&r.rows&&r.rows.length);
+  btn.classList.toggle('hasrun',hasRun);
+  stat.textContent=hasRun?'$'+fmtK(r.acct0+r.rows[r.rows.length-1].cumPnl):'—';
 }
 function switchTblStrat(n){activeTblStrat=n;[0,1,2,3,4,5].forEach(i=>{$('tsb'+i).classList.toggle('on',i===n);const iw=$('intv-wrap-'+i);if(iw)iw.style.display=i===n?'flex':'none';});renderTable(n);dvSyncTblScroll();}
 /* Keep the table scrolled to the same day across A/B/C switches, so
@@ -1608,6 +1661,7 @@ function _sim(tab){
   $('tbl-pip').classList.add('on');
   renderTable(tab,rows,acct0,c,msp,capped);
   renderStratComparison();
+  updateStratTab(tab);
   save();
 }
 
@@ -4231,6 +4285,7 @@ function clearStrategy(tab){
   if(diagDetail){diagDetail.style.display='none';diagDetail.open=false;}
   if(diagEl)diagEl.className='diag';
   renderStratComparison();
+  updateStratTab(tab);
   if(activeTblStrat===tab)renderTable(tab);
   dvRedrawChart();
   save();
