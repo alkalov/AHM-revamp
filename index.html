@@ -302,7 +302,7 @@ tr.sel-day{transition:background .5s ease;}
 #scr-tbl .sbar{display:flex;gap:4px;padding:6px 16px;border-bottom:none;background:transparent;}
 #scr-tbl .sbtn{
   --rgb:82,181,224;
-  height:38px;border-radius:7px;border:1px solid #1c2333;background:rgba(255,255,255,.02);
+  height:38px;border-radius:7px;border:none;background:transparent;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   font-size:9.5px;font-weight:600;letter-spacing:.04em;color:#7d8699;
 }
@@ -383,23 +383,21 @@ tr.sel-day{transition:background .5s ease;}
 .seg-lbl{font-family:'Inter',sans-serif;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#e2e6ed;transition:color .2s ease;}
 .seg-btn.sel .seg-ic{color:#0a0d13;filter:none;}
 .seg-btn.sel .seg-lbl{color:#0a0d13;font-weight:800;}
-/* "a little more reflective quality in the section body" — the panel
-   that opens below (.circ-panel-inner, holding WIN RATE/BREAKEVEN/etc
-   for Core, R:R OVERRIDE/etc for Overrides...) shares its glass recipe
-   with many other cards app-wide via the shared frost list up top
-   (.fc/.chart-panel/.diag/.vs-card/etc), so this layers extra shine on
-   TOP of that shared rule scoped to #scr-sim specifically — Journal's
-   and Stats' own opened panels (same .circ-panel-inner class) are
-   untouched. Adds a bright top-down ellipse sheen (the same "reflects
-   more light up top, fades out" recipe #gc-stepper .stp already uses
-   for its own liquid-glass surface) layered above the existing
-   diagonal gloss rather than replacing it, plus a brighter top-edge
-   specular line via box-shadow. */
+/* Round 90: the Sim tab's own category subpanel (.circ-panel-inner,
+   holding WIN RATE/BREAKEVEN/etc for Core, R:R OVERRIDE/etc for
+   Overrides...) used to get an extra reflective sheen layered on top
+   of the shared frost recipe (.fc/.chart-panel/.diag/.vs-card/etc) —
+   "the subcategories in the strategy settings also don't need a
+   larger window" removed that box entirely for Sim specifically
+   instead: no fill, no border, no shadow, just the individual .fc
+   cards inside it floating on the page background. Journal's and
+   Stats' own opened panels (same .circ-panel-inner class, no #scr-sim
+   prefix) are untouched — this override is scoped to Sim only. */
 #scr-sim .circ-panel-inner{
-  background-image:
-    radial-gradient(ellipse 140% 60% at 50% 0%,rgba(255,255,255,.22) 0%,rgba(255,255,255,.06) 55%,transparent 82%),
-    linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,0) 60%) !important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 1px rgba(255,255,255,.07),0 10px 28px -10px rgba(0,0,0,.55);
+  background:none !important;
+  background-image:none !important;
+  border:none !important;
+  box-shadow:none !important;
 }
 
 .fc{background:#10141c;border:1px solid #232b3d;border-left-width:2px;border-radius:12px;padding:8px 10px;margin-bottom:5px;}
@@ -467,6 +465,19 @@ tr.sel-day{transition:background .5s ease;}
 .mode-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;white-space:nowrap;}
 .mode-sel{flex:1;background:#161b26;border:1px solid #232b3d;color:#8892a4;font-family:'Inter',sans-serif;font-size:11px !important;height:28px;padding:0 7px;outline:none;border-radius:3px;}
 .chart-panel{margin:8px 0;background:#10141c;border:1px solid #232b3d;border-radius:12px;overflow:hidden;}
+/* Round 90: "I don't want the equity curve or its stats at the bottom
+   to have a box... that way the diagnostics and strategy comparison
+   don't feel overwhelming" — Sim's own chart-panel (equity chart +
+   the chart-metrics tiles nested inside it) drops the shared glass
+   card look entirely, scoped to #scr-sim only; Stats' three Real
+   Equity chart-panels are untouched (still boxed, per round 90's own
+   redundant-banner-label fix above, which left their box alone). */
+#scr-sim .chart-panel{
+  background:none !important;
+  background-image:none !important;
+  border:none !important;
+  box-shadow:none !important;
+}
 .chart-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 12px 3px;}
 .chart-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;}
 .chart-tt{font-size:10px;color:#34d399;min-height:14px;text-align:right;font-weight:500;}
@@ -1025,22 +1036,22 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
    one line of meta-text); now just accent-colored text so it stands
    out without needing a container. */
 .log-info{font-size:9px;font-weight:600;color:var(--accent-solid);text-align:center;margin-bottom:6px;letter-spacing:.07em;}
-.inp-grp{background:#10141c;border-radius:3px;margin:0 -16px 7px;overflow:hidden;border:1px solid #232b3d;}
-.tb-card{border:1px solid #232b3d;border-radius:3px;padding:7px 10px;margin:0 -16px 7px;}
+.inp-grp{background:#10141c;border-radius:12px;margin:0 -16px 7px;overflow:hidden;border:1px solid #232b3d;}
+.tb-card{border:1px solid #232b3d;border-radius:12px;padding:7px 10px;margin:0 -16px 7px;}
 .inp-row{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-bottom:1px solid #1c2333;}
 .inp-row:last-child{border:none;}
 .inp-row label{font-size:10px;color:#8892a4;}
 .ni{background:#161b26;border:1px solid #232b3d;color:#e2e6ed;font-family:'Roboto Mono',monospace;font-size:16px !important;text-align:center;width:76px;height:28px;outline:none;padding:0 4px;border-radius:3px;}
 .ni:focus{border-color:var(--accent-solid);}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:6px;}
-.sc-s{background:#10141c;padding:7px 8px;border-radius:3px;text-align:center;border:1px solid #232b3d;}
+.sc-s{background:#10141c;padding:7px 8px;border-radius:10px;text-align:center;border:1px solid #232b3d;}
 .scl{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;}
 .scv{font-size:12px;font-weight:600;color:#e2e6ed;}
 .sess-btns{display:flex;gap:6px;margin-bottom:7px;}
 .sess-btn{flex:1;height:36px;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:7px;border:1px solid;touch-action:manipulation;}
 .sess-btn.log{background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.3);color:var(--accent-solid);}
 .sess-btn.clr{background:transparent;border-color:#232b3d;color:#4d5a6e;}
-.grade-card{background:#10141c;border:1px solid #232b3d;border-radius:3px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;margin:0 -16px 10px;}
+.grade-card{background:#10141c;border:1px solid #232b3d;border-radius:12px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;margin:0 -16px 10px;}
 .grade-info .gt{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;margin-bottom:3px;}
 .grade-info .gs{font-size:10px;color:#8892a4;}
 .grade-big{font-family:'Inter',sans-serif;font-size:40px;font-weight:800;line-height:1;color:#e2e6ed;}
@@ -1065,7 +1076,7 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 .spark-cell{background:#10141c;padding:7px 9px;border-radius:3px;border:1px solid #232b3d;}
 .spark-lbl{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
 canvas.spark{width:100%;height:34px;display:block;}
-.jhist{background:#10141c;border-radius:3px;overflow:hidden;border:1px solid #232b3d;margin:0 -16px;}
+.jhist{background:#10141c;border-radius:12px;overflow:hidden;border:1px solid #232b3d;margin:0 -16px;}
 .jhist-hd{padding:5px 12px;font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.15em;border-bottom:1px solid #232b3d;background:transparent;}
 .jentry{padding:7px 12px;border-bottom:1px solid #1c2333;}
 .jentry:last-child{border:none;}
@@ -1470,17 +1481,14 @@ canvas.spark{width:100%;height:34px;display:block;}
       <div class="slbl" style="margin:8px -16px 0;padding-left:16px;">Variable Gauges — Since Earliest Data</div>
       <div id="gauge-wrap" style="padding-top:8px;"></div>
 
-      <div class="slbl" style="margin:8px -16px 0;padding-left:16px;">Real Equity — All Time</div>
       <div class="chart-panel" style="margin:8px -16px;">
         <div class="chart-hd"><span class="chart-lbl">Cumulative P&amp;L (Real)</span><span class="chart-tt" id="real-ct-all"></span></div>
         <div class="chart-wrap"><canvas class="eqcv" id="real-cv-all"></canvas></div>
       </div>
-      <div class="slbl" style="margin:8px -16px 0;padding-left:16px;">Real Equity — Weekly Rollup</div>
       <div class="chart-panel" style="margin:8px -16px;">
         <div class="chart-hd"><span class="chart-lbl">P&amp;L by Week</span><span class="chart-tt" id="real-ct-week"></span></div>
         <div class="chart-wrap"><canvas class="eqcv" id="real-cv-week"></canvas></div>
       </div>
-      <div class="slbl" style="margin:8px -16px 0;padding-left:16px;">Real Equity — Monthly Rollup</div>
       <div class="chart-panel" style="margin:8px -16px;">
         <div class="chart-hd"><span class="chart-lbl">P&amp;L by Month</span><span class="chart-tt" id="real-ct-month"></span></div>
         <div class="chart-wrap"><canvas class="eqcv" id="real-cv-month"></canvas></div>
