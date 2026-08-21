@@ -161,17 +161,17 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'Inter',sans-
    .seg-btn.sel instead. #sp0-#sp5 scoping is preserved from the
    original .circ-btn.sel rules this replaces — Journal/Stats never
    sat inside #sp{n}, so they were never affected either version. */
-#sp0 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(56,189,248,1) 55%);box-shadow:0 4px 14px -4px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
-#sp1 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(251,146,60,1) 55%);box-shadow:0 4px 14px -4px rgba(251,146,60,.5),inset 0 1px 0 rgba(255,255,255,.5);}
-#sp2 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(167,139,250,1) 55%);box-shadow:0 4px 14px -4px rgba(167,139,250,.5),inset 0 1px 0 rgba(255,255,255,.5);}
-#sp3 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(132,204,22,1) 55%);box-shadow:0 4px 14px -4px rgba(132,204,22,.5),inset 0 1px 0 rgba(255,255,255,.5);}
-#sp4 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(239,68,68,1) 55%);box-shadow:0 4px 14px -4px rgba(239,68,68,.5),inset 0 1px 0 rgba(255,255,255,.5);}
-#sp5 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(236,72,153,1) 55%);box-shadow:0 4px 14px -4px rgba(236,72,153,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+#sp0 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(82,181,224);box-shadow:0 4px 14px -4px rgba(82,181,224,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+#sp1 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(227,148,84);box-shadow:0 4px 14px -4px rgba(227,148,84,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+#sp2 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(173,152,236);box-shadow:0 4px 14px -4px rgba(173,152,236,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+#sp3 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(126,180,44);box-shadow:0 4px 14px -4px rgba(126,180,44,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+#sp4 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(217,89,89);box-shadow:0 4px 14px -4px rgba(217,89,89,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+#sp5 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(215,91,153);box-shadow:0 4px 14px -4px rgba(215,91,153,.5),inset 0 1px 0 rgba(255,255,255,.5);}
 /* Journal's segmented picker (buildJournalCircles) isn't per-strategy,
    so it gets no #sp{n}-style rotating identity colour - just the one
    generic accent fill every non-strategy control in the app uses,
    same recipe as #sp0's blue above. */
-#jcirc-mount .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(56,189,248,1) 55%);box-shadow:0 4px 14px -4px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+#jcirc-mount .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(56,189,248);box-shadow:0 4px 14px -4px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
 
 /* Press bloom: fast "hot" glow the instant a control is pressed, eased
    back to resting state on release. Trigger is a JS-added .pressed
@@ -275,23 +275,23 @@ tr.sel-day{transition:background .5s ease;}
    and doesn't apply to Sim's own pane. */
 #scr-sim .sbar{gap:5px;padding:8px 16px;border-bottom:none;background:transparent;}
 #scr-sim .sbtn{
-  --rgb:56,189,248;
+  --rgb:82,181,224;
   height:52px;border-radius:7px;border:1px solid #1c2333;background:rgba(255,255,255,.02);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   font-size:11px;font-weight:600;letter-spacing:.05em;color:#7d8699;
 }
-#scr-sim .sbtn.sc-b{--rgb:251,146,60;}
-#scr-sim .sbtn.sc-c{--rgb:167,139,250;}
-#scr-sim .sbtn.sc-d{--rgb:132,204,22;}
-#scr-sim .sbtn.sc-e{--rgb:239,68,68;}
-#scr-sim .sbtn.sc-f{--rgb:236,72,153;}
+#scr-sim .sbtn.sc-b{--rgb:227,148,84;}
+#scr-sim .sbtn.sc-c{--rgb:173,152,236;}
+#scr-sim .sbtn.sc-d{--rgb:126,180,44;}
+#scr-sim .sbtn.sc-e{--rgb:217,89,89;}
+#scr-sim .sbtn.sc-f{--rgb:215,91,153;}
 #scr-sim .sb-top{display:flex;align-items:center;gap:6px;}
 #scr-sim .sb-ring{display:inline-block;width:6px;height:6px;border-radius:50%;border:1.4px solid #2a3244;background:transparent;}
 #scr-sim .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
 #scr-sim .sb-stat{font-family:'Roboto Mono',monospace;font-size:7.3px;font-weight:500;letter-spacing:.02em;color:#4d5a6e;font-variant-numeric:tabular-nums;}
 #scr-sim .sbtn.on{
   border-color:rgba(var(--rgb),.9);
-  background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(var(--rgb),1) 55%);
+  background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(var(--rgb));
   box-shadow:0 4px 14px -4px rgba(var(--rgb),.5),inset 0 1px 0 rgba(255,255,255,.5);
 }
 #scr-sim .sbtn.on .sb-top{color:#0a0d13;font-weight:800;}
@@ -299,23 +299,23 @@ tr.sel-day{transition:background .5s ease;}
 #scr-sim .sbtn.on .sb-stat{color:rgba(10,13,19,.75);font-weight:700;}
 #scr-tbl .sbar{display:flex;gap:4px;padding:6px 16px;border-bottom:none;background:transparent;}
 #scr-tbl .sbtn{
-  --rgb:56,189,248;
+  --rgb:82,181,224;
   height:38px;border-radius:7px;border:1px solid #1c2333;background:rgba(255,255,255,.02);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   font-size:9.5px;font-weight:600;letter-spacing:.04em;color:#7d8699;
 }
-#scr-tbl .sbtn.sc-b{--rgb:251,146,60;}
-#scr-tbl .sbtn.sc-c{--rgb:167,139,250;}
-#scr-tbl .sbtn.sc-d{--rgb:132,204,22;}
-#scr-tbl .sbtn.sc-e{--rgb:239,68,68;}
-#scr-tbl .sbtn.sc-f{--rgb:236,72,153;}
+#scr-tbl .sbtn.sc-b{--rgb:227,148,84;}
+#scr-tbl .sbtn.sc-c{--rgb:173,152,236;}
+#scr-tbl .sbtn.sc-d{--rgb:126,180,44;}
+#scr-tbl .sbtn.sc-e{--rgb:217,89,89;}
+#scr-tbl .sbtn.sc-f{--rgb:215,91,153;}
 #scr-tbl .sb-top{display:flex;align-items:center;gap:4px;}
 #scr-tbl .sb-ring{display:inline-block;width:5px;height:5px;border-radius:50%;border:1.2px solid #2a3244;background:transparent;}
 #scr-tbl .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
 #scr-tbl .sb-stat{font-family:'Roboto Mono',monospace;font-size:6.3px;font-weight:500;letter-spacing:.02em;color:#4d5a6e;font-variant-numeric:tabular-nums;}
 #scr-tbl .sbtn.on{
   border-color:rgba(var(--rgb),.9);
-  background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(var(--rgb),1) 55%);
+  background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(var(--rgb));
   box-shadow:0 4px 14px -4px rgba(var(--rgb),.5),inset 0 1px 0 rgba(255,255,255,.5);
 }
 #scr-tbl .sbtn.on .sb-top{color:#0a0d13;font-weight:800;}
@@ -896,7 +896,7 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    back a visible extra table row (confirmed via Playwright). */
 .tc-quick{display:flex;align-items:center;gap:3px;background:rgba(12,15,22,.44);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:2px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
 .tc-qbtn{border:none;background:transparent;color:#7d8699;font-family:'Roboto Mono',monospace;font-size:9.5px;font-weight:600;padding:4px 8px;border-radius:7px;cursor:pointer;touch-action:manipulation;}
-.tc-qbtn.on{background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(56,189,248,1) 55%);color:#0a0d13;font-weight:800;box-shadow:0 2px 8px -2px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+.tc-qbtn.on{background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(56,189,248);color:#0a0d13;font-weight:800;box-shadow:0 2px 8px -2px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
 .tc-qbtn-custom{color:#4d5a6e;font-family:'Roboto Mono',monospace;letter-spacing:.04em;padding:4px 7px;min-width:14px;text-align:center;}
 .tc-qbtn-custom.on{background:rgba(56,189,248,.16);color:var(--accent-solid);box-shadow:none;font-weight:700;}
 .tc-close{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #232b3d;border-radius:5px;color:#4d5a6e;font-size:10px;cursor:pointer;touch-action:manipulation;}
@@ -986,7 +986,7 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
    just tucked behind "···" instead of always occupying the full row. */
 .cap-quick{display:flex;align-items:center;gap:3px;background:rgba(12,15,22,.44);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:3px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
 .cap-qbtn{flex:1;border:none;background:transparent;color:#7d8699;font-family:'Roboto Mono',monospace;font-size:12px;font-weight:700;padding:10px 4px;border-radius:9px;cursor:pointer;touch-action:manipulation;}
-.cap-qbtn.on{background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(56,189,248,1) 55%);color:#0a0d13;font-weight:800;box-shadow:0 2px 8px -2px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+.cap-qbtn.on{background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(56,189,248);color:#0a0d13;font-weight:800;box-shadow:0 2px 8px -2px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
 .cap-qbtn-custom{flex:0 0 36px;color:#4d5a6e;letter-spacing:.02em;font-size:11px;}
 .cap-qbtn-custom.on{background:rgba(56,189,248,.16);color:var(--accent-solid);box-shadow:none;font-weight:700;}
 .cap-stp-row{display:flex;align-items:center;gap:6px;}
