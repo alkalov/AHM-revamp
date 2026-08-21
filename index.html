@@ -219,55 +219,73 @@ tr.sel-day{transition:background .5s ease;}
    "has this been simulated" state, and colour only fills the whole chip
    once a tab is actually active, matching .sim-btn's own flat-fill "native
    control reads as a clean colour disc" treatment one screen down.
-   Originally shipped #scr-sim-only (the Sim tab's own A-F switcher,
-   stb0-stb5) specifically BECAUSE .sbar/.sbtn/.sc-b../.sc-f are the exact
-   same classes the Table tab's own parallel switcher (#scr-tbl,
-   tsb0-tsb5) reuses — confirmed via grep before touching anything, so an
-   unscoped edit would have silently redesigned that bar too. Follow-up
-   request ("make the table buttons match") extends these same rules to
-   #scr-tbl as well now that both should look identical — a combined
-   selector list rather than a duplicated block, so the two can't quietly
-   drift out of sync later. Table's ring/stat are driven by the exact same
-   simResults[tab] data as Sim's (updateStratTab updates both bars from
-   one call site), which now makes MORE sense here than it even did on
-   Sim — this is literally the screen for inspecting one strategy's table,
-   so knowing which strategies already have data before you tap is
-   arguably more useful here. Originally a 3-over-2 grid (base .sbar's
-   own display:grid;grid-template-columns:repeat(3,1fr), inherited
-   unchanged from round 68) — "make the table isn't so crowded, lay
-   them in one row" swapped that for display:flex here (all 6 in one
-   row, base .sbtn's pre-existing flex:1 — dead weight under grid,
-   since grid items ignore the flex shorthand — activates the instant
-   the parent becomes a flex container) and shrank the chip itself
-   (52px->38px tall, smaller type) to fit six across one 420px-wide
-   row without crowding. Applied to BOTH bars, not just Table's, since
-   the two are the combined selector above specifically so they can't
-   drift apart — a single small row reads fine on Sim's own pane too,
-   freeing space for the settings panel below it as a side benefit. */
-#scr-sim .sbar,#scr-tbl .sbar{display:flex;gap:4px;padding:6px 16px;border-bottom:none;background:transparent;}
-#scr-sim .sbtn,#scr-tbl .sbtn{
+   Shipped #scr-sim-only first (the Sim tab's own A-F switcher, stb0-stb5)
+   specifically BECAUSE .sbar/.sbtn/.sc-b../.sc-f are the exact same
+   classes the Table tab's own parallel switcher (#scr-tbl, tsb0-tsb5)
+   reuses — confirmed via grep before touching anything, so an unscoped
+   edit would have silently redesigned that bar too. "Make the table
+   buttons match" briefly combined these into one shared selector list so
+   both looked and sized identically — then "the one row was just for the
+   table, keep the sim buttons as they were" un-combined them back into
+   two independent blocks below: same ring/stat/on-fill LANGUAGE and the
+   same underlying data (updateStratTab still updates both bars' ring+stat
+   from one simResults[tab]-driven call site, unchanged), but Sim keeps
+   its original 3-over-2 grid at 52px (base .sbar's own
+   display:grid;grid-template-columns:repeat(3,1fr) is what actually
+   produces that grid — never overridden here, just inherited) while
+   Table stays the smaller single-row layout ("so the table isn't so
+   crowded" — display:flex, 38px chips, 6 across one row) since that
+   space pressure is specific to the Table screen (chart + gauges + this
+   bar + the interval stepper + the data grid all sharing one screen)
+   and doesn't apply to Sim's own pane. */
+#scr-sim .sbar{gap:5px;padding:8px 16px;border-bottom:none;background:transparent;}
+#scr-sim .sbtn{
+  --rgb:56,189,248;
+  height:52px;border-radius:7px;border:1px solid #1c2333;background:rgba(255,255,255,.02);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  font-size:11px;font-weight:600;letter-spacing:.05em;color:#7d8699;
+}
+#scr-sim .sbtn.sc-b{--rgb:251,146,60;}
+#scr-sim .sbtn.sc-c{--rgb:167,139,250;}
+#scr-sim .sbtn.sc-d{--rgb:132,204,22;}
+#scr-sim .sbtn.sc-e{--rgb:239,68,68;}
+#scr-sim .sbtn.sc-f{--rgb:236,72,153;}
+#scr-sim .sb-top{display:flex;align-items:center;gap:6px;}
+#scr-sim .sb-ring{display:inline-block;width:6px;height:6px;border-radius:50%;border:1.4px solid #2a3244;background:transparent;}
+#scr-sim .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
+#scr-sim .sb-stat{font-size:7.3px;font-weight:500;letter-spacing:.02em;color:#4d5a6e;font-variant-numeric:tabular-nums;}
+#scr-sim .sbtn.on{
+  border-color:rgba(var(--rgb),.9);
+  background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(var(--rgb),1) 55%);
+  box-shadow:0 4px 14px -4px rgba(var(--rgb),.5),inset 0 1px 0 rgba(255,255,255,.5);
+}
+#scr-sim .sbtn.on .sb-top{color:#0a0d13;font-weight:800;}
+#scr-sim .sbtn.on .sb-ring{background:#0a0d13;border-color:#0a0d13;}
+#scr-sim .sbtn.on .sb-stat{color:rgba(10,13,19,.75);font-weight:700;}
+#scr-tbl .sbar{display:flex;gap:4px;padding:6px 16px;border-bottom:none;background:transparent;}
+#scr-tbl .sbtn{
   --rgb:56,189,248;
   height:38px;border-radius:7px;border:1px solid #1c2333;background:rgba(255,255,255,.02);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   font-size:9.5px;font-weight:600;letter-spacing:.04em;color:#7d8699;
 }
-#scr-sim .sbtn.sc-b,#scr-tbl .sbtn.sc-b{--rgb:251,146,60;}
-#scr-sim .sbtn.sc-c,#scr-tbl .sbtn.sc-c{--rgb:167,139,250;}
-#scr-sim .sbtn.sc-d,#scr-tbl .sbtn.sc-d{--rgb:132,204,22;}
-#scr-sim .sbtn.sc-e,#scr-tbl .sbtn.sc-e{--rgb:239,68,68;}
-#scr-sim .sbtn.sc-f,#scr-tbl .sbtn.sc-f{--rgb:236,72,153;}
-#scr-sim .sb-top,#scr-tbl .sb-top{display:flex;align-items:center;gap:4px;}
-#scr-sim .sb-ring,#scr-tbl .sb-ring{display:inline-block;width:5px;height:5px;border-radius:50%;border:1.2px solid #2a3244;background:transparent;}
-#scr-sim .sbtn.hasrun .sb-ring,#scr-tbl .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
-#scr-sim .sb-stat,#scr-tbl .sb-stat{font-size:6.3px;font-weight:500;letter-spacing:.02em;color:#4d5a6e;font-variant-numeric:tabular-nums;}
-#scr-sim .sbtn.on,#scr-tbl .sbtn.on{
+#scr-tbl .sbtn.sc-b{--rgb:251,146,60;}
+#scr-tbl .sbtn.sc-c{--rgb:167,139,250;}
+#scr-tbl .sbtn.sc-d{--rgb:132,204,22;}
+#scr-tbl .sbtn.sc-e{--rgb:239,68,68;}
+#scr-tbl .sbtn.sc-f{--rgb:236,72,153;}
+#scr-tbl .sb-top{display:flex;align-items:center;gap:4px;}
+#scr-tbl .sb-ring{display:inline-block;width:5px;height:5px;border-radius:50%;border:1.2px solid #2a3244;background:transparent;}
+#scr-tbl .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
+#scr-tbl .sb-stat{font-size:6.3px;font-weight:500;letter-spacing:.02em;color:#4d5a6e;font-variant-numeric:tabular-nums;}
+#scr-tbl .sbtn.on{
   border-color:rgba(var(--rgb),.9);
   background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(var(--rgb),1) 55%);
   box-shadow:0 4px 14px -4px rgba(var(--rgb),.5),inset 0 1px 0 rgba(255,255,255,.5);
 }
-#scr-sim .sbtn.on .sb-top,#scr-tbl .sbtn.on .sb-top{color:#0a0d13;font-weight:800;}
-#scr-sim .sbtn.on .sb-ring,#scr-tbl .sbtn.on .sb-ring{background:#0a0d13;border-color:#0a0d13;}
-#scr-sim .sbtn.on .sb-stat,#scr-tbl .sbtn.on .sb-stat{color:rgba(10,13,19,.75);font-weight:700;}
+#scr-tbl .sbtn.on .sb-top{color:#0a0d13;font-weight:800;}
+#scr-tbl .sbtn.on .sb-ring{background:#0a0d13;border-color:#0a0d13;}
+#scr-tbl .sbtn.on .sb-stat{color:rgba(10,13,19,.75);font-weight:700;}
 .ovr-badge{font-size:7px;background:rgba(251,191,36,.1);color:#fbbf24;padding:1px 6px;border-radius:2px;letter-spacing:.1em;text-transform:uppercase;display:none;border:1px solid rgba(251,191,36,.2);}
 .ovr-badge.on{display:block;}
 
