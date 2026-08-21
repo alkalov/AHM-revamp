@@ -130,13 +130,6 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'Inter',sans-
 .stat-actbtn-chev{transition:transform .2s ease;flex-shrink:0;color:#4d5a6e;}
 .stat-actbtn.sel .stat-actbtn-chev{transform:rotate(180deg);}
 .stat-actbtn.sel{border-color:rgba(56,189,248,.4);}
-/* Primary strategy button: flat solid fill (per reference — a native
-   control reads as a clean colour disc, not a glassy gloss card), just
-   a faint top edge lift and a tight, low-key drop shadow. No more
-   coloured ambient "halo" glow, and no diagonal gloss sheen. */
-.sim-btn{
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 14px -8px rgba(0,0,0,.4);
-}
 
 /* Circle buttons: same flat-first treatment — barely-there gloss (just
    enough to read as a lit surface, not a streak), resting glow off by
@@ -451,7 +444,7 @@ tr.sel-day{transition:background .5s ease;}
 .sim-btn.sc-d{--rgb:126,180,44;}
 .sim-btn.sc-e{--rgb:217,89,89;}
 .sim-btn.sc-f{--rgb:215,91,153;}
-.exp-btn{height:42px;padding:0 12px;background:transparent;border:1px solid #232b3d;color:#4d5a6e;font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:3px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:5px;}
+.exp-btn{height:42px;padding:0 12px;background:transparent;border:1px solid #232b3d;color:#4d5a6e;font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:7px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:inset 0 1px 0 rgba(255,255,255,.1);}
 .exp-btn svg{flex-shrink:0;}
 .exp-btn:active{border-color:var(--accent-solid);color:var(--accent-solid);}
 /* Round 78: Randomise Daily is the only mode that models real day-to-day
@@ -1035,7 +1028,7 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 .scl{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;}
 .scv{font-size:12px;font-weight:600;color:#e2e6ed;}
 .sess-btns{display:flex;gap:6px;margin-bottom:7px;}
-.sess-btn{flex:1;height:36px;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:3px;border:1px solid;touch-action:manipulation;}
+.sess-btn{flex:1;height:36px;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:7px;border:1px solid;touch-action:manipulation;}
 .sess-btn.log{background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.3);color:var(--accent-solid);}
 .sess-btn.clr{background:transparent;border-color:#232b3d;color:#4d5a6e;}
 .grade-card{background:#10141c;border:1px solid #232b3d;border-radius:3px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;margin:0 -16px 10px;}
@@ -1056,7 +1049,7 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 .jnote{width:100%;background:#161b26;border:1px solid #232b3d;color:#e2e6ed;font-family:'Inter',sans-serif;font-size:14px;padding:7px 10px;outline:none;border-radius:3px;resize:none;min-height:56px;line-height:1.5;}
 .jnote:focus{border-color:var(--accent-solid);}
 .jnotes-wrap{padding:7px 12px;}
-.j-save-btn{width:100%;height:36px;background:transparent;border:1px solid rgba(56,189,248,.35);color:var(--accent-solid);font-family:'Inter',sans-serif;font-size:9px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;border-radius:3px;margin-bottom:8px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:6px;}
+.j-save-btn{width:100%;height:36px;background:transparent;border:1px solid rgba(56,189,248,.35);color:var(--accent-solid);font-family:'Inter',sans-serif;font-size:9px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;border-radius:7px;margin-bottom:8px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:6px;}
 .j-save-btn svg{flex-shrink:0;}
 .j-save-btn:active{background:rgba(56,189,248,.1);}
 .spark-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px;}
@@ -3027,7 +3020,14 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
     // the same glowing leader + tinted-glass label the Sim tab's own
     // "RAPID GROWTH POINT" marker uses — strong enough to stay legible
     // crossing up to six competing curves, not just the marker itself.
-    dvPositionGrowthCallout($('rg-line-tbl'),$('rg-bubble-tbl'),mx,my,RG_MK_R,hexToRgb(rapid.color),'FASTEST PATH',pd.l,pd.l+pw);
+    // Round 83: the label itself is now conditional on `active.length`
+    // (computed above from simResults) rather than hardcoded — with
+    // only one strategy simulated there's nothing to compare, so calling
+    // it "FASTEST PATH" implied a race that isn't happening; it reads as
+    // "RAPID GROWTH POINT" (same wording Sim's own single-curve chart
+    // always uses) until a second strategy actually has results too.
+    const rgLabel=active.length>=2?'FASTEST PATH':'RAPID GROWTH POINT';
+    dvPositionGrowthCallout($('rg-line-tbl'),$('rg-bubble-tbl'),mx,my,RG_MK_R,hexToRgb(rapid.color),rgLabel,pd.l,pd.l+pw);
   }else{
     dvPositionGrowthCallout($('rg-line-tbl'),$('rg-bubble-tbl'),null);
   }
@@ -4374,9 +4374,12 @@ const INFO={
 const SDEFS=[['minP',15,'t'],['maxP',30,'t'],['minL',5,'t'],['maxL',15,'t'],['minWR',55,'%'],['maxWR',65,'%'],['minBE',10,'%'],['maxBE',20,'%'],['minT',2,''],['maxT',5,''],['sh',100,''],['goal',500,''],['minPr',43,''],['maxPr',47,''],['spread',1,'t'],['slip',1,'t'],['buf',1,''],['cap',0,'t'],['disc',85,'%'],['bf',3,'%'],['bs',2,'%'],['gf',3,'%'],['gs_',2,'%'],['minPB',3,'t'],['maxPB',8,'t'],['minEO',1,'t'],['maxEO',4,'t'],['minSw',15,'t'],['maxSw',40,'t'],['rrSlider',0,''],['tickSz',1,'¢'],['minDp',-2,'%'],['maxDp',3,'%'],['bias',50,'%'],['intv',5,''],['volCeil',0,'sh'],['vwFH_min',60000,'/m'],['vwFH_max',120000,'/m'],['vwMD_min',15000,'/m'],['vwMD_max',40000,'/m'],['vwLH_min',30000,'/m'],['vwLH_max',70000,'/m'],['partRate',10,'%']];
 
 // Round 78: CSV/Restart got icons so their action reads at a glance
-// instead of relying on the label alone. Restart also renamed from
-// "Clear" — clearStrategy() resets to shipped defaults, it doesn't
-// wipe to blank, so "Restart" is the more honest word for what it does.
+// instead of relying on the label alone. Round 83: Restart was renamed
+// from "Clear" back when clearStrategy() reset a tab to shipped
+// defaults; it's since been narrowed to restartStrategy() (see its own
+// comment below) which only clears results, not settings — "Restart"
+// still reads correctly for that ("start the calculation over"), so
+// the label didn't need to change again.
 const DOWNLOAD_ICON=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
 const RESTART_ICON=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>`;
 function buildPanes(){
@@ -4494,7 +4497,7 @@ function buildPanes(){
       <div class="sim-row">
         <button class="sim-btn ${SCLS}" onclick="simulate(${n})">Simulate</button>
         <button class="exp-btn" onclick="exportData(${n})">${DOWNLOAD_ICON}<span>CSV</span></button>
-        <button class="exp-btn" onclick="clearStrategy(${n})" title="Reset Strategy ${L} to defaults">${RESTART_ICON}<span>Restart</span></button>
+        <button class="exp-btn" onclick="restartStrategy(${n})" title="Remove Strategy ${L} from calculations">${RESTART_ICON}<span>Restart</span></button>
       </div>
       <div class="mode-row">
         <span class="mode-lbl">Sim Mode</span>
@@ -4531,25 +4534,21 @@ function buildPanes(){
   });
 }
 
-// Resets one strategy tab back to its shipped defaults: every stepper in
-// SDEFS, every override toggle (routed through onTog so the off-state
-// styling/label/badge all follow, same as a real click), the two
-// selects, and any simulation results/derived displays for that tab.
-// Does not touch the other two strategies or the shared Capital field.
-const TOG_DEFAULTS=[['dist',false],['dp',false],['fees',true],['rr',false],['swing',true],['volceil',false],['vw',false]];
-function clearStrategy(tab){
+// Restarts one strategy tab's CALCULATION, not its configuration: clears
+// that tab's last simulation run (results, chart, Diagnostics, chart-
+// metrics tiles, rapid-growth callout) so it drops out of Strategy
+// Comparison and the Table race chart exactly as if it had never been
+// simulated. Deliberately does NOT touch anything in SDEFS, override
+// toggles, the curve/mode selects, ticker, or capital — those are
+// manually configured (often by hand, one field at a time), and this
+// used to reset all of it back to shipped defaults alongside the
+// results, which is real, frustrating data loss for something the user
+// just wanted to re-run. Now it only clears what a fresh Simulate click
+// would regenerate anyway; settings survive untouched.
+function restartStrategy(tab){
   const L=STRAT_LABELS[tab];
-  if(!confirm('Clear Strategy '+L+' back to defaults? This wipes its settings and any simulation results.'))return;
+  if(!confirm('Remove Strategy '+L+' from the comparison? Its results will be cleared — your settings stay as they are, and you can re-simulate anytime.'))return;
   const s=tab===0?'':'_'+tab;
-  SDEFS.forEach(([id,defV])=>setV(id,tab,defV));
-  TOG_DEFAULTS.forEach(([id,def])=>{
-    const cb=$('tog-'+id+s);if(!cb)return;
-    cb.checked=def;
-    onTog(cb,'fc-'+id+s,tab);
-  });
-  const curveEl=$('curve'+s);if(curveEl)curveEl.value='slow';
-  const modeEl=$('mode'+s);if(modeEl)modeEl.value='rand';
-  onSlider(tab);
   simResults[tab]=null;
   const cv=$('cv'+s);if(cv){const ctx=cv.getContext('2d');if(ctx)ctx.clearRect(0,0,cv.width,cv.height);}
   const ttEl=$('ct'+s);if(ttEl)ttEl.textContent='';
