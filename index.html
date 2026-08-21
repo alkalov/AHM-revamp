@@ -178,13 +178,13 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
    class (initPressBloom below) since CSS :active alone is unreliable
    for quick taps on mobile Safari/Chrome — kept here too as a bonus
    for desktop mouse/trackpad. */
-.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.tog,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close,.stat-actbtn{
+.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.tog,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close,.stat-actbtn,.cap-qbtn,.cap-close{
   transition:box-shadow .18s ease,transform .12s ease,background .18s ease,color .15s ease;
 }
 .sim-btn:active,.j-save-btn:active,.sess-btn:active,.exp-btn:active,.guide-btn:active,
-.ib:active,.stp-btn:active,.nb:active,.sbtn:active,.scale-btn:active,.circ-btn:active,.seg-btn:active,.dv-tbtn:active,.tc-qbtn:active,.tc-close:active,.stat-actbtn:active,
+.ib:active,.stp-btn:active,.nb:active,.sbtn:active,.scale-btn:active,.circ-btn:active,.seg-btn:active,.dv-tbtn:active,.tc-qbtn:active,.tc-close:active,.stat-actbtn:active,.cap-qbtn:active,.cap-close:active,
 .sim-btn.pressed,.j-save-btn.pressed,.sess-btn.pressed,.exp-btn.pressed,.guide-btn.pressed,
-.ib.pressed,.stp-btn.pressed,.nb.pressed,.sbtn.pressed,.scale-btn.pressed,.circ-btn.pressed,.seg-btn.pressed,.dv-tbtn.pressed,.tc-qbtn.pressed,.tc-close.pressed,.stat-actbtn.pressed{
+.ib.pressed,.stp-btn.pressed,.nb.pressed,.sbtn.pressed,.scale-btn.pressed,.circ-btn.pressed,.seg-btn.pressed,.dv-tbtn.pressed,.tc-qbtn.pressed,.tc-close.pressed,.stat-actbtn.pressed,.cap-qbtn.pressed,.cap-close.pressed{
   box-shadow:0 0 14px 1px rgba(var(--glow-rgb),.15);
   transform:scale(.97);
 }
@@ -977,6 +977,19 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 .gc-hd{display:flex;align-items:center;gap:7px;padding:0 0 10px;}
 .gc-hd span{font-family:'Cabinet Grotesk',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#e2e6ed;}
 .gc-body{padding:0;}
+/* Round 78: Starting Capital reimagined as a quick-pick, same pattern
+   as the Table tab's interval control (.tc-quick/.tc-qbtn) — most users
+   land on a round number, so presets are the fast path; the original
+   stepper (#gc-stepper, untouched) is still there for a custom amount,
+   just tucked behind "···" instead of always occupying the full row. */
+.cap-quick{display:flex;align-items:center;gap:3px;background:rgba(12,15,22,.44);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:3px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
+.cap-qbtn{flex:1;border:none;background:transparent;color:#7d8699;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;padding:10px 4px;border-radius:9px;cursor:pointer;touch-action:manipulation;}
+.cap-qbtn.on{background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(56,189,248,1) 55%);color:#0a0d13;font-weight:800;box-shadow:0 2px 8px -2px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+.cap-qbtn-custom{flex:0 0 36px;color:#4d5a6e;letter-spacing:.02em;font-size:11px;}
+.cap-qbtn-custom.on{background:rgba(56,189,248,.16);color:var(--accent-solid);box-shadow:none;font-weight:700;}
+.cap-stp-row{display:flex;align-items:center;gap:6px;}
+.cap-stp-row #gc-stepper{flex:1;}
+.cap-close{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #232b3d;border-radius:8px;color:#4d5a6e;font-size:13px;cursor:pointer;touch-action:manipulation;}
 #gc-stepper .stp{
   height:44px;border-radius:6px;overflow:hidden;
   /* Neutral liquid, not a tinted one — same pooled-top/dark-bottom
@@ -1167,7 +1180,19 @@ canvas.spark{width:100%;height:34px;display:block;}
         <span>Starting Capital</span>
         <button class="ib" onclick="openInfo('globalcap')" style="margin-left:4px;">?</button>
       </div>
-      <div class="gc-body" id="gc-stepper"></div>
+      <div class="gc-body">
+        <div class="cap-quick" id="cap-quick">
+          <button class="cap-qbtn" data-v="10000" onclick="capQuickPick(10000)">$10K</button>
+          <button class="cap-qbtn" data-v="25000" onclick="capQuickPick(25000)">$25K</button>
+          <button class="cap-qbtn" data-v="50000" onclick="capQuickPick(50000)">$50K</button>
+          <button class="cap-qbtn" data-v="100000" onclick="capQuickPick(100000)">$100K</button>
+          <button class="cap-qbtn cap-qbtn-custom" id="cap-qcustom" onclick="capOpenCustom()">···</button>
+        </div>
+        <div class="cap-stp-row" id="cap-stp-row" style="display:none;">
+          <div id="gc-stepper"></div>
+          <button class="cap-close" id="cap-close" onclick="capCloseCustom()">✕</button>
+        </div>
+      </div>
       <div class="fc-note" style="padding:0 12px 8px;">Shared starting capital across all six strategies — makes A–F directly comparable on the same account size. Each strategy still sets its own ticker, price, and share count.</div>
     </div>
     <div class="sbar">
@@ -4566,14 +4591,55 @@ function wirePanes(){
     const inp=el.querySelector('.stp-val');
     inp.value=0;
     // Global capital affects every strategy's cfg() — refresh all three, not just tab 0.
-    const refreshAll=()=>{[0,1,2,3,4,5].forEach(t=>{updateDist(t);updateFrictionBreakdown(t);updateDerivedShares(t);});save();};
+    const refreshAll=()=>{[0,1,2,3,4,5].forEach(t=>{updateDist(t);updateFrictionBreakdown(t);updateDerivedShares(t);});capSyncQuickUI();save();};
     inp.removeEventListener?.('change',null);
     // mkStp already wired change/blur/click to call onSlider(0); override with a
-    // handler that also updates B and C, since this field is shared.
+    // handler that also updates B and C, since this field is shared. Also keeps
+    // the quick-pick row's highlight in sync while the custom stepper is open.
     el.querySelectorAll('.stp-btn').forEach(btn=>btn.addEventListener('click',()=>setTimeout(refreshAll,10)));
     inp.addEventListener('change',refreshAll);
     inp.addEventListener('blur',refreshAll);
+    capSyncQuickUI();
   }
+}
+// Round 78: quick-pick for Starting Capital, same shape as the Table tab's
+// interval control (TC_PRESETS/tcQuickPick/tcOpenCustom/tcCloseCustom) —
+// the underlying #gc-stepper (mkStp('gcStartCap',...)) is untouched, this
+// just decides whether the preset row or the raw stepper is visible.
+const CAP_PRESETS=[10000,25000,50000,100000];
+function fmtCapK(v){
+  if(v>=1000000)return'$'+(v/1000000).toFixed(v%1000000===0?0:1)+'M';
+  if(v>=1000)return'$'+(v/1000).toFixed(v%1000===0?0:1)+'K';
+  return'$'+v;
+}
+function capSyncQuickUI(){
+  const inp=$('gcStartCap');
+  const v=parseFloat(inp?.value)||0;
+  const isPreset=CAP_PRESETS.includes(v);
+  document.querySelectorAll('#cap-quick .cap-qbtn:not(.cap-qbtn-custom)').forEach(b=>{
+    b.classList.toggle('on',+b.dataset.v===v);
+  });
+  const cb=$('cap-qcustom');
+  if(cb){cb.classList.toggle('on',!isPreset);cb.textContent=isPreset?'···':fmtCapK(v);}
+}
+function capQuickPick(v){
+  const inp=$('gcStartCap');if(!inp)return;
+  inp.value=v;
+  clampStp('gcStartCap',0);
+  [0,1,2,3,4,5].forEach(t=>{updateDist(t);updateFrictionBreakdown(t);updateDerivedShares(t);});
+  capSyncQuickUI();
+  save();
+}
+function capOpenCustom(){
+  const q=$('cap-quick'),row=$('cap-stp-row');
+  if(q)q.style.display='none';
+  if(row)row.style.display='flex';
+}
+function capCloseCustom(){
+  const q=$('cap-quick'),row=$('cap-stp-row');
+  if(q)q.style.display='flex';
+  if(row)row.style.display='none';
+  capSyncQuickUI();
 }
 
 const SK='ahm-v39';
@@ -4619,7 +4685,7 @@ async function load(){
    at page-load or gets created later by buildPanes/buildJournalCircles/
    buildStatsCircle — no per-element wiring needed. */
 function initPressBloom(){
-  const SEL='.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close,.stat-actbtn';
+  const SEL='.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close,.stat-actbtn,.cap-qbtn,.cap-close';
   const press=e=>{const t=e.target.closest(SEL);if(t)t.classList.add('pressed');};
   const release=e=>{const t=e.target.closest(SEL);if(t)setTimeout(()=>t.classList.remove('pressed'),120);};
   document.addEventListener('pointerdown',press,{passive:true});
@@ -4632,6 +4698,7 @@ async function init(){
   buildJournalCircles();
   buildStatsCircle();
   const loaded=await load();
+  capSyncQuickUI();
   [0,1,2,3,4,5].forEach(n=>{updateDist(n);updateFrictionBreakdown(n);updateVolWindowSummary(n);updateDerivedShares(n);});
   const allCv=$('real-cv-all'),allTt=$('real-ct-all');if(allCv&&allTt)wireChart(allCv,allTt);
   const wkCv=$('real-cv-week'),wkTt=$('real-ct-week');if(wkCv&&wkTt)wireChart(wkCv,wkTt);
