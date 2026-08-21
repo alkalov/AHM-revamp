@@ -232,23 +232,34 @@ tr.sel-day{transition:background .5s ease;}
    one call site), which now makes MORE sense here than it even did on
    Sim — this is literally the screen for inspecting one strategy's table,
    so knowing which strategies already have data before you tap is
-   arguably more useful here. */
-#scr-sim .sbar,#scr-tbl .sbar{gap:5px;padding:8px 16px;border-bottom:none;background:transparent;}
+   arguably more useful here. Originally a 3-over-2 grid (base .sbar's
+   own display:grid;grid-template-columns:repeat(3,1fr), inherited
+   unchanged from round 68) — "make the table isn't so crowded, lay
+   them in one row" swapped that for display:flex here (all 6 in one
+   row, base .sbtn's pre-existing flex:1 — dead weight under grid,
+   since grid items ignore the flex shorthand — activates the instant
+   the parent becomes a flex container) and shrank the chip itself
+   (52px->38px tall, smaller type) to fit six across one 420px-wide
+   row without crowding. Applied to BOTH bars, not just Table's, since
+   the two are the combined selector above specifically so they can't
+   drift apart — a single small row reads fine on Sim's own pane too,
+   freeing space for the settings panel below it as a side benefit. */
+#scr-sim .sbar,#scr-tbl .sbar{display:flex;gap:4px;padding:6px 16px;border-bottom:none;background:transparent;}
 #scr-sim .sbtn,#scr-tbl .sbtn{
   --rgb:56,189,248;
-  height:52px;border-radius:7px;border:1px solid #1c2333;background:rgba(255,255,255,.02);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  font-size:11px;font-weight:600;letter-spacing:.05em;color:#7d8699;
+  height:38px;border-radius:7px;border:1px solid #1c2333;background:rgba(255,255,255,.02);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  font-size:9.5px;font-weight:600;letter-spacing:.04em;color:#7d8699;
 }
 #scr-sim .sbtn.sc-b,#scr-tbl .sbtn.sc-b{--rgb:251,146,60;}
 #scr-sim .sbtn.sc-c,#scr-tbl .sbtn.sc-c{--rgb:167,139,250;}
 #scr-sim .sbtn.sc-d,#scr-tbl .sbtn.sc-d{--rgb:132,204,22;}
 #scr-sim .sbtn.sc-e,#scr-tbl .sbtn.sc-e{--rgb:239,68,68;}
 #scr-sim .sbtn.sc-f,#scr-tbl .sbtn.sc-f{--rgb:236,72,153;}
-#scr-sim .sb-top,#scr-tbl .sb-top{display:flex;align-items:center;gap:6px;}
-#scr-sim .sb-ring,#scr-tbl .sb-ring{display:inline-block;width:6px;height:6px;border-radius:50%;border:1.4px solid #2a3244;background:transparent;}
+#scr-sim .sb-top,#scr-tbl .sb-top{display:flex;align-items:center;gap:4px;}
+#scr-sim .sb-ring,#scr-tbl .sb-ring{display:inline-block;width:5px;height:5px;border-radius:50%;border:1.2px solid #2a3244;background:transparent;}
 #scr-sim .sbtn.hasrun .sb-ring,#scr-tbl .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
-#scr-sim .sb-stat,#scr-tbl .sb-stat{font-size:7.3px;font-weight:500;letter-spacing:.02em;color:#4d5a6e;font-variant-numeric:tabular-nums;}
+#scr-sim .sb-stat,#scr-tbl .sb-stat{font-size:6.3px;font-weight:500;letter-spacing:.02em;color:#4d5a6e;font-variant-numeric:tabular-nums;}
 #scr-sim .sbtn.on,#scr-tbl .sbtn.on{
   border-color:rgba(var(--rgb),.9);
   background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(var(--rgb),1) 55%);
