@@ -135,40 +135,32 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
 .circ-btn.sel{
   box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(var(--glow-rgb),.15);
 }
-/* Sim tab only: the selected circle's glow (and its label) pick up
-   THIS strategy's own identity colour instead of the app's generic
-   blue/cyan accent — every other surface in a strategy's own pane
-   already carries that colour (tab underline, Simulate button, now the
-   equity curve itself), so the one neutral-blue circle glow read as a
-   mismatch sitting in the middle of an otherwise green/red/amber
-   context. Scoped to #sp0/#sp1/#sp2 specifically so the Log and Stats
-   tabs' own circle navs (same shared classes, no strategy concept) are
-   completely unaffected. */
-#sp0 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(56,189,248,.18);}
-#sp1 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(251,146,60,.18);}
-#sp2 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(167,139,250,.18);}
-#sp3 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(132,204,22,.18);}
-#sp4 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(239,68,68,.18);}
-#sp5 .circ-btn.sel{box-shadow:0 4px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08),0 0 14px 1px rgba(236,72,153,.18);}
-#sp0 .circ-btn.sel+.circ-label{color:#38bdf8;}
-#sp1 .circ-btn.sel+.circ-label{color:#fb923c;}
-#sp2 .circ-btn.sel+.circ-label{color:#a78bfa;}
-#sp3 .circ-btn.sel+.circ-label{color:#84cc16;}
-#sp4 .circ-btn.sel+.circ-label{color:#ef4444;}
-#sp5 .circ-btn.sel+.circ-label{color:#ec4899;}
+/* Sim tab's category selector is now the segmented glass bar below
+   (.seg-btn, replacing .circ-btn there — see the "Category selector"
+   comment near CATS/circBtn in buildPanes for the full rationale) so
+   the six per-strategy accent rules that used to live here target
+   .seg-btn.sel instead. #sp0-#sp5 scoping is preserved from the
+   original .circ-btn.sel rules this replaces — Journal/Stats never
+   sat inside #sp{n}, so they were never affected either version. */
+#sp0 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(56,189,248,1) 55%);box-shadow:0 4px 14px -4px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+#sp1 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(251,146,60,1) 55%);box-shadow:0 4px 14px -4px rgba(251,146,60,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+#sp2 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(167,139,250,1) 55%);box-shadow:0 4px 14px -4px rgba(167,139,250,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+#sp3 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(132,204,22,1) 55%);box-shadow:0 4px 14px -4px rgba(132,204,22,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+#sp4 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(239,68,68,1) 55%);box-shadow:0 4px 14px -4px rgba(239,68,68,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+#sp5 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(236,72,153,1) 55%);box-shadow:0 4px 14px -4px rgba(236,72,153,.5),inset 0 1px 0 rgba(255,255,255,.5);}
 
 /* Press bloom: fast "hot" glow the instant a control is pressed, eased
    back to resting state on release. Trigger is a JS-added .pressed
    class (initPressBloom below) since CSS :active alone is unreliable
    for quick taps on mobile Safari/Chrome — kept here too as a bonus
    for desktop mouse/trackpad. */
-.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.tog,.sbtn,.scale-btn,.circ-btn,.dv-tbtn{
+.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.tog,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn{
   transition:box-shadow .18s ease,transform .12s ease,background .18s ease,color .15s ease;
 }
 .sim-btn:active,.j-save-btn:active,.sess-btn:active,.exp-btn:active,.guide-btn:active,
-.ib:active,.stp-btn:active,.nb:active,.sbtn:active,.scale-btn:active,.circ-btn:active,.dv-tbtn:active,
+.ib:active,.stp-btn:active,.nb:active,.sbtn:active,.scale-btn:active,.circ-btn:active,.seg-btn:active,.dv-tbtn:active,
 .sim-btn.pressed,.j-save-btn.pressed,.sess-btn.pressed,.exp-btn.pressed,.guide-btn.pressed,
-.ib.pressed,.stp-btn.pressed,.nb.pressed,.sbtn.pressed,.scale-btn.pressed,.circ-btn.pressed,.dv-tbtn.pressed{
+.ib.pressed,.stp-btn.pressed,.nb.pressed,.sbtn.pressed,.scale-btn.pressed,.circ-btn.pressed,.seg-btn.pressed,.dv-tbtn.pressed{
   box-shadow:0 0 14px 1px rgba(var(--glow-rgb),.15);
   transform:scale(.97);
 }
@@ -259,13 +251,12 @@ tr.sel-day{transition:background .5s ease;}
 .ovr-badge.on{display:block;}
 
 /* ══════════════════════════════════════════════════════════════
-   CIRCLE NAVIGATION — replaces the dropdown accordion. Same five
-   categories, same icons/colours, contained differently: idle state
-   is a 3-over-2 cluster of icon-only circles; selecting one animates
-   it to a single centred slot above the rest (which dim and shrink),
-   and its panel scale-emerges outward from that circle's own
-   position — motion stays circular even in the transition, not a
-   rectangular accordion drop.
+   CIRCLE NAVIGATION — Journal (category picker) and Stats (broker
+   select) only now. This used to also be the Sim tab's Core/Risk/
+   Ticker/Psych/Overrides selector, but that's a segmented glass bar
+   (.seg-bar/.seg-btn, further down) as of the redesign below — kept
+   here unmodified since Journal/Stats still build this exact circle+
+   sibling-label markup via their own circSelectJ()/circSelectS().
    ══════════════════════════════════════════════════════════════ */
 .circ-nav{padding:14px 16px 4px;}
 .circ-cluster{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:4px;}
@@ -284,6 +275,33 @@ tr.sel-day{transition:background .5s ease;}
 .circ-panel-wrap.open{max-height:9999px;opacity:1;transform:scale(1);}
 .circ-panel-inner{padding:10px 16px 14px;background:#161b26;border-radius:14px;margin:8px 0;}
 .circ-hint{text-align:center;font-size:9px;color:#4d5a6e;letter-spacing:.06em;padding:2px 0 6px;}
+
+/* ══════════════════════════════════════════════════════════════
+   SEGMENTED GLASS BAR — Sim tab's Core/Risk/Ticker/Psych/Overrides
+   selector (mockup-picked "Option B"). One continuous frosted
+   capsule, same family as the Starting Capital stepper's glass
+   treatment, subdivided into five equal segments — replaces the old
+   circle cluster's lopsided 3-over-2 grid with one balanced row and
+   reclaims the vertical space the circ-hint line used to take (no
+   idle-state hint needed — a segmented control reads as tappable on
+   its own). Icon rests at the same near-black it always resolved to
+   in the old .circ-btn (confirmed via computed style: rgb(0,0,0),
+   the button element's own default, not an explicit rule) — made
+   explicit here so the "invisible until picked" look doesn't depend
+   on an unstated UA default. Selected segment fills solid with THIS
+   strategy's identity colour (#sp0-#sp5, same accent set the tab bar
+   above already uses) and flips icon+label to dark-on-colour, the
+   same contrast move .sbtn.on already makes one screen up — unlike
+   the old circles, the label never hides, since nothing else on
+   screen names which category's fields are open below. */
+.seg-bar{display:flex;gap:3px;border-radius:14px;padding:4px;background:rgba(18,23,33,.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border:1px solid rgba(255,255,255,.09);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 6px 18px -8px rgba(0,0,0,.5);}
+.seg-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:9px 2px;border-radius:10px;background:none;border:none;cursor:pointer;touch-action:manipulation;position:relative;transition:background .28s ease,box-shadow .28s ease;}
+.seg-ic{display:flex;color:#000;}
+.seg-ic svg{width:16px;height:16px;transition:color .2s ease;}
+.seg-btn .ovr-badge{position:absolute;top:1px;right:3px;font-size:6px;padding:1px 3px;}
+.seg-lbl{font-family:'Cabinet Grotesk',sans-serif;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#e2e6ed;transition:color .2s ease;}
+.seg-btn.sel .seg-ic{color:#0a0d13;}
+.seg-btn.sel .seg-lbl{color:#0a0d13;font-weight:800;}
 
 .fc{background:#10141c;border:1px solid #232b3d;border-left-width:2px;border-radius:3px;padding:8px 10px;margin-bottom:5px;}
 .fc.off{opacity:.22;pointer-events:none;}
@@ -1380,20 +1398,13 @@ function onTog(cb,ctrl,tab){
 const isOn=id=>{const e=$(id);return!e||e.checked;};
 function circSelect(tab,catKey){
   const s=tab===0?'':'_'+tab;
-  const cluster=$('circ-cluster'+s);
+  const cluster=$('seg-bar'+s);
   const panelWrap=$('circ-panel-wrap'+s);
   const currentSel=cluster?.dataset.sel;
   const deselecting=currentSel===catKey;
-  cluster.querySelectorAll('.circ-btn').forEach(btn=>{
-    const isThis=btn.dataset.cat===catKey;
-    btn.classList.toggle('sel',isThis&&!deselecting);
-    btn.classList.toggle('dim',!isThis&&!deselecting);
-    const lbl=btn.parentElement.querySelector('.circ-label');
-    // Labels show by default (idle state); any selection hides all of them,
-    // including the tapped circle's own — reappearing once deselected.
-    if(lbl)lbl.classList.toggle('dim-out',!deselecting);
+  cluster.querySelectorAll('.seg-btn').forEach(btn=>{
+    btn.classList.toggle('sel',btn.dataset.cat===catKey&&!deselecting);
   });
-  cluster.classList.toggle('has-sel',!deselecting);
   cluster.dataset.sel=deselecting?'':catKey;
   document.querySelectorAll('.circ-panel'+s).forEach(p=>{
     p.style.display=(!deselecting&&p.dataset.cat===catKey)?'block':'none';
@@ -4171,11 +4182,25 @@ function buildPanes(){
       // Gear wheel — now Overrides (was Core's icon)
       ovr:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
     };
-    // Circle nav: same five categories, contained as a 3-over-2 circle
-    // cluster instead of an accordion. Selecting a circle emphasizes it
-    // (scale up, others dim) and reveals its panel below the cluster —
-    // the panel's transform-origin anchors to the cluster itself so the
-    // scale-emerge motion stays visually tied to "this circle opened."
+    // Category selector: mockup-picked "Option B" — one continuous
+    // segmented glass capsule (same frosted-pill family as the Starting
+    // Capital stepper) instead of the old 3-over-2 circle cluster, whose
+    // lopsided last row (3 then 2) was the one real problem with it.
+    // Icon+label are nested INSIDE each segment now rather than a
+    // separate sibling label under a free-floating circle — Journal's
+    // circSelectJ() and Stats' circSelectS() still build the ORIGINAL
+    // .circ-btn/.circ-cluster/.circ-row/.circ-label markup untouched
+    // (still circular, same shared classes, confirmed via grep before
+    // touching anything), so this uses new .seg-* class names rather
+    // than repurposing those — same shared-class caution as the
+    // strategy tab bar redesign. The open panel below (circ-panel-wrap/
+    // -inner/circ-panel${s}) is completely unchanged, only the chooser
+    // row above it is new. Unlike the old design — which hid EVERY
+    // label, including the tapped circle's own, the instant anything
+    // was selected — the segmented bar keeps all five labels visible
+    // always; the active one just goes bold/dark-on-colour, which
+    // actually improves on the old behaviour since nothing else on
+    // screen names which category's fields are showing below.
     const CATS=[
       {key:'core',title:'Core',body:core,eid:''},
       {key:'risk',title:'Risk',body:risk,eid:''},
@@ -4185,20 +4210,16 @@ function buildPanes(){
     ];
     function circBtn(cat){
       const badgeHtml=cat.eid?`<span class="ovr-badge" id="${cat.eid}">!</span>`:'';
-      return`<div style="display:flex;flex-direction:column;align-items:center;">
-        <button class="circ-btn" data-cat="${cat.key}" onclick="circSelect(${n},'${cat.key}')">
-          ${ICONS[cat.key]||''}${badgeHtml}
-        </button>
-        <span class="circ-label">${cat.title}</span>
-      </div>`;
+      return`<button class="seg-btn" data-cat="${cat.key}" onclick="circSelect(${n},'${cat.key}')">
+        <span class="seg-ic">${ICONS[cat.key]||''}${badgeHtml}</span>
+        <span class="seg-lbl">${cat.title}</span>
+      </button>`;
     }
     const circHtml=`
       <div class="circ-nav">
-        <div class="circ-cluster" id="circ-cluster${s}" data-sel="">
-          <div class="circ-row">${circBtn(CATS[0])}${circBtn(CATS[1])}${circBtn(CATS[2])}</div>
-          <div class="circ-row">${circBtn(CATS[3])}${circBtn(CATS[4])}</div>
+        <div class="seg-bar" id="seg-bar${s}" data-sel="">
+          ${circBtn(CATS[0])}${circBtn(CATS[1])}${circBtn(CATS[2])}${circBtn(CATS[3])}${circBtn(CATS[4])}
         </div>
-        <div class="circ-hint">Tap a circle to open its settings</div>
         <div class="circ-panel-wrap" id="circ-panel-wrap${s}">
           <div class="circ-panel-inner">
             ${CATS.map(cat=>`<div class="circ-panel${s}" data-cat="${cat.key}" style="display:none;">${cat.body}</div>`).join('')}
@@ -4369,7 +4390,7 @@ async function load(){
    at page-load or gets created later by buildPanes/buildJournalCircles/
    buildStatsCircle — no per-element wiring needed. */
 function initPressBloom(){
-  const SEL='.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.sbtn,.scale-btn,.circ-btn,.dv-tbtn';
+  const SEL='.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn';
   const press=e=>{const t=e.target.closest(SEL);if(t)t.classList.add('pressed');};
   const release=e=>{const t=e.target.closest(SEL);if(t)setTimeout(()=>t.classList.remove('pressed'),120);};
   document.addEventListener('pointerdown',press,{passive:true});
