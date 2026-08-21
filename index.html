@@ -148,6 +148,11 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
 #sp3 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(132,204,22,1) 55%);box-shadow:0 4px 14px -4px rgba(132,204,22,.5),inset 0 1px 0 rgba(255,255,255,.5);}
 #sp4 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(239,68,68,1) 55%);box-shadow:0 4px 14px -4px rgba(239,68,68,.5),inset 0 1px 0 rgba(255,255,255,.5);}
 #sp5 .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(236,72,153,1) 55%);box-shadow:0 4px 14px -4px rgba(236,72,153,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+/* Journal's segmented picker (buildJournalCircles) isn't per-strategy,
+   so it gets no #sp{n}-style rotating identity colour - just the one
+   generic accent fill every non-strategy control in the app uses,
+   same recipe as #sp0's blue above. */
+#jcirc-mount .seg-btn.sel{background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(56,189,248,1) 55%);box-shadow:0 4px 14px -4px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
 
 /* Press bloom: fast "hot" glow the instant a control is pressed, eased
    back to resting state on release. Trigger is a JS-added .pressed
@@ -1215,9 +1220,9 @@ canvas.spark{width:100%;height:34px;display:block;}
 
       <div class="log-info" id="log-info">0 days logged</div>
       <div class="inp-grp">
-        <div class="inp-row"><label>Wins</label><input class="ni" id="dWins" type="number" min="0" placeholder="0" oninput="onDaily()"></div>
-        <div class="inp-row"><label>Losses</label><input class="ni" id="dLoss" type="number" min="0" placeholder="0" oninput="onDaily()"></div>
-        <div class="inp-row"><label>Breakevens</label><input class="ni" id="dBE" type="number" min="0" placeholder="0" oninput="onDaily()"></div>
+        <div class="inp-row"><label style="color:#34d399;">Wins</label><input class="ni" id="dWins" type="number" min="0" placeholder="0" oninput="onDaily()"></div>
+        <div class="inp-row"><label style="color:#f87171;">Losses</label><input class="ni" id="dLoss" type="number" min="0" placeholder="0" oninput="onDaily()"></div>
+        <div class="inp-row"><label style="color:#60a5fa;">Breakevens</label><input class="ni" id="dBE" type="number" min="0" placeholder="0" oninput="onDaily()"></div>
         <div class="inp-row"><label>Avg Win ticks</label><input class="ni" id="dTickW" type="number" min="0" placeholder="0" oninput="onDaily()"></div>
         <div class="inp-row"><label>Avg Loss ticks</label><input class="ni" id="dTickL" type="number" min="0" placeholder="0" oninput="onDaily()"></div>
         <div class="inp-row"><label>Net P&amp;L $</label><input class="ni" id="dPnl" type="number" step="0.01" placeholder="0.00" oninput="onDaily()" style="width:86px;"></div>
@@ -3504,19 +3509,35 @@ const JCATS=[
     <div class="jrow"><label>Losses</label><input class="ni" id="j-${b.key}-l" type="number" min="0" placeholder="0" style="width:60px;"></div>`).join('')}`},
 ];
 
+/* Journal's 6-category picker used to be the OLD pre-round-68 circle
+   grid (.circ-btn, 3-over-3, black icons, labels below) - the same
+   component the Sim tab's Core/Risk/Ticker/Psych/Overrides selector
+   used to be before round 69's segmented-glass-bar redesign. "Full
+   visual pass" on the Log tab means bringing this one up to that same
+   .seg-btn language too, rather than leaving Journal on the one visual
+   era Sim/Table have already moved past. Kept the 2-row grouping
+   (two .seg-bar strips instead of one 6-wide bar) since 6 items reads
+   tight in a single row at this width and the 3-and-3 grouping already
+   matched Soul/Mind/Body vs Grade/Market/Outcome's natural pairing -
+   "same layout/order, just dressed up" per how this round was scoped,
+   not a restructure. No per-category identity colour here (unlike
+   Sim's per-strategy #sp{n} scoping) since Journal isn't per-strategy -
+   the selected segment just gets the app's one generic accent fill,
+   see #jcirc-mount .seg-btn.sel below. Dropped the old "Tap a circle to
+   open its section" hint text too - Sim's segmented bar never needed
+   one, a row of tappable chips is self-evident the same way tabs are. */
 function buildJournalCircles(){
   const mount=$('jcirc-mount');if(!mount)return;
-  const circBtn=cat=>`<div style="display:flex;flex-direction:column;align-items:center;">
-    <button class="circ-btn" data-cat="${cat.key}" onclick="circSelectJ('${cat.key}')">${JICONS[cat.key]||''}</button>
-    <span class="circ-label">${cat.title}</span>
-  </div>`;
+  const circBtn=cat=>`<button class="seg-btn" data-cat="${cat.key}" onclick="circSelectJ('${cat.key}')">
+    <span class="seg-ic">${JICONS[cat.key]||''}</span>
+    <span class="seg-lbl">${cat.title}</span>
+  </button>`;
   mount.innerHTML=`
     <div class="circ-nav">
-      <div class="circ-cluster" id="jcirc-cluster" data-sel="">
-        <div class="circ-row">${circBtn(JCATS[0])}${circBtn(JCATS[1])}${circBtn(JCATS[2])}</div>
-        <div class="circ-row">${circBtn(JCATS[3])}${circBtn(JCATS[4])}${circBtn(JCATS[5])}</div>
+      <div id="jcirc-cluster" data-sel="" style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px;">
+        <div class="seg-bar">${circBtn(JCATS[0])}${circBtn(JCATS[1])}${circBtn(JCATS[2])}</div>
+        <div class="seg-bar">${circBtn(JCATS[3])}${circBtn(JCATS[4])}${circBtn(JCATS[5])}</div>
       </div>
-      <div class="circ-hint">Tap a circle to open its section</div>
       <div class="circ-panel-wrap" id="jcirc-panel-wrap">
         <div class="circ-panel-inner">
           ${JCATS.map(cat=>`<div class="jcirc-panel" data-cat="${cat.key}" style="display:none;"><div class="jsec-hd" style="margin:-10px -16px 8px;">${cat.title}</div>${cat.body()}</div>`).join('')}
@@ -3536,14 +3557,9 @@ function circSelectJ(catKey){
   if(!cluster)return;
   const currentSel=cluster.dataset.sel;
   const deselecting=currentSel===catKey;
-  cluster.querySelectorAll('.circ-btn').forEach(btn=>{
-    const isThis=btn.dataset.cat===catKey;
-    btn.classList.toggle('sel',isThis&&!deselecting);
-    btn.classList.toggle('dim',!isThis&&!deselecting);
-    const lbl=btn.parentElement.querySelector('.circ-label');
-    if(lbl)lbl.classList.toggle('dim-out',!deselecting);
+  cluster.querySelectorAll('.seg-btn').forEach(btn=>{
+    btn.classList.toggle('sel',btn.dataset.cat===catKey&&!deselecting);
   });
-  cluster.classList.toggle('has-sel',!deselecting);
   cluster.dataset.sel=deselecting?'':catKey;
   document.querySelectorAll('.jcirc-panel').forEach(p=>{
     p.style.display=(!deselecting&&p.dataset.cat===catKey)?'block':'none';
@@ -3700,7 +3716,8 @@ function renderJournal(){
   hist.innerHTML='<div class="jhist-hd">History — '+journalLog.length+' entries</div>'+
     journalLog.slice(0,10).map(e=>{
       const blockSummary=e.blocks?.length?e.blocks.reduce((a,b)=>a+b.w,0)+'W-'+e.blocks.reduce((a,b)=>a+b.l,0)+'L across blocks':'';
-      return `<div class="jentry"><div class="jentry-date">${e.date}${e.daygrade?` · Grade ${e.daygrade}`:''}</div><div class="jentry-grid">
+      const dgc=e.daygrade==='A'?'#34d399':(e.daygrade==='B'||e.daygrade==='C')?'#fbbf24':'#f87171';
+      return `<div class="jentry"><div class="jentry-date">${e.date}${e.daygrade?` · <span style="color:${dgc}">Grade ${e.daygrade}</span>`:''}</div><div class="jentry-grid">
       ${e.sleep?`<div class="jentry-cell"><span class="jk">Sleep</span>${e.sleep}h${e.timeSlept!==''&&e.timeWoke!==''?` (${HOUR_LABELS[e.timeSlept]}–${HOUR_LABELS[e.timeWoke]})`:''} · Q${e.sleepQ||'—'}</div>`:''}
       ${e.preSleepEmo?`<div class="jentry-cell"><span class="jk">Pre-Sleep</span>${e.preSleepEmo}</div>`:''}
       ${e.social&&e.social!=='None — normal night'?`<div class="jentry-cell"><span class="jk">Social</span>${e.social}</div>`:''}
