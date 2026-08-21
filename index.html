@@ -105,12 +105,20 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
 }
 /* Chrome buttons: same glassy lift, blurred and translucent instead
    of flat/opaque. */
-.exp-btn,.j-save-btn,.sess-btn{
+.exp-btn,.j-save-btn,.sess-btn,.stat-actbtn{
   background-color:rgba(18,23,33,.4) !important;
   -webkit-backdrop-filter:blur(20px);
   backdrop-filter:blur(20px);
   border-color:rgba(255,255,255,.1) !important;
 }
+.stat-actbtn{width:100%;height:44px;display:flex;align-items:center;gap:8px;padding:0 14px;border-radius:10px;
+  color:var(--accent-solid);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14);touch-action:manipulation;}
+.stat-actbtn svg:not(.stat-actbtn-chev){filter:drop-shadow(0 0 3px rgba(var(--glow-rgb),.55));flex-shrink:0;}
+.stat-actbtn span{flex:1;text-align:left;}
+.stat-actbtn-chev{transition:transform .2s ease;flex-shrink:0;color:#4d5a6e;}
+.stat-actbtn.sel .stat-actbtn-chev{transform:rotate(180deg);}
+.stat-actbtn.sel{border-color:rgba(56,189,248,.4);}
 /* Primary strategy button: flat solid fill (per reference — a native
    control reads as a clean colour disc, not a glassy gloss card), just
    a faint top edge lift and a tight, low-key drop shadow. No more
@@ -159,13 +167,13 @@ html,body{height:100%;background:#0a0d13;color:#e2e6ed;font-family:'IBM Plex Mon
    class (initPressBloom below) since CSS :active alone is unreliable
    for quick taps on mobile Safari/Chrome — kept here too as a bonus
    for desktop mouse/trackpad. */
-.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.tog,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close{
+.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.tog,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close,.stat-actbtn{
   transition:box-shadow .18s ease,transform .12s ease,background .18s ease,color .15s ease;
 }
 .sim-btn:active,.j-save-btn:active,.sess-btn:active,.exp-btn:active,.guide-btn:active,
-.ib:active,.stp-btn:active,.nb:active,.sbtn:active,.scale-btn:active,.circ-btn:active,.seg-btn:active,.dv-tbtn:active,.tc-qbtn:active,.tc-close:active,
+.ib:active,.stp-btn:active,.nb:active,.sbtn:active,.scale-btn:active,.circ-btn:active,.seg-btn:active,.dv-tbtn:active,.tc-qbtn:active,.tc-close:active,.stat-actbtn:active,
 .sim-btn.pressed,.j-save-btn.pressed,.sess-btn.pressed,.exp-btn.pressed,.guide-btn.pressed,
-.ib.pressed,.stp-btn.pressed,.nb.pressed,.sbtn.pressed,.scale-btn.pressed,.circ-btn.pressed,.seg-btn.pressed,.dv-tbtn.pressed,.tc-qbtn.pressed,.tc-close.pressed{
+.ib.pressed,.stp-btn.pressed,.nb.pressed,.sbtn.pressed,.scale-btn.pressed,.circ-btn.pressed,.seg-btn.pressed,.dv-tbtn.pressed,.tc-qbtn.pressed,.tc-close.pressed,.stat-actbtn.pressed{
   box-shadow:0 0 14px 1px rgba(var(--glow-rgb),.15);
   transform:scale(.97);
 }
@@ -3568,25 +3576,29 @@ function circSelectJ(catKey){
 }
 
 /* ══════════════════════════════════════════════════════════════
-   STATS TAB CIRCLE — single circle for manual broker data entry,
-   same interaction pattern as the Sim and Log tab clusters, just
-   sized to one. Everything auto-computed (Weekly Report, Gauges,
-   Real Equity charts, Real vs Sim) stays visible outside it — this
-   circle is only for the fields a person types in by hand.
+   STATS TAB TRIGGER — single action button for manual broker data
+   entry. Used to be a lone circle (same .circ-btn language as Sim's
+   old category selector and Journal's old picker, both since
+   redesigned to .seg-btn segmented bars) but a segmented-bar treatment
+   doesn't fit a single item - there's nothing to segment against, it
+   just floats as an odd narrow pill with dead space on both sides
+   (checked via a real mockup before committing, presented alongside 2
+   other options). A full-width glass button with a rotating chevron
+   reads as one self-contained action instead, and the chevron gives
+   the expand/collapse affordance a clearer signal than the bare circle
+   ever had. Everything auto-computed (Weekly Report, Gauges, Real
+   Equity charts, Real vs Sim) stays visible outside it - this trigger
+   is only for the fields a person types in by hand.
    ══════════════════════════════════════════════════════════════ */
 function buildStatsCircle(){
   const mount=$('scirc-mount');if(!mount)return;
-  const icon=`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>`;
+  const icon=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>`;
+  const chev=`<svg class="stat-actbtn-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
   mount.innerHTML=`
     <div class="circ-nav">
-      <div class="circ-cluster" id="scirc-cluster" data-sel="">
-        <div class="circ-row">
-          <div style="display:flex;flex-direction:column;align-items:center;">
-            <button class="circ-btn" data-cat="broker" onclick="circSelectS('broker')">${icon}</button>
-            <span class="circ-label">Enter your broker trading data</span>
-          </div>
-        </div>
-      </div>
+      <button class="stat-actbtn" id="scirc-trigger" onclick="circSelectS('broker')">
+        ${icon}<span>Enter Broker Trading Data</span>${chev}
+      </button>
       <div class="circ-panel-wrap" id="scirc-panel-wrap">
         <div class="circ-panel-inner">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
@@ -3618,18 +3630,11 @@ function buildStatsCircle(){
 }
 
 function circSelectS(catKey){
-  const cluster=$('scirc-cluster');
+  const btn=$('scirc-trigger');
   const panelWrap=$('scirc-panel-wrap');
-  if(!cluster)return;
-  const currentSel=cluster.dataset.sel;
-  const deselecting=currentSel===catKey;
-  cluster.querySelectorAll('.circ-btn').forEach(btn=>{
-    const isThis=btn.dataset.cat===catKey;
-    btn.classList.toggle('sel',isThis&&!deselecting);
-    const lbl=btn.parentElement.querySelector('.circ-label');
-    if(lbl)lbl.classList.toggle('dim-out',!deselecting);
-  });
-  cluster.dataset.sel=deselecting?'':catKey;
+  if(!btn)return;
+  const deselecting=btn.classList.contains('sel');
+  btn.classList.toggle('sel',!deselecting);
   if(panelWrap)panelWrap.classList.toggle('open',!deselecting);
 }
 
@@ -4574,7 +4579,7 @@ async function load(){
    at page-load or gets created later by buildPanes/buildJournalCircles/
    buildStatsCircle — no per-element wiring needed. */
 function initPressBloom(){
-  const SEL='.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close';
+  const SEL='.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close,.stat-actbtn';
   const press=e=>{const t=e.target.closest(SEL);if(t)t.classList.add('pressed');};
   const release=e=>{const t=e.target.closest(SEL);if(t)setTimeout(()=>t.classList.remove('pressed'),120);};
   document.addEventListener('pointerdown',press,{passive:true});
