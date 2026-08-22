@@ -60,6 +60,22 @@ html,body{height:100%;background:#04060a;color:#e2e6ed;font-family:'Inter',sans-
     filter:blur(60px);
   }
 }
+/* Round 101: brings the pre-tour sequence's drifting flake particles
+   into the live app itself, at the user's request ("On some level I'd
+   like some of that active background to be part of the app" - round
+   98, deliberately deferred then, picked back up here). A real canvas,
+   not a pseudo-element, since it needs its own animated draw loop - see
+   startAppFlakeField() in the tour script for the JS half. Sits at the
+   same z-index tier as body::before, just after it in source order so
+   it paints on top of the static glow blooms but still under .app.
+   Deliberately its OWN separate particle system rather than a reuse of
+   the intro's (different vars/functions, "AppFlake" prefixed) - the
+   intro's system is small and already thoroughly tested; duplicating
+   ~25 lines was safer than a shared-state refactor touching code that
+   passed several rounds of verification. Only ever started if
+   prefers-reduced-motion allows it (see startAppFlakeField), matching
+   the same accessibility split body::before already makes above. */
+#app-flake-cv{position:fixed;inset:0;z-index:0;pointer-events:none;}
 .app{position:relative;z-index:1;}
 
 /* Shared frost treatment: every card-like surface in the app gets the
@@ -1199,9 +1215,17 @@ canvas.spark{width:100%;height:34px;display:block;}
    whichever side of the target has room — this sidesteps needing to
    know the card's own height in advance. ══════════════════════════ */
 .tour-blocker{position:fixed;inset:0;z-index:2000;background:transparent;touch-action:none;}
-.tour-spotlight{position:fixed;z-index:2001;pointer-events:none;box-shadow:0 0 0 9999px rgba(4,6,10,.86);border:2px solid rgba(56,189,248,.85);border-radius:14px;transition:top .32s cubic-bezier(.25,.46,.45,.94),left .32s cubic-bezier(.25,.46,.45,.94),width .32s cubic-bezier(.25,.46,.45,.94),height .32s cubic-bezier(.25,.46,.45,.94);}
+/* opacity added round 101 - the tour used to snap into view at full
+   opacity the instant startTour() ran (both from the pre-tour hand-off
+   AND a returning user's direct Guide click - "sudden screen change" in
+   the user's words), same darkening+card appearing in one frame with no
+   transition at all. startTour() now sets both to 0 first, then flips
+   to 1 shortly after (see the setTimeout comment in startTour() itself
+   for why a plain timeout, not rAF, turned out to be the reliable fix
+   here) so this transition actually has something to animate between. */
+.tour-spotlight{position:fixed;z-index:2001;pointer-events:none;box-shadow:0 0 0 9999px rgba(4,6,10,.86);border:2px solid rgba(56,189,248,.85);border-radius:14px;transition:top .32s cubic-bezier(.25,.46,.45,.94),left .32s cubic-bezier(.25,.46,.45,.94),width .32s cubic-bezier(.25,.46,.45,.94),height .32s cubic-bezier(.25,.46,.45,.94),opacity .4s ease;}
 .tour-spotlight.no-target{border:none;border-radius:0;}
-.tour-card{position:fixed;left:16px;right:16px;background:rgba(18,23,33,.94);background-image:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,0) 55%);-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px 16px;box-shadow:0 20px 50px -12px rgba(0,0,0,.7);color:#e2e6ed;font-family:'Inter',sans-serif;z-index:2002;max-width:400px;margin:0 auto;}
+.tour-card{position:fixed;left:16px;right:16px;background:rgba(18,23,33,.94);background-image:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,0) 55%);-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px 16px;box-shadow:0 20px 50px -12px rgba(0,0,0,.7);color:#e2e6ed;font-family:'Inter',sans-serif;z-index:2002;max-width:400px;margin:0 auto;transition:opacity .4s ease;}
 .tour-card.centered{top:50%;transform:translateY(-50%);}
 .tour-progress{font-size:8px;color:var(--accent-solid);text-transform:uppercase;letter-spacing:.16em;margin-bottom:6px;}
 .tour-title{font-size:13px;font-weight:700;margin-bottom:6px;}
@@ -1313,6 +1337,7 @@ canvas.spark{width:100%;height:34px;display:block;}
      down if either ever changes. -->
 <div id="pre-veil"></div>
 <script>try{if(localStorage.getItem('ahm-tour-v1-seen')||localStorage.getItem('ahm-v39')){var _pv=document.getElementById('pre-veil');if(_pv)_pv.remove();}}catch(e){}</script>
+<canvas id="app-flake-cv"></canvas>
 <div class="app">
 
 <div class="topbar">
@@ -4951,7 +4976,7 @@ var TOUR_STOPS=[
   {before:function(){circSelect(0,'psych');},sel:'.circ-panel[data-cat="psych"]',title:"Psych — the human variance",body:"Bad Days and Good Days simulate the emotional swings real trading has — stretches that run worse or better than your baseline edge. Discipline % and Skill Growth % model how consistently you follow your own rules, and whether your edge improves with experience."},
   {before:function(){circSelect(0,'ovr');},sel:'.circ-panel[data-cat="ovr"]',title:"Overrides — advanced, opt-in",body:"All off by default. R:R Override replaces your Stop Loss with a fixed ratio off Profit Target. Daily % Override skips tick math and applies a percentage straight to equity. Volume Ceiling caps share growth so compounding can't run away indefinitely."},
   {sel:'#sp0 .sim-row',title:"Run it",body:"Simulate runs this strategy forward using everything you just configured. CSV exports the full day-by-day result. Reset only clears this strategy's last results — it never touches your settings."},
-  {sel:'#sp0 .chart-panel, #sp0 .diag, #sp0 .vs-card',title:"Your results",body:"Once you simulate, the equity curve, a plain-English Diagnostics verdict, and a Strategy Comparison against any other strategies you've run all appear right here."},
+  {sel:'#sp0 .chart-panel, #sp0 .diag, #sp0 .vs-card',title:"Your results",body:"Once you simulate, the equity curve, a plain-English Diagnostics verdict, and a Strategy Comparison against any other strategies you've run all appear right here. Not every ticker suits every strategy equally — this comparison is how you find which combination your own numbers actually support."},
   {before:function(){switchScreen('tbl');},sel:'#scr-tbl > .dv-half:first-child',title:"Table — the race",body:"Every simulated strategy's equity curve races on one chart. The gauges below show each strategy's current share count and capital at a glance."},
   {sel:'#scr-tbl .sbar',title:"Pick a strategy to inspect",body:"Switch which strategy's day-by-day numbers you're looking at below — this doesn't affect the race chart above, which always shows all six."},
   {sel:'.tbl-controls',title:"How often to show a row",body:"The table can show every single day, or thin itself out to every 5th, 10th, 20th day, or a custom interval, so a multi-year simulation stays scannable instead of thousands of rows deep."},
@@ -4965,7 +4990,17 @@ var TOUR_STOPS=[
   {sel:'#scirc-mount',title:"Enter real broker data",body:"Feed in figures straight from your broker statement to keep the Real vs Sim comparison accurate and current."},
   {sel:'#weekly-report, #gauge-wrap',title:"Weekly grading and gauges",body:"A week-by-week report card, plus gauges tracking key variables since your earliest logged data — both computed automatically from what you've logged."},
   {sel:'#scr-stats .chart-panel',title:"Real equity, three ways",body:"Your actual cumulative P&L, plus weekly and monthly rollups, built entirely from your logged trading results, not the simulation."},
-  {sel:null,title:"That's everything",body:"Reopen this tour anytime from Guide, up top — it never touches your settings, so there's no harm coming back whenever something's unclear."}
+  {sel:null,title:"That's everything",body:"Reopen this tour anytime from Guide, up top — it never touches your settings, so there's no harm coming back whenever something's unclear."},
+  // Round 101 - a send-off, at the user's request ("maybe a send off
+  // message at the end, like good luck or something?"). Placed after
+  // the practical "reopen this from Guide" note above so the actual
+  // last thing anyone sees is the encouraging one, not a functional
+  // reminder. Also carries the compounding/reinvestment point from the
+  // same message ("the less you take, the more you get... until it's
+  // life-changing") - that idea doesn't map to any one UI element the
+  // way the ticker/strategy-fit note above does, so it lives here as
+  // closing perspective instead of another mid-tour stop.
+  {sel:null,title:"Good Luck Out There",body:"Once you find a strategy your real numbers actually support, the growth comes from consistency and sizing up — not from chasing something new every time results dip. The part most people don't expect going in: the less you pull out along the way, the more it compounds. Given enough time, that difference alone can end up being the whole game."}
 ];
 
 var state={idx:0,active:false};
@@ -5344,8 +5379,35 @@ function startTour(){
   try{switchScreen('sim');switchStrat(0);}catch(e){}
   startDemoMode();
   blocker.style.display='';spotlight.style.display='';card.style.display='';
+  // Round 101 fix: this used to leave spotlight/card at their default
+  // full opacity, so the darkened overlay + first card appeared in one
+  // frame the instant this function ran - both from the pre-tour hand-
+  // off AND a returning user's direct Guide click ("sudden screen
+  // change"). Two earlier attempts here both failed under actual
+  // testing (confirmed via the browser's own `transitionrun` event,
+  // which never fired for either): a double-rAF flip, and a forced-
+  // reflow-then-flip in the same tick. Root cause: on the FIRST ever
+  // startTour() call, spotlight/card are brand-new elements (just
+  // created by ensureDom() a few lines up) - a genuinely new element's
+  // first-ever computed style is never animated, since there's no prior
+  // rendered frame to transition FROM. That first frame (opacity:0)
+  // needs to actually get PAINTED at least once before flipping to 1
+  // counts as a real, later, transitionable change - and startDemoMode()
+  // just above already blocked the main thread for a real ~500-700ms
+  // simulating all 6 strategies, so both rAF and a same-tick forced
+  // reflow ended up racing straight through without an actual paint
+  // landing in between. A genuine setTimeout (a real macrotask
+  // boundary) reliably gives the browser that opportunity - empirically
+  // tested at several delays (30/40/60ms: unreliable, sometimes no
+  // transition; 90ms+: fired reliably across repeated trials) - 150ms
+  // for a comfortable margin, which reads as instant next to
+  // startDemoMode()'s own much longer setup delay anyway.
+  spotlight.style.opacity='0';card.style.opacity='0';
   var skipBtn=document.getElementById('tour-skip-btn');if(skipBtn)skipBtn.style.display='';
   renderStop(0);
+  setTimeout(function(){
+    spotlight.style.opacity='1';card.style.opacity='1';
+  },150);
   window.addEventListener('resize',onResize);
 }
 function finish(){
@@ -5470,28 +5532,35 @@ var GUT_CHECK={
   ]
 };
 
-// Round 99's three "thinking exercise" beats - user asked for ideas beyond
+// Round 100's three "thinking exercise" beats - user asked for ideas beyond
 // the questionnaire itself ("short thinking exercises to prune better
 // thinking about day trading and capital growth"), then picked all three
 // pitched back: a psychology beat, a math beat, and a real-statistic beat.
-// All three share ONE mechanic (runInsight below) rather than three custom
-// screens - same shape as GUT_CHECK (pick any option, nothing is scored,
-// everything leads to the same underlying substance), just with a per-
-// option acknowledgment line so picking still feels answered rather than
-// ignored. EV_INSIGHT's math is verified arithmetic, not a guess: 40%*200
-// - 60%*100 = +20/trade, *100 trades = +2000 - checked with a throwaway
-// Node script before writing it into copy, since getting trading math
-// wrong in an app whose entire premise is "cold, correct numbers" would
-// undercut the one thing it can't afford to get wrong. STAT_INSIGHT's
-// figure is sourced, not invented: the ~97% figure is the widely-cited
-// headline result of Chague/De-Losso/Giovannetti's "Day Trading for a
-// Living?" (Brazilian futures day traders who persisted 300+ days) -
-// corroborated across many independent secondary sources during round 99,
-// but a direct primary-source fetch was blocked by a tool-level session
-// limit that round, so only the headline figure is used here, not any
-// secondary number (sample size, exact earnings threshold, etc.) that
-// wasn't independently confirmed. Worth a follow-up primary-source check
-// before ever citing this stat somewhere more formal than this app.
+// Round 101 added two more (COST_INSIGHT, AI_INSIGHT below) from the same
+// kind of specific, directive follow-up request. All five share ONE
+// mechanic (runInsight below) rather than five custom screens - same
+// shape as GUT_CHECK (pick any option, nothing is scored, everything
+// leads to the same underlying substance), just with a per-option
+// acknowledgment line so picking still feels answered rather than ignored.
+// EV_INSIGHT's math is verified arithmetic, not a guess: 40%*200 - 60%*100
+// = +20/trade, *100 trades = +2000 - checked with a throwaway Node script
+// before writing it into copy, since getting trading math wrong in an app
+// whose entire premise is "cold, correct numbers" would undercut the one
+// thing it can't afford to get wrong. COST_INSIGHT (round 101) reuses that
+// exact same scenario rather than a fresh one, since the user asked for it
+// as "a follow up" to "the winrate example" specifically - $20 round-trip
+// commission * 100 trades = $2,000, exactly wiping out the $2,000 gross
+// edge, chosen because it lands cleanly at zero rather than an odd
+// fraction. STAT_INSIGHT's figure is sourced, not invented: the ~97%
+// figure is the widely-cited headline result of Chague/De-Losso/
+// Giovannetti's "Day Trading for a Living?" (Brazilian futures day
+// traders who persisted 300+ days) - corroborated across many independent
+// secondary sources during round 99, but a direct primary-source fetch
+// was blocked by a tool-level session limit that round, so only the
+// headline figure is used here, not any secondary number (sample size,
+// exact earnings threshold, etc.) that wasn't independently confirmed.
+// Worth a follow-up primary-source check before ever citing this stat
+// somewhere more formal than this app.
 var LOSS_INSIGHT={
   q:'Quick one. Which hits harder — losing $200 you already had, or missing out on a trade that would’ve made you $200?',
   opts:[
@@ -5510,6 +5579,15 @@ var EV_INSIGHT={
   ],
   fact:'Run it: 40% × $200 minus 60% × $100 comes out to +$20 of expected value per trade. Over 100 trades, that’s +$2,000 — profitable, on a strategy that loses more often than it wins. Win rate alone never tells the whole story; reward-to-risk is doing just as much work. This is the exact math Sim mode runs for you, on your own numbers instead of a hypothetical.'
 };
+var COST_INSIGHT={
+  q:'Same setup, one more variable. That $100-risk strategy nets +$20 expected value per trade before costs. Add a $20 round-trip commission — what happens to the edge?',
+  opts:[
+    {t:'Barely dented',line:'That’s the read most people have — commission feels small next to the P&L.'},
+    {t:'Cut it in half',line:'Reasonable guess, but this one’s sneakier than that.'},
+    {t:'Wiped out completely',line:'That’s exactly it.'}
+  ],
+  fact:'A $20 round-trip commission on 100 trades is $2,000 — precisely the entire edge this scenario had. The strategy didn’t get worse; the account paying for it just got more expensive to run. Broker quality is not a footnote: spreads, fees, and fill quality decide whether a real edge survives contact with a live account, before a single trade is even placed.'
+};
 var STAT_INSIGHT={
   q:'One more, before the diagnosis. Guess: among people who day trade persistently — not a week, a sustained stretch — what share end up losing money?',
   opts:[
@@ -5518,6 +5596,15 @@ var STAT_INSIGHT={
     {t:'The large majority',line:'That’s the right instinct.'}
   ],
   fact:'A widely cited academic study tracking Brazilian futures day traders found that among those who kept trading for more than 300 days, about 97% still lost money. Persistence alone didn’t save them. It rarely does — process does, or it doesn’t.'
+};
+var AI_INSIGHT={
+  q:'Do you currently track your real trades in any organized way — broker exports, a spreadsheet, a journal?',
+  opts:[
+    {t:'Yes, consistently',line:'Good — that’s the hard part most people skip.'},
+    {t:'Sort of, scattered',line:'Scattered still counts for something.'},
+    {t:'Not really',line:'That’s the most common answer, and the easiest one to fix.'}
+  ],
+  fact:'Whichever it is — you don’t have to be a spreadsheet wizard or a mathematician to do this well. AI tools can help pull structure out of a messy broker export, calculate your real win rate and expected value, and translate what actually happened into the numbers this app wants. Understanding the math matters far more than performing it by hand.'
 };
 
 var introOverlay,introCanvas,introFg,introSkipBtn;
@@ -5605,6 +5692,64 @@ function stopFlakeField(){
   flakeRafId=null;
 }
 
+// A second, independent flake field for the app's own background -
+// round 101, the user asked to bring "some of that active background"
+// into the live app itself (explicitly deferred in round 98: "we can
+// visit that later"). Deliberately kept separate from flakeParticles/
+// flakeCtx/etc. above (own canvas #app-flake-cv, own vars, own rAF loop)
+// rather than shared - that system is small and already verified across
+// several rounds; duplicating ~25 lines was cheaper than risking a
+// shared-state refactor touching tested code. Tuned subtler than the
+// intro's own (fewer, smaller, dimmer particles) since this one has to
+// sit behind real data/charts/UI someone is actually reading, not stand
+// alone on a black screen as the only visual content. Respects
+// prefers-reduced-motion, same as body::before's own split (see that
+// CSS comment) - never started at all if the user has that preference.
+var appFlakeCanvas,appFlakeCtx,appFlakeParticles=null,appFlakeRafId=null,appFlakeW=0,appFlakeH=0;
+function sizeAppFlakeCanvas(){
+  var dpr=window.devicePixelRatio||1;
+  appFlakeW=appFlakeCanvas.clientWidth;appFlakeH=appFlakeCanvas.clientHeight;
+  appFlakeCanvas.width=Math.max(1,Math.round(appFlakeW*dpr));appFlakeCanvas.height=Math.max(1,Math.round(appFlakeH*dpr));
+  appFlakeCtx=appFlakeCanvas.getContext('2d');
+  appFlakeCtx.setTransform(dpr,0,0,dpr,0,0);
+}
+function initAppFlakes(){
+  var n=Math.round(Math.min(46,Math.max(18,(appFlakeW*appFlakeH)/16000)));
+  appFlakeParticles=[];
+  for(var i=0;i<n;i++){
+    appFlakeParticles.push({
+      x:Math.random()*appFlakeW,y:Math.random()*appFlakeH,
+      r:0.7+Math.random()*1.6,
+      vy:-(0.04+Math.random()*0.09),vx:(Math.random()-0.5)*0.04,
+      baseA:0.08+Math.random()*0.22,
+      tw:Math.random()*Math.PI*2,twS:0.010+Math.random()*0.018
+    });
+  }
+}
+function drawAppFlakes(){
+  appFlakeCtx.clearRect(0,0,appFlakeW,appFlakeH);
+  appFlakeParticles.forEach(function(f){
+    f.x+=f.vx;f.y+=f.vy;f.tw+=f.twS;
+    if(f.y<-4){f.y=appFlakeH+4;f.x=Math.random()*appFlakeW;}
+    if(f.x<-4)f.x=appFlakeW+4;else if(f.x>appFlakeW+4)f.x=-4;
+    var a=f.baseA*(0.55+0.45*Math.sin(f.tw));
+    appFlakeCtx.beginPath();
+    appFlakeCtx.fillStyle='rgba(125,211,252,'+a.toFixed(3)+')';
+    appFlakeCtx.shadowColor='rgba(56,189,248,'+(a*0.9).toFixed(3)+')';appFlakeCtx.shadowBlur=4;
+    appFlakeCtx.arc(f.x,f.y,f.r,0,Math.PI*2);appFlakeCtx.fill();
+  });
+  appFlakeRafId=requestAnimationFrame(drawAppFlakes);
+}
+function startAppFlakeField(){
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  appFlakeCanvas=document.getElementById('app-flake-cv');
+  if(!appFlakeCanvas)return;
+  sizeAppFlakeCanvas();initAppFlakes();
+  if(appFlakeRafId)cancelAnimationFrame(appFlakeRafId);
+  appFlakeRafId=requestAnimationFrame(drawAppFlakes);
+  window.addEventListener('resize',function(){sizeAppFlakeCanvas();initAppFlakes();});
+}
+
 // Every screen's markup goes through here: topHtml (the fixed progress
 // dots, when present) renders outside .scr-inner so it stays pinned to
 // the viewport even while .intro-fg scrolls; everything else goes
@@ -5628,9 +5773,17 @@ function setFg(topHtml,innerHtml,extraCls){
 // words/minute (300ms/word) is a comfortable, unhurried silent-reading
 // pace; the 2200ms floor keeps even a one-word line ("Good.") from
 // flashing past.
+// Round 101: "the text that automatically vanishes should take 15%
+// longer to vanish" - scaling the whole computed value (floor included)
+// by 1.15 rather than tweaking the floor/rate separately keeps the
+// shape of the curve identical, just uniformly slower, so a one-word
+// line and a thirty-word line both get exactly the same proportional
+// extension rather than the floor and the per-word rate drifting out
+// of the ratio the round 99 tuning pass settled on.
+var PACE_SCALE=1.15;
 function readMs(text){
   var words=(text||'').trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(2200,500+words*300);
+  return Math.round(Math.max(2200,500+words*300)*PACE_SCALE);
 }
 
 // A second, deliberately smaller pacing function for ONE specific spot:
@@ -5653,7 +5806,7 @@ function readMs(text){
 // worst case down to roughly 33 seconds.
 function revealStepMs(text){
   var words=(text||'').trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(1100,Math.min(3000,650+words*130));
+  return Math.round(Math.max(1100,Math.min(3000,650+words*130))*PACE_SCALE);
 }
 
 // Advances on tap OR after `ms` of nobody tapping, whichever comes
@@ -5884,21 +6037,31 @@ function startIntroSequence(){
   introSkipBtn.style.display='';
   startFlakeField();
   // LOSS_INSIGHT opens right after the atmosphere beats - a light
-  // psychology hook before the questionnaire gets personal. EV_INSIGHT
-  // and STAT_INSIGHT land back to back after the questionnaire, building
-  // from concrete math into the heaviest "cold truth" beat, right before
-  // the gut-check's direct question about wanting to see that truth.
+  // psychology hook before the questionnaire gets personal. The other
+  // four land after the questionnaire, in a deliberate arc (round 101
+  // added COST_INSIGHT and AI_INSIGHT to round 100's EV_INSIGHT/
+  // STAT_INSIGHT): EV_INSIGHT (math literacy) -> COST_INSIGHT (the same
+  // scenario, but costs erode it - a direct follow-up, same as the user
+  // asked for) -> STAT_INSIGHT (the heaviest "cold truth" beat) ->
+  // AI_INSIGHT (a deliberate pivot to something empowering right after
+  // the heaviest stat, so the sequence doesn't end on unrelieved
+  // heaviness right before the gut-check's direct question about
+  // wanting to see that truth).
   runBeats(function(){
     runInsight(LOSS_INSIGHT,function(){
       runQuestionnaire(function(){
         runInsight(EV_INSIGHT,function(){
-          runInsight(STAT_INSIGHT,function(){
-            runGutCheck(function(){
-              renderReadiness(function(){
-                stopFlakeField();
-                introOverlay.style.display='none';
-                introSkipBtn.style.display='none';
-                startTour();
+          runInsight(COST_INSIGHT,function(){
+            runInsight(STAT_INSIGHT,function(){
+              runInsight(AI_INSIGHT,function(){
+                runGutCheck(function(){
+                  renderReadiness(function(){
+                    stopFlakeField();
+                    introOverlay.style.display='none';
+                    introSkipBtn.style.display='none';
+                    startTour();
+                  });
+                });
               });
             });
           });
@@ -5910,6 +6073,14 @@ function startIntroSequence(){
 
 window.startTour=startTour;
 window.startIntroSequence=startIntroSequence;
+
+// Unconditional and independent of shouldAutoShow() - the app-level
+// flake background belongs to the app itself, not the pre-tour
+// sequence, so it starts the same way for a first-time visitor (where
+// it's simply hidden behind the opaque #pre-veil/.intro-overlay until
+// either finishes, per those elements' own zero-flash design) and a
+// returning one (who sees it immediately, with no intro at all).
+startAppFlakeField();
 
 if(shouldAutoShow())setTimeout(startIntroSequence,500);
 })();
