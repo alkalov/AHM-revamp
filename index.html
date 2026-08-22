@@ -1368,15 +1368,28 @@ canvas.spark{width:100%;height:34px;display:block;}
         <canvas id="dv-gauge-cv"></canvas>
       </div>
     </div>
-    <div class="dv-half">
-      <div class="sbar">
+    <!-- Round 92: pulled the strategy tabs out of the lower .dv-half
+         entirely (rather than just styling .sbtn/.sbar transparent, as
+         round 90 did). They used to be the FIRST child inside that
+         glass-boxed .dv-half, so the box's own top inset highlight sat
+         right above them, and .tbl-controls (also independently boxed,
+         being the very next child) put a second highlight right below
+         them — sandwiching the tab row in what read as its own bordered
+         "window" even though .sbar/.sbtn had no fill of their own. Now
+         .sbar sits as a plain screen-level sibling between the two
+         .dv-half blocks, same as the Sim tab's own .sbar — nothing but
+         the ambient bloom behind it. The lower .dv-half's box now starts
+         cleanly at .tbl-controls, so the actual data table keeps its
+         window (data still gets one); only the tab buttons lost theirs. -->
+    <div class="sbar">
         <button class="sbtn on" id="tsb0" onclick="switchTblStrat(0)"><span class="sb-top">A<i class="sb-ring" id="tbr0"></i></span><span class="sb-stat" id="tbs0">—</span></button>
         <button class="sbtn sc-b" id="tsb1" onclick="switchTblStrat(1)"><span class="sb-top">B<i class="sb-ring" id="tbr1"></i></span><span class="sb-stat" id="tbs1">—</span></button>
         <button class="sbtn sc-c" id="tsb2" onclick="switchTblStrat(2)"><span class="sb-top">C<i class="sb-ring" id="tbr2"></i></span><span class="sb-stat" id="tbs2">—</span></button>
         <button class="sbtn sc-d" id="tsb3" onclick="switchTblStrat(3)"><span class="sb-top">D<i class="sb-ring" id="tbr3"></i></span><span class="sb-stat" id="tbs3">—</span></button>
         <button class="sbtn sc-e" id="tsb4" onclick="switchTblStrat(4)"><span class="sb-top">E<i class="sb-ring" id="tbr4"></i></span><span class="sb-stat" id="tbs4">—</span></button>
         <button class="sbtn sc-f" id="tsb5" onclick="switchTblStrat(5)"><span class="sb-top">F<i class="sb-ring" id="tbr5"></i></span><span class="sb-stat" id="tbs5">—</span></button>
-      </div>
+    </div>
+    <div class="dv-half">
       <div class="tbl-controls">
         <span class="tc-lbl">Every</span>
         <div class="tc-quick" id="tc-quick">
