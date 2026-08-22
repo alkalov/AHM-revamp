@@ -1158,13 +1158,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 .modal,.imodal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;align-items:flex-end;justify-content:center;}
 .modal.open,.imodal.open{display:flex;}
 .mbox,.ibox{background:#10141c;border-top:1px solid var(--accent-cyan);max-width:600px;width:100%;padding:14px 16px 32px;max-height:80vh;overflow-y:auto;border-radius:8px 8px 0 0;position:relative;}
-.mlbl{font-size:8px;color:var(--accent-solid);text-transform:uppercase;letter-spacing:.2em;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #232b3d;}
 .mx{position:absolute;top:10px;right:14px;background:transparent;border:1px solid #232b3d;color:#4d5a6e;font-family:'Inter',sans-serif;font-size:8px;padding:2px 8px;cursor:pointer;border-radius:2px;}
-.gs-sec{margin-bottom:10px;padding-left:10px;border-left:1px solid var(--accent-cyan);}
-.gs-sec h3{font-family:'Inter',sans-serif;font-size:10px;font-weight:700;color:var(--accent-solid);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px;}
-.gs-sec p,.gs-sec li{font-size:11px;color:#8892a4;line-height:1.65;margin-bottom:2px;}
-.gs-sec ul{padding-left:14px;}
-.gtag{background:rgba(56,189,248,.12);color:var(--accent-solid);font-size:9px;padding:1px 5px;border-radius:2px;}
 .ibox h2{font-family:'Inter',sans-serif;font-size:10px;color:#fbbf24;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;}
 .ibox p,.ibox li{font-size:11px;color:#8892a4;line-height:1.65;margin-bottom:3px;}
 .ibox ul{padding-left:14px;}
@@ -1177,121 +1171,49 @@ canvas.spark{width:100%;height:34px;display:block;}
 .fb-total .fb-lbl{color:#8892a4;font-weight:600;}
 .fb-total .fb-val{color:#34d399;font-weight:600;}
 .fb-tier{font-size:8px;color:#fbbf24;margin-top:4px;letter-spacing:.04em;}
+
+/* ══════════════════════════════════════════════════════════════
+   APP TOUR (round 94 — full replacement of the round 86-88 wizard,
+   which was a separate self-contained carousel that asked chip
+   questions and wrote real settings on Finish). This is a different
+   mechanism by explicit request: a live coachmark tour that spotlights
+   REAL elements on the REAL screens as it steps through them, paired
+   with a small explanation card (a "window slide") next to each one.
+   It is a pure explainer — it never reads a chip answer or writes any
+   app field, so it's safe to reopen from Guide as many times as
+   wanted, not just once on first launch. The old wizard's entire
+   style/script blocks were deleted outright rather than patched (same
+   "3 rounds patching means the approach is wrong" lesson as always —
+   this is a different approach, not a patch). Old static "How to Use"
+   modal (#gmodal) was folded into this and removed; Guide now opens
+   this tour instead.
+   Mechanics: one full-viewport click-blocker (.tour-blocker) sits
+   below everything and swallows taps so the real app can't be
+   accidentally triggered mid-tour; .tour-spotlight is a single
+   position:fixed box whose OWN box-shadow (0 0 0 9999px) paints the
+   dark backdrop everywhere outside itself — no separate overlay+mask
+   needed, and a 0×0 spotlight (used for the intro/outro, which have no
+   target) still darkens the full screen with no visible hole. The
+   card always spans left:16px/right:16px (never centered via width
+   math) and is positioned by setting EITHER top OR bottom in JS,
+   whichever side of the target has room — this sidesteps needing to
+   know the card's own height in advance. ══════════════════════════ */
+.tour-blocker{position:fixed;inset:0;z-index:2000;background:transparent;touch-action:none;}
+.tour-spotlight{position:fixed;z-index:2001;pointer-events:none;box-shadow:0 0 0 9999px rgba(4,6,10,.86);border:2px solid rgba(56,189,248,.85);border-radius:14px;transition:top .32s cubic-bezier(.25,.46,.45,.94),left .32s cubic-bezier(.25,.46,.45,.94),width .32s cubic-bezier(.25,.46,.45,.94),height .32s cubic-bezier(.25,.46,.45,.94);}
+.tour-spotlight.no-target{border:none;border-radius:0;}
+.tour-card{position:fixed;left:16px;right:16px;background:rgba(18,23,33,.94);background-image:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,0) 55%);-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px 16px;box-shadow:0 20px 50px -12px rgba(0,0,0,.7);color:#e2e6ed;font-family:'Inter',sans-serif;z-index:2002;max-width:400px;margin:0 auto;}
+.tour-card.centered{top:50%;transform:translateY(-50%);}
+.tour-progress{font-size:8px;color:var(--accent-solid);text-transform:uppercase;letter-spacing:.16em;margin-bottom:6px;}
+.tour-title{font-size:13px;font-weight:700;margin-bottom:6px;}
+.tour-body{font-size:11px;color:#b8c0cd;line-height:1.6;margin-bottom:12px;}
+.tour-nav{display:flex;gap:8px;}
+.tour-btn{flex:1;height:34px;border-radius:8px;font-family:'Inter',sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;}
+.tour-back{background:transparent;border:1px solid #232b3d;color:#8892a4;}
+.tour-back:disabled{opacity:.35;pointer-events:none;}
+.tour-next{background:var(--accent-solid);border:none;color:#04060a;font-weight:700;}
+.tour-skip{position:fixed;z-index:2002;top:calc(14px + env(safe-area-inset-top,0px));right:16px;font-size:10px;color:#8892a4;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;padding:6px;touch-action:manipulation;background:rgba(4,6,10,.5);border-radius:4px;}
 </style>
 
-<!-- ══════════════════════════════════════════════════════════════
-     FIRST-RUN WIZARD (round 86, expanded round 87, reworked round 88)
-     — a self-contained onboarding module with its own stylesheet and
-     its own script (below, after the app's own closing </script>),
-     its own localStorage key. Round 86 kept this at ZERO app coupling
-     beyond a read-only existing-user check. Round 87 added real
-     write-back. Round 88 corrected two things about that write-back
-     after direct feedback: (1) the wizard no longer NARRATES the
-     plain-English-to-jargon connection anywhere ("the app calls this
-     X" is gone, and so is the paired said/jargon recap table) — the
-     real field label + value now only ever appear quietly, as an
-     accumulating row of small pills in the footer, so the user makes
-     the connection themselves rather than being told it; (2) the
-     risk:reward question no longer targets the opt-in, default-OFF
-     "R:R Override" field (rrSlider/tog-rr) — it now targets the
-     always-on, always-visible Profit Target and Stop Loss fields
-     (minP/maxP/minL/maxL) that every strategy already uses, via a
-     fixed baseline-stop conversion (rrToTicks in the script below).
-       - READS the app's save key (APP_SK in the script) to detect
-         existing users and skip the wizard for them entirely (round
-         86, unchanged).
-       - READS the app's STRAT_COLORS array (with a hardcoded fallback
-         if that global is ever renamed/removed) purely for palette
-         continuity in the ambient background animation — no behavior
-         depends on it.
-       - WRITES, exactly once, at the final "Enter the Machine" tap:
-         calls the app's own real setter functions (capQuickPick, setV)
-         to apply the four plain-English answers collected in the
-         wizard to Strategy A's real fields, then switches to the real
-         Sim screen. This is the same one-directional path a user's
-         own taps on the real UI would take — the wizard never reads
-         app state back out, never measures live app elements, and
-         never runs this path unless the user reaches the final page
-         and taps Finish (Skip, at any point, bails with zero writes).
-         If the app's field ids or setter functions are ever renamed,
-         applyAnswersToApp() in the script below is the one place that
-         needs updating.
-     ══════════════════════════════════════════════════════════════ -->
-<style>
-.aw-root{position:fixed;inset:0;z-index:1000;overflow:hidden;background:radial-gradient(ellipse 140% 100% at 50% -10%,rgba(56,189,248,.10) 0%,rgba(4,6,10,0) 55%) ,#04060a;display:flex;flex-direction:column;font-family:'Inter',sans-serif;color:#e2e6ed;}
-.aw-skip{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:18px;font-size:11px;color:#5c6779;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;z-index:2;padding:6px 4px;touch-action:manipulation;}
-.aw-track{flex:1;display:flex;transition:transform .32s cubic-bezier(.25,.46,.45,.94);touch-action:pan-y;}
-.aw-page{flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 34px;position:relative;}
-.aw-page.aw-q,.aw-page.aw-recap{justify-content:center;padding-top:calc(20px + env(safe-area-inset-top,0px));padding-bottom:20px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;}
-@supports (justify-content:safe center){.aw-page.aw-q,.aw-page.aw-recap{justify-content:safe center;}}
-.aw-bg{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
-.aw-bg canvas{width:100%;height:100%;display:block;}
-.aw-bg-dim{opacity:.4;}
-.aw-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;}
-.aw-icon{width:88px;height:88px;border-radius:50%;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.5),rgba(56,189,248,.14) 62%),rgb(15,20,29);border:1px solid rgba(56,189,248,.3);display:flex;align-items:center;justify-content:center;color:var(--accent-solid);box-shadow:0 0 34px -6px rgba(56,189,248,.45),inset 0 1px 0 rgba(255,255,255,.12);margin-bottom:30px;}
-.aw-headline{font-size:23px;font-weight:800;letter-spacing:-.015em;line-height:1.25;margin-bottom:14px;color:#f5f7fa;}
-.aw-body{font-size:13px;line-height:1.65;color:#93a0b4;max-width:300px;}
-.aw-footer{padding:0 28px calc(22px + env(safe-area-inset-bottom,0px));}
-.aw-dots{display:flex;justify-content:center;gap:7px;margin-bottom:22px;}
-.aw-dot{width:6px;height:6px;border-radius:50%;background:#232b3d;transition:width .25s ease,background .25s ease;}
-.aw-dot.on{background:var(--accent-solid);width:20px;border-radius:3px;}
-.aw-nav{display:flex;align-items:center;gap:10px;}
-.aw-back{background:transparent;border:none;color:#5c6779;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:14px 6px;cursor:pointer;touch-action:manipulation;visibility:hidden;}
-.aw-next{flex:1;height:50px;border-radius:12px;background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.4) 0%,rgba(255,255,255,0) 55%),rgb(56,189,248);color:#0a0d13;font-family:'Inter',sans-serif;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border:none;cursor:pointer;touch-action:manipulation;box-shadow:0 6px 20px -6px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.45);}
-
-/* Question pages */
-.aw-qtext{font-size:19px;font-weight:800;line-height:1.32;margin-bottom:18px;color:#f5f7fa;max-width:300px;}
-.aw-preview{min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:4px 0 6px;width:100%;}
-.aw-prev-num{font-family:'Roboto Mono',monospace;font-size:29px;font-weight:700;color:var(--accent-solid);text-shadow:0 0 20px rgba(56,189,248,.35);}
-.aw-prev-bar-wrap{width:190px;height:6px;border-radius:3px;background:#181d29;margin-top:12px;overflow:hidden;}
-.aw-prev-bar{height:100%;background:linear-gradient(90deg,#1c72a8,#38bdf8);border-radius:3px;transition:width .3s ease;}
-.aw-prev-dots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:220px;}
-.aw-prev-dot{width:16px;height:16px;border-radius:50%;background:#232b3d;transition:background .25s,transform .25s;}
-.aw-prev-dot.win{background:#34d399;box-shadow:0 0 8px rgba(52,211,153,.5);}
-.aw-prev-dots-lbl{font-size:10px;color:#8892a4;margin-top:12px;letter-spacing:.02em;font-family:'Roboto Mono',monospace;}
-.aw-prev-rr{display:flex;gap:24px;align-items:flex-end;height:110px;}
-.aw-prev-rr-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
-.aw-prev-rr-bar{width:34px;border-radius:6px 6px 0 0;transition:height .3s ease;}
-.aw-prev-rr-bar.risk{background:linear-gradient(180deg,#f87171,#b91c1c);}
-.aw-prev-rr-bar.reward{background:linear-gradient(180deg,#34d399,#059669);}
-.aw-prev-rr-lbl{font-size:9px;color:#8892a4;margin-top:7px;font-family:'Roboto Mono',monospace;}
-.aw-prev-trades{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;max-width:220px;}
-.aw-prev-trade-dot{width:9px;height:16px;border-radius:2px;background:var(--accent-solid);box-shadow:0 0 6px rgba(56,189,248,.5);}
-.aw-prev-trades-lbl{font-size:10px;color:#8892a4;margin-top:12px;font-family:'Roboto Mono',monospace;}
-.aw-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0 4px;max-width:300px;}
-.aw-chip{padding:11px 18px;border-radius:14px;background:rgba(18,23,33,.5);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border:1px solid rgba(255,255,255,.09);color:#c7d0de;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;transition:background .18s,color .18s,transform .12s,border-color .18s;}
-.aw-chip:active{transform:scale(.96);}
-.aw-chip.on{background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(56,189,248);color:#0a0d13;border-color:transparent;box-shadow:0 4px 14px -4px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
-/* Footer thread — the ONLY place a real field label + value ever
-   appears. No narrating sentence anywhere: just the app's own label
-   and the resulting value, accumulating one bead per question as the
-   user moves forward. Positional/visual proximity to what they just
-   tapped is the whole mechanism — the connection is theirs to notice,
-   not spelled out. Echoes the "one strategy becomes six" thread motif
-   from the intro's strands background. */
-.aw-thread{display:none;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:14px;min-height:22px;}
-.aw-thread-bead{display:flex;align-items:center;gap:5px;background:rgba(18,23,33,.5);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:4px 8px;opacity:0;animation:awBeadIn .3s ease forwards;}
-@keyframes awBeadIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
-.aw-thread-lbl{font-size:8px;color:#5c6779;text-transform:uppercase;letter-spacing:.06em;}
-.aw-thread-val{font-size:10px;color:var(--accent-solid);font-weight:700;font-family:'Roboto Mono',monospace;}
-.aw-thread-burst{gap:10px;}
-.aw-thread-spark{width:8px;height:8px;border-radius:50%;opacity:0;animation:awSpark .5s ease forwards;}
-@keyframes awSpark{0%{opacity:0;transform:scale(.3) translateY(4px);}60%{opacity:1;transform:scale(1.15) translateY(-2px);}100%{opacity:1;transform:scale(1) translateY(0);}}
-
-/* Recap page */
-.aw-recap-title{font-size:19px;font-weight:800;color:#f5f7fa;margin-bottom:18px;}
-.aw-recap-prose{font-size:14px;line-height:1.7;color:#c7d0de;max-width:300px;margin-bottom:6px;}
-.aw-recap-chart-wrap{width:100%;max-width:310px;height:86px;margin-top:20px;border-radius:12px;overflow:hidden;background:rgba(18,23,33,.3);border:1px solid rgba(255,255,255,.06);}
-.aw-recap-chart-wrap canvas{width:100%;height:100%;display:block;}
-.aw-recap-chart-lbl{font-size:9px;color:#5c6779;margin-top:8px;text-align:center;max-width:310px;}
-
-/* One-time spotlight pulse applied to the REAL app's Simulate button
-   right after handoff (added/removed by the wizard's own script, see
-   applyAnswersToApp) - the only wizard-defined rule that ever targets
-   a real app element, and it always self-removes within ~4s. */
-.aw-spotlight{animation:awSpotlight 1.1s ease-in-out 3;box-shadow:0 0 0 4px rgba(56,189,248,.35),0 6px 20px -4px rgba(56,189,248,.7) !important;}
-@keyframes awSpotlight{0%,100%{transform:scale(1);}50%{transform:scale(1.045);}}
-</style>
 </head>
 <body>
 <div class="app">
@@ -1430,7 +1352,7 @@ canvas.spark{width:100%;height:34px;display:block;}
            six panels' field markup lives in one place only. -->
       <div id="jcirc-mount"></div>
 
-      <button class="j-save-btn" onclick="saveJournal()">Save Entry</button>
+      <button class="j-save-btn" id="log-save-btn" onclick="saveJournal()">Save Entry</button>
 
       <div class="log-divider"></div>
 
@@ -1470,7 +1392,7 @@ canvas.spark{width:100%;height:34px;display:block;}
         <div class="grade-big" id="sd-grade">—</div>
       </div>
 
-      <button class="j-save-btn" onclick="exportLogCSV()" style="border-color:#60a5fa;color:#60a5fa;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Export Log + Journal CSV</span></button>
+      <button class="j-save-btn" id="log-export-btn" onclick="exportLogCSV()" style="border-color:#60a5fa;color:#60a5fa;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Export Log + Journal CSV</span></button>
       <div class="spark-grid" id="spark-grid" style="display:none;"></div>
       <div class="jhist" id="jhist"><div class="jhist-hd">History</div><div class="jentry" style="color:#4d5a6e;font-size:10px;text-align:center;padding:14px;">No entries yet.</div></div>
     </div>
@@ -1537,22 +1459,6 @@ canvas.spark{width:100%;height:34px;display:block;}
 </nav>
 </div>
 
-<div class="modal" id="gmodal" onclick="if(event.target===this)closeGuide()">
-  <div class="mbox">
-    <button class="mx" onclick="closeGuide()">✕</button>
-    <div class="mlbl">How to Use</div>
-    <div class="gs-sec"><h3>Sim</h3><p>Configure your strategy across five sections. Toggle fields ON/OFF. Hit <span class="gtag">Simulate</span>. Chart, diagnostics and results appear inline below.</p></div>
-    <div class="gs-sec"><h3>Table</h3><p>Day-by-day breakdown. Adjust the interval stepper. Scrolls horizontally for all columns.</p></div>
-    <div class="gs-sec"><h3>Log</h3><p>Top half: log today's trades after the close. Grades unlock after a baseline forms. Bottom half: journal your mental and physical state daily.</p></div>
-    <div class="gs-sec"><h3>Stats</h3><p>Enter real broker data to compare against your simulation targets in real time.</p></div>
-    <div class="gs-sec"><h3>Key Terms</h3><ul>
-      <li><b>Tick</b> — $0.01/share (US equities)</li>
-      <li><b>R:R</b> — Reward:Risk ratio</li>
-      <li><b>Edge</b> — Expected profit after all costs</li>
-      <li><b>Pullback Kill</b> — Win that reverses past target, becomes a loss</li>
-    </ul></div>
-  </div>
-</div>
 
 <div class="imodal" id="imodal" onclick="if(event.target===this)closeInfo()">
   <div class="ibox">
@@ -1767,8 +1673,7 @@ function dvSyncTblScroll(){
   bloomRow(closest);
 }
 
-function openGuide(){$('gmodal').classList.add('open');}
-function closeGuide(){$('gmodal').classList.remove('open');}
+function openGuide(){if(typeof startTour==='function')startTour();}
 function openInfo(k){const d=INFO[k];if(!d)return;$('ititle').textContent=d.t;$('ibody').innerHTML=d.b;$('imodal').classList.add('open');}
 function closeInfo(){$('imodal').classList.remove('open');}
 
@@ -4920,421 +4825,465 @@ function wireGlobalResize(){
 init();
 </script>
 
-<!-- FIRST-RUN WIZARD (round 86, expanded round 87) — own script, runs
-     after the app above has booted. See the style block's header
-     comment for the full coupling rationale (two reads, one guarded
-     one-time write path). -->
+<!-- APP TOUR (round 94) — own script, runs after the app above has
+     booted. See the style block's header comment for the full
+     rationale. Two read-only couplings only: switchScreen/switchStrat/
+     circSelect are called to bring real elements into view, and
+     localStorage's app save-key is read (never written) to skip the
+     auto-launch for existing users. Nothing here ever writes an app
+     field — see applyAnswersToApp in the OLD (deleted) wizard for
+     contrast; this tour has no equivalent function at all. -->
 <script>
 (function(){
 'use strict';
-var WK='ahm-wizard-v1-seen';
-// Coupling #1 (round 86): read-only existing-user check.
-var APP_SK='ahm-v39';
-// Coupling #2 (round 87): read-only palette continuity, with a safe
-// fallback if the app's STRAT_COLORS global is ever renamed/removed.
-var PALETTE=(typeof STRAT_COLORS!=='undefined'&&STRAT_COLORS.length)?STRAT_COLORS:['#38bdf8','#fb923c','#a78bfa','#84cc16','#ef4444','#ec4899'];
 
-function shouldShow(){
+// Each stop: optional before() prepares the real UI (switch screen /
+// open a category) before the stop is measured; sel is a CSS selector
+// (comma-separated for a union of several elements) or null for a
+// centered, untargeted stop (intro/outro). Title/body use double
+// quotes throughout so natural apostrophes in the copy never need
+// escaping.
+var TOUR_STOPS=[
+  {sel:null,title:"Welcome to the Anti-Hope Machine",body:"A quick tour of every screen — nothing here changes any of your settings. Skip anytime, and you can reopen this tour later from Guide, up top."},
+  {before:function(){switchScreen('sim');},sel:'.global-capital',title:"Starting Capital",body:"One shared capital value every strategy compounds from — A through F all start on equal footing, so comparing them stays apples-to-apples no matter what ticker or share price each is testing."},
+  {sel:'#scr-sim .sbar',title:"Six strategies, one account",body:"Switch between Strategies A–F here. Each keeps its own ticker, targets, and risk settings, but they all draw from the same Starting Capital above, so you can genuinely compare six different ideas side by side."},
+  {sel:'#seg-bar',title:"Five setting groups",body:"Every field for the active strategy lives in one of five categories: Core, Risk, Ticker, Psych, and Overrides. Tap a segment to open it — the next few stops walk through each one."},
+  {before:function(){circSelect(0,'core');},sel:'.circ-panel[data-cat="core"]',title:"Core — your edge",body:"Win Rate % and Breakeven % define how often you win versus scratch a trade. Loss Rate fills in automatically from what's left. Distribution (off by default) shows the resulting win/breakeven/loss split and an estimated EV per trade."},
+  {before:function(){circSelect(0,'risk');},sel:'.circ-panel[data-cat="risk"]',title:"Risk — targets and frequency",body:"Profit Target and Stop Loss are set in ticks — one tick is $0.01/share on US equities, and Reward:Risk is just Profit Target ÷ Stop Loss. Trades / Day sets how many trades you take on a trading day; Days You Trade lets swing-style traders spread that same frequency across fewer active days a month. Daily Loss Cap puts a hard ceiling on how bad one day can get."},
+  {before:function(){circSelect(0,'ticker');},sel:'.circ-panel[data-cat="ticker"]',title:"Ticker — price and real costs",body:"Price Range and Starting Shares (derived from your shared Capital) set the account size for this ticker. Commission, exchange/clearing fees, spread, and slippage are all modeled here too — this is what keeps results honest instead of showing a fantasy of gross P&L."},
+  {before:function(){circSelect(0,'psych');},sel:'.circ-panel[data-cat="psych"]',title:"Psych — the human variance",body:"Bad Days and Good Days simulate the emotional swings real trading has — stretches that run worse or better than your baseline edge. Discipline % and Skill Growth % model how consistently you follow your own rules, and whether your edge improves with experience."},
+  {before:function(){circSelect(0,'ovr');},sel:'.circ-panel[data-cat="ovr"]',title:"Overrides — advanced, opt-in",body:"All off by default. R:R Override replaces your Stop Loss with a fixed ratio off Profit Target. Daily % Override skips tick math and applies a percentage straight to equity. Volume Ceiling caps share growth so compounding can't run away indefinitely."},
+  {sel:'#sp0 .sim-row',title:"Run it",body:"Simulate runs this strategy forward using everything you just configured. CSV exports the full day-by-day result. Reset only clears this strategy's last results — it never touches your settings."},
+  {sel:'#sp0 .chart-panel, #sp0 .diag, #sp0 .vs-card',title:"Your results",body:"Once you simulate, the equity curve, a plain-English Diagnostics verdict, and a Strategy Comparison against any other strategies you've run all appear right here."},
+  {before:function(){switchScreen('tbl');},sel:'#scr-tbl > .dv-half:first-child',title:"Table — the race",body:"Every simulated strategy's equity curve races on one chart. The gauges below show each strategy's current share count and capital at a glance."},
+  {sel:'#scr-tbl .sbar',title:"Pick a strategy to inspect",body:"Switch which strategy's day-by-day numbers you're looking at below — this doesn't affect the race chart above, which always shows all six."},
+  {sel:'.tbl-controls',title:"How often to show a row",body:"The table can show every single day, or thin itself out to every 5th, 10th, 20th day, or a custom interval, so a multi-year simulation stays scannable instead of thousands of rows deep."},
+  {sel:'.tbl-scroll',title:"Day-by-day breakdown",body:"Every column from share count to win rate to cumulative P&L, scrollable both directions. This is the same data the CSV export gives you, just live on screen."},
+  {before:function(){switchScreen('log');},sel:'#jcirc-mount',title:"Log — your journal",body:"Six categories — Soul, Mind, Body, Grade, Market, Outcome — for tracking the human side of trading day to day: sleep, stress, discipline, how the day actually went. Tap a category to open it."},
+  {sel:'#log-save-btn',title:"Save Entry",body:"Saves everything in the journal cluster above as today's entry. Save it again later the same day and it overwrites rather than duplicating — one entry per calendar date."},
+  {sel:'#scr-log .inp-grp, #scr-log .tb-card',title:"Your actual trading results",body:"Separate from the journal — this is where you enter what really happened: wins, losses, breakevens, tick averages, net P&L, and a breakdown of how much of each trade's move you actually captured."},
+  {sel:'#scr-log .sess-btns, #scr-log .g3, #scr-log .grade-card',title:"Log Day",body:"Adds today's numbers to your running log — unlike Save Entry, this appends every time rather than overwriting. Once you've logged a few days, Win Rate, Expectancy, and a Grade vs. your own baseline all compute automatically."},
+  {sel:'#log-export-btn, #scr-log .jhist',title:"Export and history",body:"One CSV combines your trading log and journal entries by date, one row per day. Your full logged history sits below it, scrollable."},
+  {before:function(){switchScreen('stats');},sel:'.vs-card',title:"Stats — reality check",body:"Once you've logged real trading days, this compares what actually happened against your simulation's targets for the same strategy — the whole point of building the simulation in the first place."},
+  {sel:'#scirc-mount',title:"Enter real broker data",body:"Feed in figures straight from your broker statement to keep the Real vs Sim comparison accurate and current."},
+  {sel:'#weekly-report, #gauge-wrap',title:"Weekly grading and gauges",body:"A week-by-week report card, plus gauges tracking key variables since your earliest logged data — both computed automatically from what you've logged."},
+  {sel:'#scr-stats .chart-panel',title:"Real equity, three ways",body:"Your actual cumulative P&L, plus weekly and monthly rollups, built entirely from your logged trading results, not the simulation."},
+  {sel:null,title:"That's everything",body:"Reopen this tour anytime from Guide, up top — it never touches your settings, so there's no harm coming back whenever something's unclear."}
+];
+
+var state={idx:0,active:false};
+var blocker,spotlight,card;
+
+function ensureDom(){
+  if(blocker)return;
+  blocker=document.createElement('div');blocker.className='tour-blocker';
+  spotlight=document.createElement('div');spotlight.className='tour-spotlight';
+  card=document.createElement('div');card.className='tour-card';
+  var skip=document.createElement('div');skip.className='tour-skip';skip.id='tour-skip-btn';skip.textContent='Skip';
+  skip.addEventListener('click',finish);
+  document.body.appendChild(blocker);
+  document.body.appendChild(spotlight);
+  document.body.appendChild(skip);
+  document.body.appendChild(card);
+}
+
+function unionRect(sel){
+  if(!sel)return null;
+  var els;
+  try{els=Array.prototype.slice.call(document.querySelectorAll(sel));}catch(e){return null;}
+  els=els.filter(function(el){var r=el.getBoundingClientRect();return r.width>0&&r.height>0;});
+  if(!els.length)return null;
+  var top=Infinity,left=Infinity,right=-Infinity,bottom=-Infinity;
+  els.forEach(function(el){
+    var r=el.getBoundingClientRect();
+    if(r.top<top)top=r.top;
+    if(r.left<left)left=r.left;
+    if(r.right>right)right=r.right;
+    if(r.bottom>bottom)bottom=r.bottom;
+  });
+  return {top:top,left:left,right:right,bottom:bottom,width:right-left,height:bottom-top};
+}
+
+function positionFor(stop){
+  var rect=unionRect(stop.sel);
+  var PAD=6;
+  if(!rect){
+    spotlight.classList.add('no-target');
+    spotlight.style.top=(window.innerHeight/2)+'px';
+    spotlight.style.left=(window.innerWidth/2)+'px';
+    spotlight.style.width='0px';spotlight.style.height='0px';
+    card.classList.add('centered');
+    card.style.top='';card.style.bottom='';
+    return;
+  }
+  spotlight.classList.remove('no-target');
+  card.classList.remove('centered');
+  var top=Math.max(0,rect.top-PAD),left=Math.max(0,rect.left-PAD);
+  var width=Math.min(window.innerWidth,rect.right+PAD)-left;
+  var height=Math.min(window.innerHeight,rect.bottom+PAD)-top;
+  spotlight.style.top=top+'px';spotlight.style.left=left+'px';
+  spotlight.style.width=width+'px';spotlight.style.height=height+'px';
+  // Dock the card to a fixed screen edge (top or bottom) rather than
+  // computing a position adjacent to the target's own rect: a target
+  // that's very tall (e.g. three stacked chart-panels) or sits right
+  // at an edge can leave no room for an adjacent card to render fully
+  // on-screen. A fixed-edge dock is always fully visible regardless of
+  // the target's size or position - pick whichever edge the target
+  // ISN'T near the bottom 38% of the viewport toward.
+  var targetBottom=top+height;
+  if(targetBottom>window.innerHeight*0.62){
+    card.style.top='calc(46px + env(safe-area-inset-top,0px))';card.style.bottom='';
+  }else{
+    card.style.bottom='calc(14px + env(safe-area-inset-bottom,0px))';card.style.top='';
+  }
+}
+
+function renderStop(i){
+  var stop=TOUR_STOPS[i];
+  function doPosition(){
+    positionFor(stop);
+    card.innerHTML=
+      '<div class="tour-progress">'+(i+1)+' / '+TOUR_STOPS.length+'</div>'+
+      '<div class="tour-title">'+stop.title+'</div>'+
+      '<div class="tour-body">'+stop.body+'</div>'+
+      '<div class="tour-nav">'+
+        '<button class="tour-btn tour-back" id="tour-back"'+(i===0?' disabled':'')+'>Back</button>'+
+        '<button class="tour-btn tour-next" id="tour-next">'+(i===TOUR_STOPS.length-1?'Done':'Next')+'</button>'+
+      '</div>';
+    var backBtn=document.getElementById('tour-back'),nextBtn=document.getElementById('tour-next');
+    if(backBtn)backBtn.addEventListener('click',back);
+    if(nextBtn)nextBtn.addEventListener('click',next);
+  }
+  if(stop.before){
+    try{stop.before();}catch(e){}
+    var target=stop.sel?document.querySelector(stop.sel):null;
+    if(target&&target.scrollIntoView)target.scrollIntoView({block:'center',behavior:'auto'});
+    setTimeout(doPosition,420);
+  }else if(stop.sel){
+    var target2=document.querySelector(stop.sel);
+    if(target2&&target2.scrollIntoView){
+      target2.scrollIntoView({block:'center',behavior:'auto'});
+      setTimeout(doPosition,120);
+    }else doPosition();
+  }else{
+    doPosition();
+  }
+}
+
+function next(){
+  if(state.idx>=TOUR_STOPS.length-1){finish();return;}
+  state.idx++;renderStop(state.idx);
+}
+function back(){
+  if(state.idx<=0)return;
+  state.idx--;renderStop(state.idx);
+}
+function onResize(){
+  if(!state.active)return;
+  positionFor(TOUR_STOPS[state.idx]);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DEMO MODE — round 95. The tour above walks a fresh install where
+   every screen shows real, honest emptiness (no sim run yet, no log/
+   journal entries) — which meant the very stops explaining share
+   gauges, equity curves, variable gauges, and report cards had
+   nothing to point at. This block temporarily substitutes plausible
+   synthetic data for the tour's duration only, then puts everything
+   back exactly as it was. sessionLog/journalLog/simResults are real
+   user DATA (not settings, which this tour has never touched), so
+   the bar for "back exactly as it was" is zero drift, not "close
+   enough":
+   - window.save is replaced with a no-op for the entire demo window,
+     restored only once every real value is back in place. save() is
+     the ONLY writer of the app's localStorage save key anywhere in
+     this file (grep-verified — see load()/save() above), so this
+     alone is a complete guarantee nothing synthetic ever reaches
+     disk, independent of whatever render/compute path happens to
+     run while it's live.
+   - sessionLog/journalLog are swapped for synthetic arrays and
+     swapped back by reference, verbatim.
+   - simResults[0..5] are snapshotted by reference (each slot's value,
+     null or not — _sim() always REPLACES a slot rather than mutating
+     it in place, so the original object, if any, sits untouched in
+     the snapshot the whole time) then restored by reference.
+   - Every visual these feed (equity canvases, diagnostics, the race
+     chart + gauges, the data table, weekly report card, variable
+     gauges, real equity charts, the Log tab's live day-grade preview)
+     is repainted from the restored data via the app's own render
+     functions — restoring the DATA alone would leave stale demo
+     pixels on any canvas/innerHTML nothing repaints on its own.
+   ══════════════════════════════════════════════════════════════ */
+var DEMO_LOG_FIELD_IDS=['dWins','dLoss','dBE','dTickW','dTickL','dPnl','dShares','dTotW','dCapW','dTotBE','dCapBE','dTotL','dCapL'];
+var DEMO_PREVIEW_IDS=['dd-wr','dd-ev','dd-mo','dd-pb','dd-og','dd-gr'];
+var demo={active:false};
+
+function pickGbg(){var r=Math.random();return r<0.15?'Bad':r<0.55?'Good':'Great';}
+var DEMO_EXERCISE=['None','Light walk','Moderate','Intense'];
+var DEMO_PREP=['None','Brief','Thorough'];
+
+// ~18 days of synthetic sessionLog + same-date journalLog entries, newest
+// first (matches saveJournal's own unshift order). Sleep hours are
+// DELIBERATELY made to drive that day's P&L (with noise on top) so the
+// Variable Gauges panel — which only ever shows a gauge once a variable
+// clears a real statistical bar (GAUGE_MIN_WEIGHTED_N/GAUGE_MIN_ABS_R,
+// see above) — reliably has at least one real-looking gauge to show
+// instead of gambling on random noise clearing that bar by chance.
+// Every other tracked variable is left to pure noise, same as it would
+// be for the pattern-searching this feature is actually built for.
+function genDemoData(){
+  var N=18,sessionLog=[],journalLog=[];
+  for(var i=0;i<N;i++){
+    var d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);
+    var date=d.toISOString().slice(0,10);
+    var sleep=+(5+Math.random()*4).toFixed(1);
+    var pnlBase=(sleep-7)*185+(Math.random()-0.5)*230;
+    var numTr=4+Math.floor(Math.random()*4);
+    var wrProb=Math.max(0.25,Math.min(0.8,0.5+pnlBase/900));
+    var w=Math.round(numTr*wrProb);
+    var b=Math.random()<0.3?1:0;
+    var l=Math.max(0,numTr-w-b);
+    var tw=+(6+Math.random()*6).toFixed(1),tl=+(4+Math.random()*5).toFixed(1);
+    var sh=100+Math.floor(Math.random()*4)*50;
+    var pnl=+pnlBase.toFixed(2);
+    sessionLog.push({date:date,w:w,l:l,b:b,pnl:pnl,tw:tw,tl:tl,sh:sh,
+      totW:w,capW:+(55+Math.random()*35).toFixed(1),
+      totBE:b,capBE:+(40+Math.random()*20).toFixed(1),
+      totL:l,capL:+(50+Math.random()*30).toFixed(1)});
+    var stress=Math.max(1,Math.min(5,Math.round(3-(sleep-7)*0.6+(Math.random()-0.5)*2)));
+    var fatigue=Math.max(1,Math.min(5,Math.round(3-(sleep-7)*0.7+(Math.random()-0.5)*2)));
+    var conf=Math.max(1,Math.min(5,Math.round(3+(sleep-7)*0.4+(Math.random()-0.5)*2)));
+    var sleepQ=Math.max(1,Math.min(5,Math.round(3+(sleep-7)*0.5+(Math.random()-0.5)*2)));
+    var diet=1+Math.floor(Math.random()*5);
+    var hydration=1+Math.floor(Math.random()*5);
+    var rulesN=Math.random()<0.55?0:(Math.random()<0.7?1:(Math.random()<0.85?2:3));
+    var remW=w,remL=l;
+    var blocks=TIME_BLOCKS.map(function(b2,bi){
+      var isLast=bi===TIME_BLOCKS.length-1;
+      var bw=isLast?remW:Math.round(Math.random()*remW);
+      var bl=isLast?remL:Math.round(Math.random()*remL);
+      remW-=bw;remL-=bl;
+      return{key:b2.key,disc:pickGbg(),tr:bw+bl,w:bw,l:bl};
+    });
+    journalLog.push({
+      date:date,ts:d.getTime(),
+      timeSlept:'',timeWoke:'',sleep:sleep,preSleepEmo:'',
+      sleepQ:sleepQ,social:'None — normal night',
+      stress:stress,fatigue:fatigue,conf:conf,
+      rules:rulesN,diet:diet,hydration:hydration,
+      phys:'Normal',sick:'No',temp:'Comfortable',
+      emo:'Steady',conflict:'None',news:'Neither',
+      exercise:DEMO_EXERCISE[Math.floor(Math.random()*DEMO_EXERCISE.length)],
+      prep:DEMO_PREP[Math.floor(Math.random()*DEMO_PREP.length)],
+      note:'',
+      worship:pickGbg(),faith:pickGbg(),prayer:pickGbg(),
+      balance:'',control:'',behavior:'',newsday:'',
+      location:'',
+      daygrade:pnl>=150?'A':pnl>=0?'B':pnl>=-150?'C':'D',
+      marketfav:'',focus:'',bestop:'',
+      blocks:blocks
+    });
+  }
+  return{sessionLog:sessionLog,journalLog:journalLog};
+}
+
+function snapshotEl(id){
+  var e=document.getElementById(id);
+  if(!e)return null;
+  return{text:e.textContent,color:e.style.color};
+}
+function restoreEl(id,snap){
+  var e=document.getElementById(id);
+  if(!e||!snap)return;
+  e.textContent=snap.text;e.style.color=snap.color;
+}
+
+// Mirrors resetStrategy()'s DOM-clearing half exactly (see that function,
+// in the main script above) — deliberately not called directly since
+// resetStrategy also confirm()s, mutates simResults, and save()s, none
+// of which belong here.
+function blankStrategyVisuals(tab){
+  var s=tab===0?'':'_'+tab;
+  var cv=document.getElementById('cv'+s);
+  if(cv){var ctx=cv.getContext('2d');if(ctx)ctx.clearRect(0,0,cv.width,cv.height);}
+  var ttEl=document.getElementById('ct'+s);if(ttEl)ttEl.textContent='';
+  var rgLineEl=document.getElementById('rg-line'+s),rgBubbleEl=document.getElementById('rg-bubble'+s);
+  if(rgLineEl)rgLineEl.classList.remove('show');
+  if(rgBubbleEl)rgBubbleEl.classList.remove('show');
+  var CM_DEFAULT_CLS={'cm-ttg':'cmv steel','cm-cap':'cmv amb','cm-ret':'cmv','cm-ann':'cmv'};
+  Object.keys(CM_DEFAULT_CLS).forEach(function(id){var e=document.getElementById(id+s);if(e){e.textContent='—';e.className=CM_DEFAULT_CLS[id];}});
+  ['cm-ttgs','cm-caps','cm-rets'].forEach(function(id){var e=document.getElementById(id+s);if(e)e.textContent='—';});
+  var diagT=document.getElementById('diag-t'+s),diagB=document.getElementById('diag-b'+s),diagTiles=document.getElementById('diag-tiles'+s),diagVerdict=document.getElementById('diag-verdict'+s),diagDetail=document.getElementById('diag-detail'+s),diagL=document.getElementById('diag-l'+s),diagEl=document.getElementById('diag'+s);
+  if(diagT)diagT.textContent='Diagnostics';
+  if(diagB)diagB.textContent='—';
+  if(diagTiles)diagTiles.innerHTML='';
+  if(diagVerdict)diagVerdict.innerHTML='';
+  if(diagL)diagL.innerHTML='';
+  if(diagDetail){diagDetail.style.display='none';diagDetail.open=false;}
+  if(diagEl)diagEl.className='diag';
+}
+
+// Repaints one strategy tab's Sim-tab visuals (equity chart, cm-* summary
+// fields, Diagnostics, its Table-tab row data) straight from
+// simResults[tab] with NO recomputation — unlike simulate()/_sim(), which
+// always runs a fresh (random) simulation. Used only to restore a tab
+// after demo mode, where re-simulating would silently hand a returning
+// user a DIFFERENT result than the one they actually had. Mirrors
+// _sim()'s own tail (see the main script above), reading stored values
+// instead of live locals.
+function repaintStrategy(tab){
+  var r=simResults[tab];
+  var s=tab===0?'':'_'+tab;
+  if(!r||!r.rows||!r.rows.length){
+    blankStrategyVisuals(tab);
+    try{updateStratTab(tab);}catch(e){}
+    try{renderTable(tab);}catch(e){}
+    return;
+  }
+  var rows=r.rows,equity=r.equity,acct0=r.acct0,c=r.c,msp=r.msp;
+  var day=rows.length,calMoT=(day/252)*12;
+  var cumPnl=rows[rows.length-1].cumPnl;
+  var retPct=(cumPnl/acct0)*100,annPct=day>0?(retPct/day)*252:0;
+  var pnlArr=rows.map(function(x){return x.dayPnl;});
+  var sp=sharpe(pnlArr,acct0);
+  var capped=day>=10000;
+  var peak=0,simMDD=0;
+  equity.forEach(function(pt){if(pt.cumPnl>peak)peak=pt.cumPnl;var dd=peak-pt.cumPnl;if(dd>simMDD)simMDD=dd;});
+  var simMDDpct=acct0>0?(simMDD/acct0)*100:0;
+  try{drawChart(equity,acct0,tab);}catch(e){}
+  function setEl(id,v,cls){var e=document.getElementById(id+s);if(!e)return;e.textContent=v;if(cls)e.className='cmv '+cls;}
+  setEl('cm-ttg',cal(calMoT),'steel');setEl('cm-ttgs',day.toLocaleString()+' market days','');
+  setEl('cm-cap','$'+fmt(acct0+cumPnl),'amb');setEl('cm-caps',pct(retPct)+' total','');
+  setEl('cm-ret',pct(retPct),retPct>=0?'go':'stop');setEl('cm-rets',pct(annPct)+' ann.','');
+  setEl('cm-ann',pct(annPct)+' p.a.',annPct>=0?'go':'stop');
+  try{buildDiag(c,cumPnl,day,acct0,capped,retPct,annPct,sp,simMDD,simMDDpct,tab);}catch(e){}
+  try{renderTable(tab,rows,acct0,c,msp,capped);}catch(e){}
+  try{updateStratTab(tab);}catch(e){}
+}
+
+function startDemoMode(){
+  if(demo.active)return;
   try{
-    if(localStorage.getItem(WK))return false;
+    demo.active=true;
+    demo.realSave=window.save;
+    window.save=function(){};
+    demo.origSessionLog=sessionLog;
+    demo.origJournalLog=journalLog;
+    demo.origSimResults=simResults.slice();
+    demo.origActiveStrat=activeStrat;
+    demo.origActiveTblStrat=activeTblStrat;
+    var logInfoEl0=document.getElementById('log-info');
+    demo.origLogInfo=logInfoEl0?logInfoEl0.textContent:null;
+    var pipEl0=document.getElementById('tbl-pip');
+    demo.origTblPipOn=!!(pipEl0&&pipEl0.classList.contains('on'));
+    demo.origLogFields={};
+    DEMO_LOG_FIELD_IDS.forEach(function(id){var e=document.getElementById(id);demo.origLogFields[id]=e?e.value:'';});
+    demo.origPreview={};
+    DEMO_PREVIEW_IDS.forEach(function(id){demo.origPreview[id]=snapshotEl(id);});
+    demo.origSdGrade=snapshotEl('sd-grade');
+    var sdStatusEl0=document.getElementById('sd-status');
+    demo.origSdStatus=sdStatusEl0?sdStatusEl0.textContent:null;
+    demo.origRealFields={};
+    REAL_IDS.forEach(function(id){var e=document.getElementById(id);demo.origRealFields[id]=e?e.value:'';});
+
+    var gen=genDemoData();
+    sessionLog=gen.sessionLog;
+    journalLog=gen.journalLog;
+
+    [0,1,2,3,4,5].forEach(function(t){try{simulate(t);}catch(e){}});
+    try{resetRealStats();}catch(e){}
+
+    var todayEntry=sessionLog[0];
+    if(todayEntry){
+      var setV=function(id,v){var e=document.getElementById(id);if(e)e.value=v;};
+      setV('dWins',todayEntry.w);setV('dLoss',todayEntry.l);setV('dBE',todayEntry.b);
+      setV('dTickW',todayEntry.tw);setV('dTickL',todayEntry.tl);
+      setV('dPnl',todayEntry.pnl);setV('dShares',todayEntry.sh);
+      setV('dTotW',todayEntry.totW);setV('dCapW',todayEntry.capW);
+      setV('dTotBE',todayEntry.totBE);setV('dCapBE',todayEntry.capBE);
+      setV('dTotL',todayEntry.totL);setV('dCapL',todayEntry.capL);
+      try{onDaily();}catch(e){}
+    }
+    if(logInfoEl0)logInfoEl0.textContent=sessionLog.length+' days logged';
+    try{renderJournal();}catch(e){}
+  }catch(e){/* demo setup must never break the tour itself */}
+}
+
+function endDemoMode(){
+  if(!demo.active)return;
+  try{
+    sessionLog=demo.origSessionLog;
+    journalLog=demo.origJournalLog;
+    for(var i=0;i<6;i++)simResults[i]=demo.origSimResults[i];
+    [0,1,2,3,4,5].forEach(function(t){try{switchStrat(t);repaintStrategy(t);}catch(e){}});
+    try{switchStrat(demo.origActiveStrat);}catch(e){}
+
+    DEMO_LOG_FIELD_IDS.forEach(function(id){var e=document.getElementById(id);if(e)e.value=demo.origLogFields[id]||'';});
+    DEMO_PREVIEW_IDS.forEach(function(id){restoreEl(id,demo.origPreview[id]);});
+    restoreEl('sd-grade',demo.origSdGrade);
+    var sdStatusEl1=document.getElementById('sd-status');
+    if(sdStatusEl1&&demo.origSdStatus!=null)sdStatusEl1.textContent=demo.origSdStatus;
+    REAL_IDS.forEach(function(id){var e=document.getElementById(id);if(e)e.value=demo.origRealFields[id]||'';});
+
+    try{onReal();}catch(e){}
+
+    var logInfoEl1=document.getElementById('log-info');
+    if(logInfoEl1&&demo.origLogInfo!=null)logInfoEl1.textContent=demo.origLogInfo;
+    try{renderJournal();}catch(e){}
+
+    var pipEl1=document.getElementById('tbl-pip');
+    if(pipEl1)pipEl1.classList.toggle('on',demo.origTblPipOn);
+    try{switchTblStrat(demo.origActiveTblStrat);}catch(e){}
+  }catch(e){}
+  finally{
+    window.save=demo.realSave||window.save;
+    demo.active=false;
+  }
+}
+
+function startTour(){
+  ensureDom();
+  state.active=true;state.idx=0;
+  try{switchScreen('sim');switchStrat(0);}catch(e){}
+  startDemoMode();
+  blocker.style.display='';spotlight.style.display='';card.style.display='';
+  var skipBtn=document.getElementById('tour-skip-btn');if(skipBtn)skipBtn.style.display='';
+  renderStop(0);
+  window.addEventListener('resize',onResize);
+}
+function finish(){
+  state.active=false;
+  endDemoMode();
+  markSeen();
+  if(blocker)blocker.style.display='none';
+  if(spotlight)spotlight.style.display='none';
+  if(card)card.style.display='none';
+  var skipBtn=document.getElementById('tour-skip-btn');if(skipBtn)skipBtn.style.display='none';
+  window.removeEventListener('resize',onResize);
+}
+
+// Coupling: READS the app's save key to detect existing users and
+// skip the auto-launch for them (same convention the old wizard used)
+// - never written by this tour. Own key (ahm-tour-v1-seen, not the
+// old wizard's ahm-wizard-v1-seen) since this is a different mechanism
+// entirely, not a continuation of it.
+var TK='ahm-tour-v1-seen';
+var APP_SK='ahm-v39';
+function shouldAutoShow(){
+  try{
+    if(localStorage.getItem(TK))return false;
     if(localStorage.getItem(APP_SK))return false;
     return true;
   }catch(e){return false;}
 }
-function markSeen(){try{localStorage.setItem(WK,'1');}catch(e){}}
+function markSeen(){try{localStorage.setItem(TK,'1');}catch(e){}}
 
-var ICON_CURVE='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 5"/><polyline points="14 5 21 5 21 12"/></svg>';
-var ICON_LAYERS='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>';
-var ICON_FLAG='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"/><path d="M4 4h11l-1.5 4L15 12H4"/></svg>';
+window.startTour=startTour;
 
-// ── Content: 3 intro/bridge pages, 4 plain-English question pages,
-// 1 recap page. Each question is asked purely in plain English — the
-// real field(s) it maps to (q.terms) surface only as small, unlabeled-
-// as-such pills accumulating in the footer thread as the user moves
-// forward. Nothing on screen ever says "this means that" — the recap
-// page reflects the user's own words back at them in prose, and the
-// technical side lives quietly in the thread for them to connect on
-// their own.
-var INTRO=[
-  {kind:'intro',bg:'curve',icon:ICON_CURVE,title:'Test it before you trust it',body:'Run your trading idea through thousands of simulated days before a single real dollar is on the line.'},
-  {kind:'intro',bg:'strands',icon:ICON_LAYERS,title:'Shape up to six strategies',body:'Compare tickers, targets, and risk rules side-by-side — see which idea actually holds up.'},
-  {kind:'bridge',bg:'particles',icon:ICON_FLAG,title:'Let’s build your first one',body:'Four quick questions, plain English — no jargon required. We’ll show you the real setting behind each answer as you go.'}
-];
-// Fixed baseline stop (in ticks) that the risk:reward question's ratio
-// is applied against, matching the shipped default strategy's own
-// Stop Loss midpoint (minL 5 / maxL 15 → avg 10). Profit Target is
-// just that stop scaled by the ratio the user picked. This targets the
-// app's always-on Risk fields (Profit Target / Stop Loss) rather than
-// the opt-in, default-OFF "R:R Override" — every strategy already has
-// a stop and a target, so no toggle ever needs flipping.
-function rrToTicks(ratio){
-  var stop=10;
-  return {stop:stop,profit:Math.round(stop*ratio)};
-}
-var QUESTIONS=[
-  {key:'capital',q:'How much money are you starting with?',
-    chips:[{v:5000,l:'$5,000'},{v:10000,l:'$10,000'},{v:25000,l:'$25,000'},{v:50000,l:'$50,000'}],
-    def:25000,
-    terms:function(v){return [{label:'Starting Capital',value:'$'+v.toLocaleString()}];}},
-  {key:'winrate',q:'How often do you win?',
-    chips:[{v:30,l:'3 in 10'},{v:50,l:'5 in 10'},{v:60,l:'6 in 10'},{v:80,l:'8 in 10'}],
-    def:60,
-    terms:function(v){return [{label:'Win Rate %',value:v+'%'}];}},
-  {key:'rr',q:'For every $1 you risk, how many do you want to make?',
-    chips:[{v:1,l:'$1 → $1'},{v:2,l:'$1 → $2'},{v:3,l:'$1 → $3'}],
-    def:2,
-    terms:function(v){var t=rrToTicks(v);return [{label:'Profit Target',value:t.profit+'t'},{label:'Stop Loss',value:t.stop+'t'}];}},
-  {key:'trades',q:'About how many trades do you make a day?',
-    chips:[{v:1,l:'1'},{v:3,l:'3'},{v:5,l:'5'},{v:10,l:'10'}],
-    def:3,
-    terms:function(v){return [{label:'Trades / Day',value:v+'/day'}];}}
-];
-var PAGES=INTRO.concat(QUESTIONS.map(function(q){return {kind:'question',q:q};})).concat([{kind:'recap'}]);
-var answers={capital:QUESTIONS[0].def,winrate:QUESTIONS[1].def,rr:QUESTIONS[2].def,trades:QUESTIONS[3].def};
-
-// ── Ambient canvas backgrounds ──────────────────────────────────────
-// Small continuous functions of elapsed time t (seconds), built from a
-// few periodic trig terms, so they loop seamlessly forever with no
-// reset/jump logic needed. This stands in for an actual photo/video
-// loop per slide — this build environment has no network access to
-// source real image/video assets, so the background IS the concept in
-// motion instead (a live equity curve, multiplying strategy strands,
-// drifting particles), in the app's own accent-blue/glass language.
-function drawCurve(ctx,w,h,t){
-  ctx.clearRect(0,0,w,h);
-  var midY=h*0.6,amp=h*0.2;
-  ctx.beginPath();
-  for(var i=0;i<=60;i++){
-    var x=i/60*w;
-    var ph=i/60*Math.PI*2*1.3+t*0.6;
-    var y=midY-amp*(0.5*Math.sin(ph)+0.3*Math.sin(ph*2.3+1)+0.2*Math.sin(ph*0.5+2))-(i/60)*h*0.14;
-    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-  }
-  ctx.strokeStyle='rgba(56,189,248,.5)';ctx.lineWidth=2.5;
-  ctx.shadowColor='rgba(56,189,248,.55)';ctx.shadowBlur=14;
-  ctx.stroke();ctx.shadowBlur=0;
-}
-function drawStrands(ctx,w,h,t){
-  ctx.clearRect(0,0,w,h);
-  var midY=h*0.5;
-  // Slow breathing fan-out: every ~52s the six strands drift from
-  // nearly-merged (echoing the single curve on intro page 1 - "one
-  // strategy") out to fully separated ("becomes six"), then back in,
-  // as a continuous ambient loop rather than a one-shot reveal.
-  var fan=0.15+0.85*(0.5+0.5*Math.sin(t*0.12));
-  PALETTE.forEach(function(col,ci){
-    ctx.beginPath();
-    var freq=1.3+ci*0.14,ph=t*0.5+ci*0.8,ampY=h*0.14*(0.6+0.4*Math.sin(ci*1.7));
-    for(var i=0;i<=40;i++){
-      var x=i/40*w;
-      var y=midY+ampY*Math.sin(i/40*Math.PI*2*freq+ph)+(ci-2.5)*h*0.05*fan;
-      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-    }
-    ctx.strokeStyle=col;ctx.globalAlpha=.5;ctx.lineWidth=2;
-    ctx.stroke();ctx.globalAlpha=1;
-  });
-}
-var PARTICLES=null;
-function drawParticles(ctx,w,h,t){
-  if(!PARTICLES){
-    PARTICLES=[];
-    for(var i=0;i<22;i++)PARTICLES.push({x:Math.random(),speed:0.3+Math.random()*0.7,offset:Math.random()*h,r:1+Math.random()*1.8,alpha:.15+Math.random()*.3});
-  }
-  ctx.clearRect(0,0,w,h);
-  PARTICLES.forEach(function(p){
-    var y=h-((t*p.speed*28+p.offset)%(h+30));
-    ctx.beginPath();ctx.arc(p.x*w,y,p.r,0,Math.PI*2);
-    ctx.fillStyle='rgba(56,189,248,'+p.alpha+')';ctx.fill();
-  });
-}
-var bgCanvases=[],rafId=null;
-function startBgLoop(){
-  function frame(){
-    var t=performance.now()/1000;
-    bgCanvases.forEach(function(bc){bc.draw(bc.ctx,bc.w,bc.h,t);});
-    rafId=requestAnimationFrame(frame);
-  }
-  rafId=requestAnimationFrame(frame);
-}
-function stopBgLoop(){if(rafId){cancelAnimationFrame(rafId);rafId=null;}}
-function wireBg(cvEl){
-  var kind=cvEl.dataset.bg;
-  var rect=cvEl.getBoundingClientRect();
-  var dpr=window.devicePixelRatio||1;
-  var w=Math.max(1,rect.width),h=Math.max(1,rect.height);
-  cvEl.width=w*dpr;cvEl.height=h*dpr;
-  var ctx=cvEl.getContext('2d');ctx.scale(dpr,dpr);
-  var draw=kind==='curve'?drawCurve:kind==='strands'?drawStrands:drawParticles;
-  bgCanvases.push({ctx:ctx,w:w,h:h,draw:draw});
-}
-
-// ── Per-question live preview widgets ───────────────────────────────
-function renderPreview(key,el,v){
-  if(key==='capital'){
-    var pct=Math.max(6,Math.round(v/50000*100));
-    el.innerHTML='<div class="aw-prev-num">$'+v.toLocaleString()+'</div><div class="aw-prev-bar-wrap"><div class="aw-prev-bar" style="width:'+pct+'%"></div></div>';
-  }else if(key==='winrate'){
-    var wins=Math.round(v/10),dots='';
-    for(var i=0;i<10;i++)dots+='<div class="aw-prev-dot'+(i<wins?' win':'')+'"></div>';
-    el.innerHTML='<div class="aw-prev-dots">'+dots+'</div><div class="aw-prev-dots-lbl">'+wins+' wins out of 10 trades</div>';
-  }else if(key==='rr'){
-    var riskH=32,rewardH=Math.min(32*v,120);
-    el.innerHTML='<div class="aw-prev-rr"><div class="aw-prev-rr-col"><div class="aw-prev-rr-bar risk" style="height:'+riskH+'px"></div><div class="aw-prev-rr-lbl">RISK $1</div></div><div class="aw-prev-rr-col"><div class="aw-prev-rr-bar reward" style="height:'+rewardH+'px"></div><div class="aw-prev-rr-lbl">REWARD $'+v+'</div></div></div>';
-  }else if(key==='trades'){
-    var show=Math.min(v,10),ticks='';
-    for(var i=0;i<show;i++)ticks+='<div class="aw-prev-trade-dot"></div>';
-    el.innerHTML='<div class="aw-prev-trades">'+ticks+'</div><div class="aw-prev-trades-lbl">'+v+' trade'+(v===1?'':'s')+' a day</div>';
-  }
-}
-
-// ── Build ────────────────────────────────────────────────────────────
-var idx=0,root=null,track=null,backBtn=null,nextBtn=null,skipBtn=null,dotEls=[];
-function pageHtml(p){
-  var pct=(100/PAGES.length);
-  if(p.kind==='intro'||p.kind==='bridge'){
-    return '<div class="aw-page" style="width:'+pct+'%">'+
-      '<div class="aw-bg"><canvas class="aw-bgcv" data-bg="'+p.bg+'"></canvas></div>'+
-      '<div class="aw-content"><div class="aw-icon">'+p.icon+'</div>'+
-      '<div class="aw-headline">'+p.title+'</div>'+
-      '<div class="aw-body">'+p.body+'</div></div></div>';
-  }
-  if(p.kind==='question'){
-    var q=p.q;
-    var chips=q.chips.map(function(c){return '<button class="aw-chip" data-v="'+c.v+'">'+c.l+'</button>';}).join('');
-    return '<div class="aw-page aw-q" style="width:'+pct+'%">'+
-      '<div class="aw-bg aw-bg-dim"><canvas class="aw-bgcv" data-bg="particles"></canvas></div>'+
-      '<div class="aw-content"><div class="aw-qtext">'+q.q+'</div>'+
-      '<div class="aw-preview" id="aw-prev-'+q.key+'"></div>'+
-      '<div class="aw-chips" id="aw-chips-'+q.key+'">'+chips+'</div>'+
-      '</div></div>';
-  }
-  return '<div class="aw-page aw-recap" style="width:'+pct+'%">'+
-    '<div class="aw-content"><div class="aw-recap-title">Here’s your first strategy</div>'+
-    '<div class="aw-recap-prose" id="aw-recap-prose"></div>'+
-    '<div class="aw-recap-chart-wrap"><canvas id="aw-recap-cv"></canvas></div>'+
-    '<div class="aw-recap-chart-lbl">A rough preview — real math kicks in once you hit Simulate</div>'+
-    '</div></div>';
-}
-function build(){
-  root=document.createElement('div');
-  root.className='aw-root';
-  root.innerHTML=
-    '<div class="aw-skip" id="aw-skip">Skip</div>'+
-    '<div class="aw-track" id="aw-track">'+PAGES.map(pageHtml).join('')+'</div>'+
-    '<div class="aw-footer">'+
-      '<div class="aw-dots" id="aw-dots">'+PAGES.map(function(){return '<div class="aw-dot"></div>';}).join('')+'</div>'+
-      '<div class="aw-thread" id="aw-thread"></div>'+
-      '<div class="aw-nav"><button class="aw-back" id="aw-back">Back</button><button class="aw-next" id="aw-next">Next</button></div>'+
-    '</div>';
-  document.body.appendChild(root);
-  track=root.querySelector('#aw-track');
-  track.style.width=(PAGES.length*100)+'%';
-  backBtn=root.querySelector('#aw-back');
-  nextBtn=root.querySelector('#aw-next');
-  skipBtn=root.querySelector('#aw-skip');
-  dotEls=Array.prototype.slice.call(root.querySelectorAll('.aw-dot'));
-
-  root.querySelectorAll('.aw-bgcv').forEach(wireBg);
-  startBgLoop();
-
-  QUESTIONS.forEach(function(q){
-    var wrap=root.querySelector('#aw-chips-'+q.key);
-    var prevEl=root.querySelector('#aw-prev-'+q.key);
-    function select(v){
-      answers[q.key]=v;
-      wrap.querySelectorAll('.aw-chip').forEach(function(b){b.classList.toggle('on',+b.dataset.v===v);});
-      renderPreview(q.key,prevEl,v);
-      renderThread();
-    }
-    wrap.querySelectorAll('.aw-chip').forEach(function(b){
-      // Chips live inside the swipeable track, so a tap must not be
-      // mistaken for the start of a horizontal drag - stop the
-      // pointerdown from bubbling to wireSwipe's track-level listener.
-      // The click event (which select() relies on) still fires
-      // normally since we never call preventDefault.
-      b.addEventListener('pointerdown',function(e){e.stopPropagation();});
-      b.addEventListener('click',function(){select(+b.dataset.v);});
-    });
-    select(q.def);
-  });
-
-  skipBtn.addEventListener('click',function(){finish(false);});
-  backBtn.addEventListener('click',function(){go(idx-1);});
-  nextBtn.addEventListener('click',function(){if(idx>=PAGES.length-1)finish(true);else go(idx+1);});
-  wireSwipe();
-  render();
-}
-function go(i){idx=Math.max(0,Math.min(PAGES.length-1,i));render();}
-function render(){
-  track.style.transform='translateX(-'+(idx*100/PAGES.length)+'%)';
-  dotEls.forEach(function(d,i){d.classList.toggle('on',i===idx);});
-  backBtn.style.visibility=idx===0?'hidden':'visible';
-  var isLast=idx===PAGES.length-1;
-  nextBtn.textContent=isLast?'Enter the Machine':'Next';
-  skipBtn.style.display=isLast?'none':'block';
-  renderThread();
-  if(isLast)renderRecap();
-}
-// The footer thread: one accumulating row of small pills, each just a
-// real field's own label + the value the user's answer produced. No
-// sentence ever explains the connection - the pill simply appears
-// right after the chip that produced it, so proximity in time and
-// place is the only link offered. Shows nothing before the first
-// question, accumulates one question's terms at a time, and shows all
-// of them together once the recap page is reached.
-function renderThread(){
-  var threadEl=root.querySelector('#aw-thread');
-  if(!threadEl)return;
-  var qStart=INTRO.length;
-  var doneCount;
-  if(idx<qStart)doneCount=0;
-  else if(idx<qStart+QUESTIONS.length)doneCount=idx-qStart+1;
-  else doneCount=QUESTIONS.length;
-  threadEl.style.display=doneCount>0?'flex':'none';
-  var html='';
-  for(var i=0;i<doneCount;i++){
-    var q=QUESTIONS[i];
-    q.terms(answers[q.key]).forEach(function(term){
-      html+='<div class="aw-thread-bead"><span class="aw-thread-lbl">'+term.label+'</span><span class="aw-thread-val">'+term.value+'</span></div>';
-    });
-  }
-  threadEl.innerHTML=html;
-}
-function renderRecap(){
-  var proseEl=root.querySelector('#aw-recap-prose');
-  if(!proseEl)return;
-  var a=answers,winIn10=Math.round(a.winrate/10);
-  proseEl.textContent="You're starting with $"+a.capital.toLocaleString()+". You win about "+winIn10+" in 10 trades, aiming to make $"+a.rr+" for every $1 you risk. That's roughly "+a.trades+" trade"+(a.trades===1?'':'s')+" a day.";
-  drawRecapChart();
-}
-function drawRecapChart(){
-  var cv=root.querySelector('#aw-recap-cv');if(!cv)return;
-  var rect=cv.getBoundingClientRect();if(!rect.width||!rect.height)return;
-  var dpr=window.devicePixelRatio||1;
-  cv.width=rect.width*dpr;cv.height=rect.height*dpr;
-  var ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
-  var w=rect.width,h=rect.height;
-  ctx.clearRect(0,0,w,h);
-  // Deterministic (seeded) so re-rendering the recap page without
-  // changing an answer doesn't jitter the shape - Park-Miller minimal
-  // standard LCG, seeded from the answers themselves. This is a
-  // simplified, self-contained preview - NOT the real tick/share/
-  // friction engine - labelled honestly as a rough preview below.
-  var seed=Math.abs(Math.round(answers.capital*7+answers.winrate*131+answers.rr*997+answers.trades*31))%2147483646+1;
-  function rnd(){seed=seed*16807%2147483647;return(seed-1)/2147483646;}
-  var equity=answers.capital,pts=[equity];
-  for(var d=0;d<30;d++){
-    for(var t=0;t<answers.trades;t++){
-      var riskAmt=equity*0.01;
-      equity+=(rnd()<answers.winrate/100)?riskAmt*answers.rr:-riskAmt;
-      if(equity<1)equity=1;
-    }
-    pts.push(equity);
-  }
-  var minV=Math.min.apply(null,pts),maxV=Math.max.apply(null,pts);
-  var pad=6;
-  ctx.beginPath();
-  pts.forEach(function(v,i){
-    var x=pad+(i/(pts.length-1))*(w-pad*2);
-    var norm=maxV>minV?(v-minV)/(maxV-minV):0.5;
-    var y=h-pad-norm*(h-pad*2);
-    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-  });
-  ctx.strokeStyle='#38bdf8';ctx.lineWidth=2;ctx.shadowColor='rgba(56,189,248,.5)';ctx.shadowBlur=10;
-  ctx.stroke();ctx.shadowBlur=0;
-  ctx.lineTo(pad+(w-pad*2),h);ctx.lineTo(pad,h);ctx.closePath();
-  var grad=ctx.createLinearGradient(0,0,0,h);
-  grad.addColorStop(0,'rgba(56,189,248,.22)');grad.addColorStop(1,'rgba(56,189,248,0)');
-  ctx.fillStyle=grad;ctx.fill();
-}
-function finish(applyData){
-  stopBgLoop();
-  markSeen();
-  if(applyData){
-    burstThread(function(){
-      applyAnswersToApp();
-      if(root){root.remove();root=null;}
-    });
-  }else{
-    if(root){root.remove();root=null;}
-  }
-}
-// The closing "one becomes six" payoff: the accumulated thread pills
-// turn into six sparks, one per real strategy color, right at the
-// moment of handoff into the real app's six-strategy workspace.
-function burstThread(cb){
-  var threadEl=root?root.querySelector('#aw-thread'):null;
-  if(!threadEl){cb();return;}
-  var html='';
-  PALETTE.forEach(function(col,i){
-    html+='<div class="aw-thread-spark" style="background:'+col+';box-shadow:0 0 8px '+col+';animation-delay:'+(i*40)+'ms"></div>';
-  });
-  threadEl.innerHTML=html;
-  threadEl.classList.add('aw-thread-burst');
-  setTimeout(cb,550);
-}
-// Round 87's one write-coupling (refined round 88): calls the app's
-// own real setter functions (the same ones its own live UI uses) to
-// apply the four collected answers to Strategy A, then hands off to
-// the real Sim screen. The risk:reward answer now targets Profit
-// Target/Stop Loss (always-on fields every strategy already has)
-// instead of the opt-in R:R Override, so no toggle ever needs
-// flipping. Wrapped defensively so a future rename in the app never
-// blocks handoff - the wizard just quietly skips whatever step it
-// can't find and still closes normally.
-function applyAnswersToApp(){
-  try{
-    if(typeof capQuickPick==='function')capQuickPick(answers.capital);
-    if(typeof setV==='function'){
-      setV('minWR',0,answers.winrate);setV('maxWR',0,answers.winrate);
-      setV('minT',0,answers.trades);setV('maxT',0,answers.trades);
-      var t=rrToTicks(answers.rr);
-      setV('minL',0,t.stop);setV('maxL',0,t.stop);
-      setV('minP',0,t.profit);setV('maxP',0,t.profit);
-    }
-    if(typeof onSlider==='function')onSlider(0);
-    if(typeof switchScreen==='function')switchScreen('sim');
-    if(typeof switchStrat==='function')switchStrat(0);
-    var simBtn=document.querySelector('#sp0 .sim-btn');
-    if(simBtn){
-      simBtn.classList.add('aw-spotlight');
-      setTimeout(function(){simBtn.classList.remove('aw-spotlight');},4200);
-    }
-  }catch(e){/* never let a data-apply failure block handoff to the real app */}
-}
-function wireSwipe(){
-  var startX=0,dragging=false,deltaX=0,pid=null;
-  track.addEventListener('pointerdown',function(e){
-    dragging=true;startX=e.clientX;deltaX=0;pid=e.pointerId;
-    try{track.setPointerCapture(pid);}catch(err){}
-    track.style.transition='none';
-  });
-  track.addEventListener('pointermove',function(e){
-    if(!dragging)return;
-    deltaX=e.clientX-startX;
-    var base=-(idx*100/PAGES.length);
-    var pct=base+(deltaX/window.innerWidth)*(100/PAGES.length);
-    track.style.transform='translateX('+pct+'%)';
-  });
-  function endDrag(){
-    if(!dragging)return;
-    dragging=false;
-    track.style.transition='';
-    if(deltaX<-50&&idx<PAGES.length-1)idx++;
-    else if(deltaX>50&&idx>0)idx--;
-    render();
-  }
-  track.addEventListener('pointerup',endDrag);
-  track.addEventListener('pointercancel',endDrag);
-}
-
-function boot(){
-  if(!shouldShow())return;
-  build();
-}
-boot();
+if(shouldAutoShow())setTimeout(startTour,500);
 })();
 </script>
+
 </body>
 </html>
 
