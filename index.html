@@ -180,13 +180,13 @@ html,body{height:100%;background:#04060a;color:#e2e6ed;font-family:'Inter',sans-
    class (initPressBloom below) since CSS :active alone is unreliable
    for quick taps on mobile Safari/Chrome — kept here too as a bonus
    for desktop mouse/trackpad. */
-.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.tog,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close,.stat-actbtn,.cap-qbtn,.cap-close{
+.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.tog,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close,.stat-actbtn,.cap-qbtn,.cap-close,.scr-opt,.scr-next{
   transition:box-shadow .18s ease,transform .12s ease,background .18s ease,color .15s ease;
 }
 .sim-btn:active,.j-save-btn:active,.sess-btn:active,.exp-btn:active,.guide-btn:active,
-.ib:active,.stp-btn:active,.nb:active,.sbtn:active,.scale-btn:active,.circ-btn:active,.seg-btn:active,.dv-tbtn:active,.tc-qbtn:active,.tc-close:active,.stat-actbtn:active,.cap-qbtn:active,.cap-close:active,
+.ib:active,.stp-btn:active,.nb:active,.sbtn:active,.scale-btn:active,.circ-btn:active,.seg-btn:active,.dv-tbtn:active,.tc-qbtn:active,.tc-close:active,.stat-actbtn:active,.cap-qbtn:active,.cap-close:active,.scr-opt:active,.scr-next:active,
 .sim-btn.pressed,.j-save-btn.pressed,.sess-btn.pressed,.exp-btn.pressed,.guide-btn.pressed,
-.ib.pressed,.stp-btn.pressed,.nb.pressed,.sbtn.pressed,.scale-btn.pressed,.circ-btn.pressed,.seg-btn.pressed,.dv-tbtn.pressed,.tc-qbtn.pressed,.tc-close.pressed,.stat-actbtn.pressed,.cap-qbtn.pressed,.cap-close.pressed{
+.ib.pressed,.stp-btn.pressed,.nb.pressed,.sbtn.pressed,.scale-btn.pressed,.circ-btn.pressed,.seg-btn.pressed,.dv-tbtn.pressed,.tc-qbtn.pressed,.tc-close.pressed,.stat-actbtn.pressed,.cap-qbtn.pressed,.cap-close.pressed,.scr-opt.pressed,.scr-next.pressed{
   box-shadow:0 0 14px 1px rgba(var(--glow-rgb),.15);
   transform:scale(.97);
 }
@@ -1212,10 +1212,107 @@ canvas.spark{width:100%;height:34px;display:block;}
 .tour-back:disabled{opacity:.35;pointer-events:none;}
 .tour-next{background:var(--accent-solid);border:none;color:#04060a;font-weight:700;}
 .tour-skip{position:fixed;z-index:2002;top:calc(14px + env(safe-area-inset-top,0px));right:16px;font-size:10px;color:#8892a4;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;padding:6px;touch-action:manipulation;background:rgba(4,6,10,.5);border-radius:4px;}
+
+/* PRE-TOUR SEQUENCE (round 96, restyled round 97) — motion intro +
+   screening questionnaire, first-time visitors only, ahead of the tour
+   above. Round 96 first reused .tour-card's glass/frost "window" look
+   for the questionnaire; the user rejected that on sight ("I liked the
+   black backdrop and matching text, not a window that's from the app.
+   It doesn't fit the aesthetic of a different visual context") - this
+   sequence needs to read as a DIFFERENT visual register than the app
+   chrome it's about to hand off into, not a preview of it. So none of
+   the .scr-* rules below borrow .tour-card/.tour-btn; it's plain text
+   straight on the black backdrop, no card, no border, no blur. The
+   line-drawing/colour-join canvas phase from round 96 is cut for now
+   too, per "we can figure out the line visuals later" - deferred, not
+   lost; see the JS comment above runIntroBeat() before rebuilding it.
+   Kept from round 96: .intro-overlay's z-index (1990, BELOW the shared
+   2002 .tour-skip/.tour-card layer) - getting this backwards once
+   silently blocked every click under it, caught only by a Playwright
+   click timeout, not by anything visual, so don't re-guess this number
+   without a click test. Also kept: the single unified Skip meaning
+   (abandons the whole remaining sequence, tour included) and the fact
+   that nothing here is ever written to localStorage. */
+#pre-veil{position:fixed;inset:0;z-index:9999;background:#000;}
+.intro-overlay{position:fixed;inset:0;z-index:1990;background:#000;overflow:hidden;transition:opacity .4s ease;}
+.intro-cv{position:absolute;inset:0;width:100%;height:100%;display:block;}
+.intro-fg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:60px 30px 36px;text-align:center;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+/* .scr-inner carries the actual per-screen content (everything except
+   the fixed progress bar) and uses the flex "margin:auto 0" trick, not
+   .intro-fg's own justify-content, to center vertically: with overflow
+   scroll on the parent, justify-content:center on content taller than
+   the viewport clips the TOP out of scroll reach (a well-known flex
+   gotcha) - margin:auto still centers short content but degrades to a
+   normal, fully-scrollable top edge once content overflows. Caught via
+   screenshot review: the low-readiness tier's five paragraphs pushed
+   Continue off the bottom of a real phone viewport with no way to
+   reach it before this fix. */
+.scr-inner{width:100%;max-width:300px;margin:auto 0;display:flex;flex-direction:column;align-items:center;}
+/* .scr-inner.grow overrides the vertical auto-margin above for the one
+   screen that grows its own content over time (the paced reveal,
+   renderReadiness) - with margin:auto 0, every newly-appended sentence
+   changes the block's height, and flexbox re-centers the WHOLE block
+   after every single append, so already-read lines visibly slide up
+   the screen each time a new one arrives ("loads wonky", caught from
+   the user's own description, not a screenshot - the jump is only
+   visible in motion). Anchoring to the top instead means only the
+   BOTTOM edge grows as sentences append; nothing already on screen
+   ever moves. */
+.scr-inner.grow{margin-top:0;margin-bottom:0;}
+.intro-skip{position:fixed;z-index:2002;top:calc(14px + env(safe-area-inset-top,0px));right:16px;font-size:10px;color:#6b7484;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;padding:8px;touch-action:manipulation;}
+@keyframes scrFadeUp{from{opacity:0;transform:translateY(9px);}to{opacity:1;transform:translateY(0);}}
+.scr-progress{position:fixed;z-index:1;top:calc(16px + env(safe-area-inset-top,0px));left:24px;right:60px;display:flex;gap:5px;}
+.scr-progress i{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.12);}
+.scr-progress i.on{background:var(--accent-solid);}
+.scr-eyebrow{font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-solid);margin-bottom:12px;animation:scrFadeUp .55s cubic-bezier(.25,.46,.45,.94) both;animation-delay:.04s;}
+.scr-title{font-family:'Inter',sans-serif;font-size:19px;font-weight:700;color:#f4f6fa;line-height:1.4;max-width:300px;margin-bottom:14px;animation:scrFadeUp .55s cubic-bezier(.25,.46,.45,.94) both;animation-delay:.14s;}
+.scr-body{font-family:'Inter',sans-serif;font-size:12.5px;color:#a7b0bf;line-height:1.7;max-width:300px;animation:scrFadeUp .55s cubic-bezier(.25,.46,.45,.94) both;animation-delay:.28s;}
+.scr-body+.scr-body{margin-top:11px;}
+/* renderReadiness() often stacks several .scr-body paragraphs at once
+   (one per flagged gap) - centered multi-paragraph prose reads as a
+   dense, hard-to-scan block, so that screen's body copy is wrapped in
+   .scr-bodies and left-aligned instead; the short centered eyebrow/
+   title above it stay centered on purpose (a headline reads fine
+   centered, body prose doesn't) - same pattern results/report screens
+   in other apps use. */
+.scr-bodies{width:100%;max-width:300px;text-align:left;}
+.scr-opts{width:100%;max-width:300px;margin-top:20px;text-align:left;animation:scrFadeUp .55s cubic-bezier(.25,.46,.45,.94) both;animation-delay:.14s;}
+.scr-opt{display:block;width:100%;background:none;border:none;border-bottom:1px solid rgba(255,255,255,.1);color:#c3cad6;font-family:'Inter',sans-serif;font-size:13px;line-height:1.4;text-align:left;padding:13px 2px;cursor:pointer;touch-action:manipulation;position:relative;}
+.scr-opt:last-child{border-bottom:none;}
+.scr-opt::before{content:'';position:absolute;left:-13px;top:50%;transform:translateY(-50%);width:5px;height:5px;border-radius:50%;background:transparent;transition:background .15s ease;}
+.scr-opt.sel{color:var(--accent-solid);}
+.scr-opt.sel::before{background:var(--accent-solid);}
+.scr-nav{width:100%;max-width:300px;display:flex;align-items:center;justify-content:space-between;margin-top:24px;animation:scrFadeUp .55s cubic-bezier(.25,.46,.45,.94) both;animation-delay:.5s;}
+.scr-nav.center{justify-content:center;}
+.scr-back{background:none;border:none;color:#6b7484;font-family:'Inter',sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;padding:9px 4px;touch-action:manipulation;}
+.scr-back:disabled{opacity:0;pointer-events:none;}
+.scr-next{background:var(--accent-solid);border:none;color:#04060a;font-weight:700;font-family:'Inter',sans-serif;font-size:11px;letter-spacing:.03em;padding:12px 26px;border-radius:30px;cursor:pointer;touch-action:manipulation;}
 </style>
 
 </head>
 <body>
+<!-- PRE-VEIL (round 98) — the pre-tour sequence used to be shown by a
+     setTimeout deep in the tour's own script block at the bottom of
+     this document; that meant the real app (topbar, default $10,000
+     Sim screen, everything) was the FIRST thing painted, visible and
+     tappable, until that script got around to covering it. The user
+     caught this ("I don't want the app to show before the intro
+     starts") - the fix can't be "run the JS sooner," because no matter
+     how early, script execution still happens after this much markup
+     has already been parsed and can already have painted. So instead:
+     this div is plain, static HTML - present from the very first frame
+     with no JS required - and the inline script right after it runs
+     synchronously, before the .app div below is even parsed, so a
+     RETURNING user (who should see nothing extra) never sees so much
+     as a flash of black either. A first-time user keeps this veil
+     until the real .intro-overlay is ready to take over (see
+     ensureIntroDom() far below) - both are opaque #000, so that
+     handoff is an invisible swap, not a fade. NOTE: the two key names
+     below are hardcoded on purpose (TK/APP_SK don't exist yet this
+     early in parsing) and must stay in sync with TK/APP_SK further
+     down if either ever changes. -->
+<div id="pre-veil"></div>
+<script>try{if(localStorage.getItem('ahm-tour-v1-seen')||localStorage.getItem('ahm-v39')){var _pv=document.getElementById('pre-veil');if(_pv)_pv.remove();}}catch(e){}</script>
 <div class="app">
 
 <div class="topbar">
@@ -4761,7 +4858,7 @@ async function load(){
    at page-load or gets created later by buildPanes/buildJournalCircles/
    buildStatsCircle — no per-element wiring needed. */
 function initPressBloom(){
-  const SEL='.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close,.stat-actbtn,.cap-qbtn,.cap-close';
+  const SEL='.sim-btn,.j-save-btn,.sess-btn,.exp-btn,.guide-btn,.ib,.stp-btn,.nb,.sbtn,.scale-btn,.circ-btn,.seg-btn,.dv-tbtn,.tc-qbtn,.tc-close,.stat-actbtn,.cap-qbtn,.cap-close,.scr-opt,.scr-next';
   const press=e=>{const t=e.target.closest(SEL);if(t)t.classList.add('pressed');};
   const release=e=>{const t=e.target.closest(SEL);if(t)setTimeout(()=>t.classList.remove('pressed'),120);};
   document.addEventListener('pointerdown',press,{passive:true});
@@ -5278,9 +5375,543 @@ function shouldAutoShow(){
 }
 function markSeen(){try{localStorage.setItem(TK,'1');}catch(e){}}
 
-window.startTour=startTour;
+/* ══════════════════════════════════════════════════════════════
+   PRE-TOUR SEQUENCE — round 96, made adaptive round 97, expanded into
+   a genuine prologue round 98. Round 97 was already adaptive in
+   principle (every answer scored, a tailored closing screen) but the
+   user said it didn't FEEL adaptive, and felt too short and thrown
+   together for what it's actually trying to be: "This should be
+   elaborate and cause you to think and feel the weight of the
+   possibility this app can be used to reveal to you... right now it
+   feels like a warning and half-minded question before it throws you
+   in... don't be afraid to lean into it, we can always remove later."
+   Two structural changes answer that. (1) every answer now gets its
+   OWN short reaction immediately after you tap it (renderReaction
+   below) - not just a report card at the very end - so being "read"
+   happens continuously, not once on exit. (2) the whole thing is a
+   longer, paced, four-part arc: BEATS (three sequential atmosphere
+   lines, runBeats, on what this app actually is and why the next
+   couple of minutes matter) then QUESTIONS (four diagnostic questions,
+   each followed by its own reaction) then a non-scored GUT CHECK
+   (whether they actually want the unflattering truth, not just the
+   flattering one) then a REVEAL that discloses itself paragraph by
+   paragraph like a considered verdict, not a dumped wall of text.
+   Scoring is unchanged from round 97 - each diagnostic answer still
+   carries a 0-2 score (max 8) summed into one of three tiers. What's
+   new: each option now carries its own reaction (said the instant you
+   pick it) SEPARATE from its gap line (said only in the final
+   synthesis, for low-scoring answers) - deliberately different
+   wording for the same theme, so the ending doesn't just repeat
+   itself; hearing a related-but-not-identical line twice, once
+   immediately and once in the verdict, is what reads as "this was
+   paying attention," not two coats of the same paint.
+   Visual language (round 97, unchanged): plain text on a pure #000
+   backdrop, no .tour-card glass chrome, continuous drifting flakes
+   via startFlakeField()/stopFlakeField(). New this round: the user
+   also asked that the app never be visible even briefly before this
+   sequence starts - see the #pre-veil block right after <body> above,
+   a static, JS-independent cover present from the very first paint
+   (this script's own setTimeout below was never going to be fast
+   enough to guarantee that on its own, however short the delay);
+   ensureIntroDom() below removes it the moment the real overlay is up
+   - both are opaque #000 so the handoff is an invisible swap.
+   Skip - one control, shown throughout - still abandons the ENTIRE
+   remaining sequence, tour included. Nothing here - diagnostic
+   answers, gut-check - is ever written to localStorage; it all lives
+   in memory for the length of the sequence only, same "pure
+   explainer" principle the tour itself follows. Back is intentionally
+   only available on the four question screens (to revise an answer
+   before its reaction plays), not on beats/reactions/gut-check/
+   reveal, which are one-directional narrative beats, not form fields
+   - Skip is the only way out of those.
+   ══════════════════════════════════════════════════════════════ */
+var INTRO_BEATS=[
+  {title:'Right now, somewhere, someone is opening a trade they haven’t earned the right to make.'},
+  {eyebrow:'The Anti-Hope Machine',title:'This isn’t built to make trading feel easier.',body:'It’s built to show you, in cold and unsentimental numbers, whether what you’re doing actually works. Most tools flatter you. This one is built not to.'},
+  {eyebrow:'Before You Begin',title:'What it ends up showing you depends entirely on what you’re willing to feed it.',body:'A few honest questions, first — not to judge you, but to calibrate what you’re about to see.',btn:'I’m Ready'}
+];
 
-if(shouldAutoShow())setTimeout(startTour,500);
+var QUIZ_QUESTIONS=[
+  {q:'Have you traded before — live or demo?',
+   opts:[
+     {t:'No, never',s:0,reaction:'Then everything from here is a first look, not a test you can fail — just a mirror with nothing on it yet.'},
+     {t:'Demo or paper trading only',s:1,reaction:'Paper trading proves you can follow a plan when nothing real is at stake. It’s never once proven anyone can hold that plan once their own money is watching them break it.'},
+     {t:'Yes, with real money',s:2,reaction:'Then you already know the gap between a plan on paper and a plan with your own money on the line.'}
+   ],
+   gap:'Simulated reps still count for something — but nothing rehearses the pull to override your own plan quite like real money on the line. Until you’ve felt that, treat every number in here as a rehearsal, not a verdict.'},
+  {q:'Have you backtested a strategy over at least 50 trades?',
+   opts:[
+     {t:'No',s:0,reaction:'So there isn’t a strategy yet — just an instinct wearing a strategy’s name.'},
+     {t:'Some, but fewer than 50',s:1,reaction:'Close enough to see a shape, not close enough to trust it. Most false edges reveal themselves right around there.'},
+     {t:'Yes, 50 or more',s:2,reaction:'Good. That’s roughly where luck starts running out of places to hide.'}
+   ],
+   gap:'Under about 50 trades, a hot streak and a real edge look identical. That’s not this app being strict — it’s just how small samples work.'},
+  {q:'Do you have real trade data ready to log — broker exports, a journal, anything?',
+   opts:[
+     {t:'Not yet',s:0,reaction:'That’s fine, for today. But everything after this point stays a demonstration, not a diagnosis, until you bring it real numbers.'},
+     {t:'Some, scattered',s:1,reaction:'Scattered still counts. Gathering it into one place is half the discipline this app is actually trying to teach.'},
+     {t:'Yes, ready to go',s:2,reaction:'Then this tool can start doing its job on you, not just in front of you.'}
+   ],
+   gap:'This tool is only as sharp as what you feed it. Without real trades behind the numbers, what you’ll see here is a demonstration — not a conclusion about you.'},
+  {q:'What are you hoping day trading gives you right now?',
+   opts:[
+     {t:'Steady income to replace or supplement my job',s:0,reaction:'Worth saying plainly, once: most people chasing that outcome lose money for a long stretch first — some never stop. This app can’t shortcut that. It can only show you the truth faster.'},
+     {t:'To learn the mechanics and build discipline',s:1,reaction:'A realistic place to start. Discipline is the one part of this entirely within your control.'},
+     {t:'To stress-test an edge I already trade',s:2,reaction:'Then you’re not here to be convinced trading works. You’re here to find out if you do. That’s the right question.'}
+   ],
+   gap:'Worth saying plainly: most people who start day trading expecting steady income end up losing money, often for a long stretch, before they stop — if they stop. This app won’t shortcut that. What it’s built for is showing you, in cold numbers, whether your process is actually working. That’s the only real way through.'}
+];
+
+var GUT_CHECK={
+  q:'If this app told you the truth about your trading — the real numbers, no excuses — would you actually want to see it?',
+  opts:[
+    {t:'Yes — that’s exactly why I’m here',line:'Good. That’s the only honest way to start.'},
+    {t:'Honestly, I’m not sure',line:'Fair answer. Most people aren’t, until the numbers make them.'}
+  ]
+};
+
+// Round 99's three "thinking exercise" beats - user asked for ideas beyond
+// the questionnaire itself ("short thinking exercises to prune better
+// thinking about day trading and capital growth"), then picked all three
+// pitched back: a psychology beat, a math beat, and a real-statistic beat.
+// All three share ONE mechanic (runInsight below) rather than three custom
+// screens - same shape as GUT_CHECK (pick any option, nothing is scored,
+// everything leads to the same underlying substance), just with a per-
+// option acknowledgment line so picking still feels answered rather than
+// ignored. EV_INSIGHT's math is verified arithmetic, not a guess: 40%*200
+// - 60%*100 = +20/trade, *100 trades = +2000 - checked with a throwaway
+// Node script before writing it into copy, since getting trading math
+// wrong in an app whose entire premise is "cold, correct numbers" would
+// undercut the one thing it can't afford to get wrong. STAT_INSIGHT's
+// figure is sourced, not invented: the ~97% figure is the widely-cited
+// headline result of Chague/De-Losso/Giovannetti's "Day Trading for a
+// Living?" (Brazilian futures day traders who persisted 300+ days) -
+// corroborated across many independent secondary sources during round 99,
+// but a direct primary-source fetch was blocked by a tool-level session
+// limit that round, so only the headline figure is used here, not any
+// secondary number (sample size, exact earnings threshold, etc.) that
+// wasn't independently confirmed. Worth a follow-up primary-source check
+// before ever citing this stat somewhere more formal than this app.
+var LOSS_INSIGHT={
+  q:'Quick one. Which hits harder — losing $200 you already had, or missing out on a trade that would’ve made you $200?',
+  opts:[
+    {t:'Losing the $200',line:'That instinct is well documented.'},
+    {t:'About the same, honestly',line:'Worth watching for — most people don’t actually feel it that way.'},
+    {t:'Missing the gain hits harder',line:'That’s the less common answer.'}
+  ],
+  fact:'Most people rate a loss as roughly twice as painful as an equal-sized gain feels good — a bias called loss aversion. It’s why traders hold losing trades hoping they’ll turn around, and cut winning trades short just to lock in the relief. The math doesn’t care how a trade feels. Your discipline has to cover for what your instincts won’t.'
+};
+var EV_INSIGHT={
+  q:'Quick math. Risk $100 a trade, win 40% of the time, winners pay 2x the risk, losers cost 1x the risk. Over 100 trades — profitable, or not?',
+  opts:[
+    {t:'Clearly profitable',line:'Good instinct.'},
+    {t:'Roughly breakeven',line:'Close, but not quite.'},
+    {t:'Losing money',line:'The 40% made it feel that way — a fair guess.'}
+  ],
+  fact:'Run it: 40% × $200 minus 60% × $100 comes out to +$20 of expected value per trade. Over 100 trades, that’s +$2,000 — profitable, on a strategy that loses more often than it wins. Win rate alone never tells the whole story; reward-to-risk is doing just as much work. This is the exact math Sim mode runs for you, on your own numbers instead of a hypothetical.'
+};
+var STAT_INSIGHT={
+  q:'One more, before the diagnosis. Guess: among people who day trade persistently — not a week, a sustained stretch — what share end up losing money?',
+  opts:[
+    {t:'Less than half',line:'Optimistic — and not what the data shows.'},
+    {t:'Roughly half to three-quarters',line:'Closer, but still short.'},
+    {t:'The large majority',line:'That’s the right instinct.'}
+  ],
+  fact:'A widely cited academic study tracking Brazilian futures day traders found that among those who kept trading for more than 300 days, about 97% still lost money. Persistence alone didn’t save them. It rarely does — process does, or it doesn’t.'
+};
+
+var introOverlay,introCanvas,introFg,introSkipBtn;
+var quizIdx=0,quizAnswers=[],gutLine='';
+var flakeRafId=null,flakeParticles=null,flakeCtx=null,flakeW=0,flakeH=0;
+
+function ensureIntroDom(){
+  if(introOverlay)return;
+  introOverlay=document.createElement('div');introOverlay.className='intro-overlay';
+  introCanvas=document.createElement('canvas');introCanvas.className='intro-cv';
+  introFg=document.createElement('div');introFg.className='intro-fg';
+  introOverlay.appendChild(introCanvas);
+  introOverlay.appendChild(introFg);
+  document.body.appendChild(introOverlay);
+  introSkipBtn=document.createElement('div');introSkipBtn.className='intro-skip';introSkipBtn.id='intro-skip-btn';introSkipBtn.textContent='Skip';
+  introSkipBtn.addEventListener('click',abandonOnboarding);
+  document.body.appendChild(introSkipBtn);
+  // The real overlay is up - the static #pre-veil (see the comment
+  // block right after <body>) has done its job. Both are opaque
+  // #000, so removing it here is an invisible swap, never a fade.
+  var pv=document.getElementById('pre-veil');if(pv)pv.remove();
+}
+
+// Bails out of the WHOLE pre-tour sequence (opening beat + questionnaire
+// + readiness screen) AND the tour that would have followed it - see
+// the header comment above for why this is one meaning, not several.
+// Never touches demo mode: at this point the tour hasn't started yet,
+// so there's nothing demo-related to restore (that only happens once
+// startTour() itself runs, and its own finish()/endDemoMode() handle it
+// if the user instead skips out of the tour proper, later).
+function abandonOnboarding(){
+  stopFlakeField();
+  if(introOverlay)introOverlay.style.display='none';
+  if(introSkipBtn)introSkipBtn.style.display='none';
+  markSeen();
+}
+
+// Continuous drifting-flake backdrop - the one piece of "motion" kept
+// running live behind every screen of this sequence (opening beat,
+// each question, the readiness screen), deliberately decoupled from
+// whatever text is on screen at the time: starts once when the
+// sequence begins, keeps animating straight through every transition,
+// stops only when the sequence ends (Continue into the tour, or Skip).
+function sizeFlakeCanvas(){
+  var dpr=window.devicePixelRatio||1;
+  flakeW=introCanvas.clientWidth;flakeH=introCanvas.clientHeight;
+  introCanvas.width=Math.max(1,Math.round(flakeW*dpr));introCanvas.height=Math.max(1,Math.round(flakeH*dpr));
+  flakeCtx=introCanvas.getContext('2d');
+  flakeCtx.setTransform(dpr,0,0,dpr,0,0);
+}
+function initFlakes(){
+  var n=Math.round(Math.min(64,Math.max(26,(flakeW*flakeH)/11000)));
+  flakeParticles=[];
+  for(var i=0;i<n;i++){
+    flakeParticles.push({
+      x:Math.random()*flakeW,y:Math.random()*flakeH,
+      r:0.8+Math.random()*1.9,
+      vy:-(0.05+Math.random()*0.13),vx:(Math.random()-0.5)*0.05,
+      baseA:0.14+Math.random()*0.46,
+      tw:Math.random()*Math.PI*2,twS:0.012+Math.random()*0.022
+    });
+  }
+}
+function drawFlakes(){
+  flakeCtx.clearRect(0,0,flakeW,flakeH);
+  flakeParticles.forEach(function(f){
+    f.x+=f.vx;f.y+=f.vy;f.tw+=f.twS;
+    if(f.y<-4){f.y=flakeH+4;f.x=Math.random()*flakeW;}
+    if(f.x<-4)f.x=flakeW+4;else if(f.x>flakeW+4)f.x=-4;
+    var a=f.baseA*(0.55+0.45*Math.sin(f.tw));
+    flakeCtx.beginPath();
+    flakeCtx.fillStyle='rgba(125,211,252,'+a.toFixed(3)+')';
+    flakeCtx.shadowColor='rgba(56,189,248,'+(a*0.9).toFixed(3)+')';flakeCtx.shadowBlur=5;
+    flakeCtx.arc(f.x,f.y,f.r,0,Math.PI*2);flakeCtx.fill();
+  });
+  flakeRafId=requestAnimationFrame(drawFlakes);
+}
+function startFlakeField(){
+  sizeFlakeCanvas();initFlakes();
+  if(flakeRafId)cancelAnimationFrame(flakeRafId);
+  flakeRafId=requestAnimationFrame(drawFlakes);
+}
+function stopFlakeField(){
+  if(flakeRafId)cancelAnimationFrame(flakeRafId);
+  flakeRafId=null;
+}
+
+// Every screen's markup goes through here: topHtml (the fixed progress
+// dots, when present) renders outside .scr-inner so it stays pinned to
+// the viewport even while .intro-fg scrolls; everything else goes
+// inside .scr-inner, which centers short content and degrades to a
+// scrollable top-aligned block for anything taller than the viewport
+// (see the .scr-inner CSS comment above for why that split matters).
+// extraCls is optional - renderReadiness passes 'grow' (see the CSS
+// comment on .scr-inner.grow) since it's the one screen whose content
+// keeps growing after it's first shown.
+function setFg(topHtml,innerHtml,extraCls){
+  introFg.innerHTML=(topHtml||'')+'<div class="scr-inner'+(extraCls?' '+extraCls:'')+'">'+innerHtml+'</div>';
+}
+
+// Minimum on-screen time for a piece of text, scaled to its own length
+// - the direct fix for "the text moves too fast for readability": the
+// old flat timeouts (3.4-4.6s per beat, 3.8s per reaction, 950ms per
+// reveal paragraph) were tuned by feel, not by how much there actually
+// was to read, and the longest strings in this sequence ran well past
+// 400 words/minute once actually measured - closer to speed-reading
+// than the deliberate, weighty pace this sequence is going for. ~200
+// words/minute (300ms/word) is a comfortable, unhurried silent-reading
+// pace; the 2200ms floor keeps even a one-word line ("Good.") from
+// flashing past.
+function readMs(text){
+  var words=(text||'').trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(2200,500+words*300);
+}
+
+// A second, deliberately smaller pacing function for ONE specific spot:
+// the gap between sentences as they stage into renderReadiness's reveal.
+// readMs() above is right for a screen shown in isolation (a beat, a
+// reaction) - the full 300ms/word plus a 2200ms floor gives each of
+// those its own fair read. But once "distill it to one sentence per
+// paragraph" turned the reveal's handful of multi-sentence paragraphs
+// into a dozen-plus short standalone sentences, reusing readMs() per
+// sentence meant that same 2200ms floor got paid AGAIN for every one of
+// them - and they stack, since every earlier sentence is still sitting
+// on screen when the next one lands, so the reader isn't starting cold
+// each time the way they are for a fresh beat. Measured against the
+// actual low-readiness copy (worst case, ~14 sentences): readMs() per
+// sentence summed to roughly 65+ seconds for this one screen alone,
+// which reads as sluggish rather than weighty. revealStepMs() paces the
+// STAGGER instead of the READ - a shorter floor (1100ms), a lower
+// per-word rate (130ms), and a cap (3000ms) so one unusually long
+// sentence can't stretch the rhythm out on its own - bringing that same
+// worst case down to roughly 33 seconds.
+function revealStepMs(text){
+  var words=(text||'').trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1100,Math.min(3000,650+words*130));
+}
+
+// Advances on tap OR after `ms` of nobody tapping, whichever comes
+// first - the pacing mechanism behind every beat/reaction in this
+// sequence: long enough to actually read a couple of sentences, short
+// enough that a fast reader never feels stuck waiting on it. Pass a
+// falsy btnId for a beat with no visible control (see runBeats) - it
+// still resolves, just on the timer alone.
+function autoAdvance(btnId,ms,onDone){
+  var done=false;
+  var t=setTimeout(go,ms);
+  function go(){if(done)return;done=true;clearTimeout(t);onDone();}
+  var btn=btnId?document.getElementById(btnId):null;
+  if(btn)btn.addEventListener('click',go);
+}
+
+// Three sequential atmosphere beats - what round 97 tried to say in
+// one card, now given real room (see the header comment). The first
+// two are pure pacing, no visible control - deliberately: this is the
+// one part of the sequence that can't be rushed past, only abandoned
+// outright via Skip, which is what gives it weight instead of reading
+// as a dismissable tooltip. The third beat carries the "I'm Ready"
+// button that hands off into the questions.
+function runBeats(onDone){
+  var i=0;
+  function step(){
+    if(i>=INTRO_BEATS.length){onDone();return;}
+    var b=INTRO_BEATS[i];
+    var isLast=i===INTRO_BEATS.length-1;
+    setFg('',
+      (b.eyebrow?'<div class="scr-eyebrow">'+b.eyebrow+'</div>':'')+
+      '<div class="scr-title">'+b.title+'</div>'+
+      (b.body?'<div class="scr-body">'+b.body+'</div>':'')+
+      (isLast?'<div class="scr-nav center"><button type="button" class="scr-next" id="beat-next">'+b.btn+'</button></div>':''));
+    autoAdvance(isLast?'beat-next':null,isLast?60000:readMs((b.title||'')+' '+(b.body||'')),function(){i++;step();});
+  }
+  step();
+}
+
+// One diagnostic question - tap an option, then that option's OWN
+// reaction plays (renderReaction) before the next question appears.
+// This, not just the closing report card, is what's meant to make the
+// sequence feel adaptive as you go rather than only in hindsight.
+// Nothing here is applied to any app field/setting; each answer's 0-2
+// score is retained in memory only (see the header comment) so
+// renderReadiness() can react to it once all four are in.
+function renderQuizStep(onDone){
+  var item=QUIZ_QUESTIONS[quizIdx];
+  var prev=quizAnswers[quizIdx];
+  var dots='';
+  for(var i=0;i<QUIZ_QUESTIONS.length;i++)dots+='<i class="'+(i<=quizIdx?'on':'')+'"></i>';
+  setFg(
+    '<div class="scr-progress">'+dots+'</div>',
+    '<div class="scr-title">'+item.q+'</div>'+
+    '<div class="scr-opts">'+item.opts.map(function(o,oi){return '<button type="button" class="scr-opt'+(prev&&prev.oi===oi?' sel':'')+'" data-i="'+oi+'">'+o.t+'</button>';}).join('')+'</div>'+
+    '<div class="scr-nav"><button type="button" class="scr-back" id="quiz-back"'+(quizIdx===0?' disabled':'')+'>Back</button><span></span></div>');
+  var backBtn=document.getElementById('quiz-back');
+  if(backBtn)backBtn.addEventListener('click',function(){
+    if(quizIdx>0){quizIdx--;quizAnswers.pop();renderQuizStep(onDone);}
+  });
+  introFg.querySelectorAll('.scr-opt').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      introFg.querySelectorAll('.scr-opt').forEach(function(b){b.classList.remove('sel');});
+      btn.classList.add('sel');
+      var oi=+btn.getAttribute('data-i');
+      var opt=item.opts[oi];
+      quizAnswers[quizIdx]={qi:quizIdx,oi:oi,s:opt.s};
+      setTimeout(function(){renderReaction(opt.reaction,dots,onDone);},260);
+    });
+  });
+}
+// The in-the-moment payoff for the answer just given - see the header
+// comment for why this exists at all (round 97's version waited until
+// the very end to react to anything). No Back here on purpose: it's a
+// response to a choice already made, not a form field.
+function renderReaction(text,dots,onDone){
+  setFg(
+    '<div class="scr-progress">'+dots+'</div>',
+    '<div class="scr-body">'+text+'</div>'+
+    '<div class="scr-nav center"><button type="button" class="scr-next" id="reaction-next">Continue</button></div>');
+  autoAdvance('reaction-next',readMs(text),function(){
+    if(quizIdx<QUIZ_QUESTIONS.length-1){quizIdx++;renderQuizStep(onDone);}
+    else{onDone();}
+  });
+}
+function runQuestionnaire(onDone){
+  quizIdx=0;quizAnswers=[];
+  renderQuizStep(onDone);
+}
+
+// Non-scored, deliberately - this isn't measuring readiness, it's
+// naming the actual premise of the app out loud before the reveal:
+// that what it's about to show you only matters if you actually want
+// to see it. The chosen line becomes the reveal's closing paragraph.
+function runGutCheck(onDone){
+  setFg('',
+    '<div class="scr-title">'+GUT_CHECK.q+'</div>'+
+    '<div class="scr-opts">'+GUT_CHECK.opts.map(function(o,oi){return '<button type="button" class="scr-opt" data-i="'+oi+'">'+o.t+'</button>';}).join('')+'</div>');
+  introFg.querySelectorAll('.scr-opt').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      introFg.querySelectorAll('.scr-opt').forEach(function(b){b.classList.remove('sel');});
+      btn.classList.add('sel');
+      var oi=+btn.getAttribute('data-i');
+      gutLine=GUT_CHECK.opts[oi].line;
+      setTimeout(onDone,300);
+    });
+  });
+}
+
+// The shared mechanic behind LOSS_INSIGHT/EV_INSIGHT/STAT_INSIGHT (see
+// the header comment above those) - structurally the same as
+// runGutCheck just above (pick any option, nothing scored) crossed with
+// renderReaction's auto-advancing reveal, but with no dots (these
+// aren't part of the 4-question progress count) and no Back (matching
+// gut-check/beats: Skip is the only way out of a screen once it's up).
+// Each option's own `line` is a short, tailored acknowledgment; `fact`
+// underneath it is the one substantive payoff, identical regardless of
+// which option got picked, since these are revealing an objective
+// answer, not reacting to a subjective one the way the questionnaire's
+// reactions do.
+function renderInsightReveal(text,onDone){
+  setFg('',
+    '<div class="scr-body">'+text+'</div>'+
+    '<div class="scr-nav center"><button type="button" class="scr-next" id="insight-next">Continue</button></div>');
+  autoAdvance('insight-next',readMs(text),onDone);
+}
+function runInsight(insight,onDone){
+  setFg('',
+    '<div class="scr-title">'+insight.q+'</div>'+
+    '<div class="scr-opts">'+insight.opts.map(function(o,oi){return '<button type="button" class="scr-opt" data-i="'+oi+'">'+o.t+'</button>';}).join('')+'</div>');
+  introFg.querySelectorAll('.scr-opt').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      introFg.querySelectorAll('.scr-opt').forEach(function(b){b.classList.remove('sel');});
+      btn.classList.add('sel');
+      var oi=+btn.getAttribute('data-i');
+      var revealText=insight.opts[oi].line+' '+insight.fact;
+      setTimeout(function(){renderInsightReveal(revealText,onDone);},300);
+    });
+  });
+}
+
+// Naive but sufficient sentence splitter for renderReadiness's one-
+// sentence-per-paragraph rule below: every string this app ever feeds
+// it is plain prose with no abbreviations/decimals/ellipses, so a
+// split on ". "/"! "/"? " is safe here - this is NOT a general-purpose
+// sentence splitter, don't reuse it on arbitrary text without checking
+// that assumption still holds.
+function splitSentences(text){
+  var m=(text||'').match(/[^.!?]+[.!?]+(?:\s+|$)/g);
+  if(!m)return text?[text.trim()]:[];
+  return m.map(function(s){return s.trim();}).filter(Boolean);
+}
+
+// The payoff, paced like a considered verdict rather than a wall of
+// text: eyebrow+title alone first (a held beat of quiet), then ONE
+// SENTENCE at a time fades in - not one paragraph at a time - each
+// held on screen for revealStepMs() of its own length (see that
+// function's comment for why it's not just readMs() reused), then the gut-check
+// line, then Continue. Two things changed here after the user flagged
+// both a readability problem and a visual one in the same message:
+// (1) "distill it to one sentence per paragraph for the big text
+// block" - each gap/closing/gut-check string, which used to render as
+// one multi-sentence paragraph, is now run through splitSentences()
+// and each sentence gets its own line; shorter chunks read faster AND
+// land closer to what was actually asked for than just slowing the
+// old multi-sentence paragraphs down would have. (2) "the last big
+// text block loads wonky" - traced to .scr-inner's vertical auto-
+// centering: every new paragraph changed the block's height, so
+// flexbox re-centered the WHOLE block and every already-read line
+// visibly slid up the screen. Fixed by passing the 'grow' modifier to
+// setFg() here specifically (see the .scr-inner.grow CSS comment) so
+// this screen anchors to the top and only grows downward - nothing
+// already on screen moves once it's there. .scr-inner still degrades
+// to a scrollable block once content overflows the viewport (that
+// part of round 97's fix is untouched), so even the longest "Start
+// Here" verdict - now potentially a dozen-plus short sentences - never
+// traps its own Continue button off-screen. Scoring/tiers themselves
+// are unchanged from round 97.
+function renderReadiness(onDone){
+  var total=quizAnswers.reduce(function(a,x){return a+(x?x.s:0);},0);
+  var gaps=quizAnswers.filter(function(x){return x&&x.s<=1;}).map(function(x){return QUIZ_QUESTIONS[x.qi].gap;});
+  var eyebrow,title,paras;
+  if(total>=6){
+    eyebrow='You’re Ready';
+    title='You’ve already done the part most people skip.';
+    paras=['This tool won’t predict the market for you. What it will do is tell you the truth about your own process — usually the part traders spend the most energy avoiding.'];
+    if(gaps.length)paras.push(gaps[0]);
+  }else if(total>=3){
+    eyebrow='Getting There';
+    title='Real gaps, worth carrying into what comes next.';
+    paras=gaps.slice(0,3);
+    paras.push('None of that locks you out. It just means the next stretch in here should be treated as practice, not proof.');
+  }else{
+    eyebrow='Start Here, Not There';
+    title='Day trading is unforgiving of accounts that skip the groundwork.';
+    paras=gaps.slice(0,4);
+    paras.push('That’s not a reason to stop. It’s exactly what Simulate mode is for — build the history first, and let the app show you the truth instead of you having to guess at it.');
+  }
+  if(gutLine)paras.push(gutLine);
+  var sentences=[];
+  paras.forEach(function(p){sentences=sentences.concat(splitSentences(p));});
+
+  setFg('','<div class="scr-eyebrow">'+eyebrow+'</div><div class="scr-title">'+title+'</div><div class="scr-bodies" id="rd-bodies"></div>','grow');
+  var bodiesEl=document.getElementById('rd-bodies');
+  var i=0;
+  function next(){
+    if(i<sentences.length){
+      var p=document.createElement('div');
+      p.className='scr-body';p.textContent=sentences[i];
+      bodiesEl.appendChild(p);
+      i++;
+      setTimeout(next,revealStepMs(sentences[i-1]));
+    }else{
+      var nav=document.createElement('div');
+      nav.className='scr-nav center';
+      nav.innerHTML='<button type="button" class="scr-next" id="readiness-go">Continue</button>';
+      introFg.querySelector('.scr-inner').appendChild(nav);
+      var goBtn=document.getElementById('readiness-go');
+      if(goBtn)goBtn.addEventListener('click',onDone);
+    }
+  }
+  setTimeout(next,1900);
+}
+
+function startIntroSequence(){
+  ensureIntroDom();
+  introOverlay.style.display='block';introOverlay.style.opacity='1';
+  introSkipBtn.style.display='';
+  startFlakeField();
+  // LOSS_INSIGHT opens right after the atmosphere beats - a light
+  // psychology hook before the questionnaire gets personal. EV_INSIGHT
+  // and STAT_INSIGHT land back to back after the questionnaire, building
+  // from concrete math into the heaviest "cold truth" beat, right before
+  // the gut-check's direct question about wanting to see that truth.
+  runBeats(function(){
+    runInsight(LOSS_INSIGHT,function(){
+      runQuestionnaire(function(){
+        runInsight(EV_INSIGHT,function(){
+          runInsight(STAT_INSIGHT,function(){
+            runGutCheck(function(){
+              renderReadiness(function(){
+                stopFlakeField();
+                introOverlay.style.display='none';
+                introSkipBtn.style.display='none';
+                startTour();
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+}
+
+window.startTour=startTour;
+window.startIntroSequence=startIntroSequence;
+
+if(shouldAutoShow())setTimeout(startIntroSequence,500);
 })();
 </script>
 
