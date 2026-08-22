@@ -1315,28 +1315,38 @@ canvas.spark{width:100%;height:34px;display:block;}
 
 </head>
 <body>
-<!-- PRE-VEIL (round 98) — the pre-tour sequence used to be shown by a
-     setTimeout deep in the tour's own script block at the bottom of
-     this document; that meant the real app (topbar, default $10,000
-     Sim screen, everything) was the FIRST thing painted, visible and
-     tappable, until that script got around to covering it. The user
-     caught this ("I don't want the app to show before the intro
-     starts") - the fix can't be "run the JS sooner," because no matter
-     how early, script execution still happens after this much markup
-     has already been parsed and can already have painted. So instead:
-     this div is plain, static HTML - present from the very first frame
-     with no JS required - and the inline script right after it runs
-     synchronously, before the .app div below is even parsed, so a
-     RETURNING user (who should see nothing extra) never sees so much
-     as a flash of black either. A first-time user keeps this veil
-     until the real .intro-overlay is ready to take over (see
-     ensureIntroDom() far below) - both are opaque #000, so that
-     handoff is an invisible swap, not a fade. NOTE: the two key names
-     below are hardcoded on purpose (TK/APP_SK don't exist yet this
-     early in parsing) and must stay in sync with TK/APP_SK further
-     down if either ever changes. -->
+<!-- PRE-VEIL (round 98, revised round 102, gate changed round 102b) —
+     the pre-tour sequence used to be shown by a setTimeout deep in the
+     tour's own script block at the bottom of this document; that meant
+     the real app (topbar, default $10,000 Sim screen, everything) was
+     the FIRST thing painted, visible and tappable, until that script
+     got around to covering it. The user caught this ("I don't want the
+     app to show before the intro starts") - the fix can't be "run the
+     JS sooner," because no matter how early, script execution still
+     happens after this much markup has already been parsed and can
+     already have painted. So instead: this div is plain, static HTML -
+     present from the very first frame with no JS required - and the
+     inline script right after it runs synchronously, before the .app
+     div below is even parsed, so a user who's already entered real
+     data never sees so much as a flash of black either. Round 102:
+     "start the intro every time the page loads" (someone opens the
+     app, exits, reopens later, and it doesn't load the intro) removed
+     the old one-time "seen it once" flag entirely. Round 102b refined
+     that into a happy medium per the user's own framing: "once they
+     have data entered it shouldn't replay for them" - so the gate
+     below is no longer about whether the intro was ever SEEN, only
+     about whether the user has ever logged real session or journal
+     data (sessionLog/journalLog inside the ahm-v39 save blob) - synced
+     with the equivalent, non-hardcoded check in the main script's
+     hasRealData() far below (see the comment there for why this one
+     has to duplicate that logic instead of just calling it - the app's
+     own script hasn't run yet this early in parsing). A user with real
+     data keeps seeing NOTHING extra, same zero-flash guarantee as
+     before; anyone else keeps this veil until the real .intro-overlay
+     is ready to take over (see ensureIntroDom() far below) - both are
+     opaque #000, so that handoff is an invisible swap, not a fade. -->
 <div id="pre-veil"></div>
-<script>try{if(localStorage.getItem('ahm-tour-v1-seen')||localStorage.getItem('ahm-v39')){var _pv=document.getElementById('pre-veil');if(_pv)_pv.remove();}}catch(e){}</script>
+<script>try{var _r=localStorage.getItem('ahm-v39');if(_r){var _d=JSON.parse(_r);if(_d&&((_d.sessionLog&&_d.sessionLog.length)||(_d.journalLog&&_d.journalLog.length))){var _pv=document.getElementById('pre-veil');if(_pv)_pv.remove();}}}catch(e){}</script>
 <canvas id="app-flake-cv"></canvas>
 <div class="app">
 
@@ -5413,7 +5423,6 @@ function startTour(){
 function finish(){
   state.active=false;
   endDemoMode();
-  markSeen();
   if(blocker)blocker.style.display='none';
   if(spotlight)spotlight.style.display='none';
   if(card)card.style.display='none';
@@ -5421,21 +5430,34 @@ function finish(){
   window.removeEventListener('resize',onResize);
 }
 
-// Coupling: READS the app's save key to detect existing users and
-// skip the auto-launch for them (same convention the old wizard used)
-// - never written by this tour. Own key (ahm-tour-v1-seen, not the
-// old wizard's ahm-wizard-v1-seen) since this is a different mechanism
-// entirely, not a continuation of it.
-var TK='ahm-tour-v1-seen';
-var APP_SK='ahm-v39';
-function shouldAutoShow(){
+// Round 96-101: this pre-tour sequence auto-launched only once per
+// browser, gated behind an "ahm-tour-v1-seen" localStorage flag (and
+// skipped outright if the app's own save key already had data) - the
+// old shouldAutoShow()/markSeen()/TK/APP_SK mechanism that used to
+// live here. Round 102 removed that gate entirely - "someone opens it
+// and exits and then goes to open again... it doesn't load the intro"
+// was explicitly the behavior to fix, so the sequence launched
+// unconditionally on every single page load, no exceptions.
+// Round 102b brought back exactly one exception, per the user's own
+// framing of the happy medium: "once they have data entered it
+// shouldn't replay for them." Note this is NOT the old "seen it once"
+// flag reborn under a new name - nothing here is ever written just
+// because the sequence played or was skipped. It's purely a read of
+// whether the user has ever logged something real (a session day via
+// Log Day, or a journal entry) - sim runs / settings changes / mere
+// app usage don't count, since those aren't "data" in the sense the
+// user meant (simResults isn't even persisted - see round 95's notes).
+function hasRealData(){
   try{
-    if(localStorage.getItem(TK))return false;
-    if(localStorage.getItem(APP_SK))return false;
-    return true;
+    var raw=localStorage.getItem('ahm-v39');
+    if(!raw)return false;
+    var d=JSON.parse(raw);
+    return !!(d&&((d.sessionLog&&d.sessionLog.length)||(d.journalLog&&d.journalLog.length)));
   }catch(e){return false;}
 }
-function markSeen(){try{localStorage.setItem(TK,'1');}catch(e){}}
+// The manual Guide button (openGuide()) was never gated by this in the
+// first place - it jumps straight to startTour() - so it's unaffected
+// either way, for a user with or without real data.
 
 /* ══════════════════════════════════════════════════════════════
    PRE-TOUR SEQUENCE — round 96, made adaptive round 97, expanded into
@@ -5639,7 +5661,6 @@ function abandonOnboarding(){
   stopFlakeField();
   if(introOverlay)introOverlay.style.display='none';
   if(introSkipBtn)introSkipBtn.style.display='none';
-  markSeen();
 }
 
 // Continuous drifting-flake backdrop - the one piece of "motion" kept
@@ -6074,15 +6095,20 @@ function startIntroSequence(){
 window.startTour=startTour;
 window.startIntroSequence=startIntroSequence;
 
-// Unconditional and independent of shouldAutoShow() - the app-level
-// flake background belongs to the app itself, not the pre-tour
-// sequence, so it starts the same way for a first-time visitor (where
-// it's simply hidden behind the opaque #pre-veil/.intro-overlay until
-// either finishes, per those elements' own zero-flash design) and a
-// returning one (who sees it immediately, with no intro at all).
+// The app-level flake background belongs to the app itself, not the
+// pre-tour sequence, so it always starts here regardless: it's simply
+// hidden behind the opaque #pre-veil/.intro-overlay until the sequence
+// below finishes, per those elements' own zero-flash design.
 startAppFlakeField();
 
-if(shouldAutoShow())setTimeout(startIntroSequence,500);
+// Round 102b: launches on every page load UNLESS real data already
+// exists (see hasRealData() above, just below finish(), for exactly
+// what counts). Note this only controls whether startIntroSequence()
+// itself ever runs - the #pre-veil at the top of <body> has its own,
+// necessarily duplicated copy of this same check (see the comment
+// there) so a real-data user's veil comes down immediately rather than
+// waiting for this script to finish parsing/executing.
+if(!hasRealData())setTimeout(startIntroSequence,500);
 })();
 </script>
 
