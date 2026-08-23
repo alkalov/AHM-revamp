@@ -1223,9 +1223,9 @@ canvas.spark{width:100%;height:34px;display:block;}
    to 1 shortly after (see the setTimeout comment in startTour() itself
    for why a plain timeout, not rAF, turned out to be the reliable fix
    here) so this transition actually has something to animate between. */
-.tour-spotlight{position:fixed;z-index:2001;pointer-events:none;box-shadow:0 0 0 9999px rgba(4,6,10,.86);border:2px solid rgba(56,189,248,.85);border-radius:14px;transition:top .32s cubic-bezier(.25,.46,.45,.94),left .32s cubic-bezier(.25,.46,.45,.94),width .32s cubic-bezier(.25,.46,.45,.94),height .32s cubic-bezier(.25,.46,.45,.94),opacity .4s ease;}
+.tour-spotlight{position:fixed;z-index:2001;pointer-events:none;box-shadow:0 0 0 9999px rgba(4,6,10,.86);border:2px solid rgba(56,189,248,.85);border-radius:14px;transition:top .32s cubic-bezier(.25,.46,.45,.94),left .32s cubic-bezier(.25,.46,.45,.94),width .32s cubic-bezier(.25,.46,.45,.94),height .32s cubic-bezier(.25,.46,.45,.94),opacity .75s ease;}
 .tour-spotlight.no-target{border:none;border-radius:0;}
-.tour-card{position:fixed;left:16px;right:16px;background:rgba(18,23,33,.94);background-image:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,0) 55%);-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px 16px;box-shadow:0 20px 50px -12px rgba(0,0,0,.7);color:#e2e6ed;font-family:'Inter',sans-serif;z-index:2002;max-width:400px;margin:0 auto;transition:opacity .4s ease;}
+.tour-card{position:fixed;left:16px;right:16px;background:rgba(18,23,33,.94);background-image:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,0) 55%);-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px 16px;box-shadow:0 20px 50px -12px rgba(0,0,0,.7);color:#e2e6ed;font-family:'Inter',sans-serif;z-index:2002;max-width:400px;margin:0 auto;transition:opacity .75s ease;pointer-events:none;}
 .tour-card.centered{top:50%;transform:translateY(-50%);}
 .tour-progress{font-size:8px;color:var(--accent-solid);text-transform:uppercase;letter-spacing:.16em;margin-bottom:6px;}
 .tour-title{font-size:13px;font-weight:700;margin-bottom:6px;}
@@ -5018,10 +5018,40 @@ var blocker,spotlight,card;
 
 function ensureDom(){
   if(blocker)return;
-  blocker=document.createElement('div');blocker.className='tour-blocker';
-  spotlight=document.createElement('div');spotlight.className='tour-spotlight';
-  card=document.createElement('div');card.className='tour-card';
-  var skip=document.createElement('div');skip.className='tour-skip';skip.id='tour-skip-btn';skip.textContent='Skip';
+  // Round 103: this used to be called lazily, the first time startTour()
+  // ever ran - meaning spotlight/card were BRAND NEW elements at the
+  // exact moment we also needed them to fade in. A brand-new element's
+  // first-ever computed style is never animated (no prior rendered
+  // frame to transition FROM) - round 101 papered over this with a
+  // setTimeout delay, which mostly worked at .4s but broke down once
+  // the fade was lengthened to .75s: verified via direct instrumentation
+  // (transitionrun timing + computed-opacity sampling, not eyeballing)
+  // that a SEPARATE, unrelated phantom transition was firing first -
+  // the browser doesn't seem to reliably commit a brand-new element's
+  // inline opacity into computed style until sometime AFTER creation,
+  // so it was transitioning FROM the CSS-default opacity of 1 down
+  // toward the just-set 0 for a while, and our intended 0->1 fade then
+  // had to fight/reverse that mid-flight - which the CSS transitions
+  // spec's own reversing-shortening logic sometimes rendered as a
+  // near-instant snap rather than a real fade, depending on exactly
+  // how far that phantom transition had gotten before we interrupted
+  // it. Fix: create spotlight/card here, unconditionally, once, on
+  // every page load (see the unconditional ensureDom() call near the
+  // bottom of this script) - long before any tour ever starts - each
+  // pinned to opacity:0 immediately. That opacity:0 state gets a real,
+  // settled, PAINTED frame during ordinary page-idle time, so by the
+  // time startTour() actually flips it to 1, it's a completely normal,
+  // well-established transition with no "brand new element" ambiguity
+  // left to race against. blocker/skip still use display:none while
+  // idle (they have no opacity transition to protect) - spotlight
+  // already has permanent pointer-events:none in its own CSS, and card
+  // gets the same treatment below so an invisible, always-present card
+  // can't intercept clicks meant for the real app underneath; startTour()
+  // enables it (card.style.pointerEvents='auto') and finish() clears it.
+  blocker=document.createElement('div');blocker.className='tour-blocker';blocker.style.display='none';
+  spotlight=document.createElement('div');spotlight.className='tour-spotlight';spotlight.style.opacity='0';
+  card=document.createElement('div');card.className='tour-card';card.style.opacity='0';
+  var skip=document.createElement('div');skip.className='tour-skip';skip.id='tour-skip-btn';skip.textContent='Skip';skip.style.display='none';
   skip.addEventListener('click',finish);
   document.body.appendChild(blocker);
   document.body.appendChild(spotlight);
@@ -5388,30 +5418,35 @@ function startTour(){
   state.active=true;state.idx=0;
   try{switchScreen('sim');switchStrat(0);}catch(e){}
   startDemoMode();
-  blocker.style.display='';spotlight.style.display='';card.style.display='';
-  // Round 101 fix: this used to leave spotlight/card at their default
-  // full opacity, so the darkened overlay + first card appeared in one
-  // frame the instant this function ran - both from the pre-tour hand-
-  // off AND a returning user's direct Guide click ("sudden screen
-  // change"). Two earlier attempts here both failed under actual
-  // testing (confirmed via the browser's own `transitionrun` event,
-  // which never fired for either): a double-rAF flip, and a forced-
-  // reflow-then-flip in the same tick. Root cause: on the FIRST ever
-  // startTour() call, spotlight/card are brand-new elements (just
-  // created by ensureDom() a few lines up) - a genuinely new element's
-  // first-ever computed style is never animated, since there's no prior
-  // rendered frame to transition FROM. That first frame (opacity:0)
-  // needs to actually get PAINTED at least once before flipping to 1
-  // counts as a real, later, transitionable change - and startDemoMode()
-  // just above already blocked the main thread for a real ~500-700ms
-  // simulating all 6 strategies, so both rAF and a same-tick forced
-  // reflow ended up racing straight through without an actual paint
-  // landing in between. A genuine setTimeout (a real macrotask
-  // boundary) reliably gives the browser that opportunity - empirically
-  // tested at several delays (30/40/60ms: unreliable, sometimes no
-  // transition; 90ms+: fired reliably across repeated trials) - 150ms
-  // for a comfortable margin, which reads as instant next to
-  // startDemoMode()'s own much longer setup delay anyway.
+  blocker.style.display='';card.style.pointerEvents='auto';
+  // Round 101 fix, corrected round 103: this used to leave spotlight/
+  // card at their default full opacity, so the darkened overlay + first
+  // card appeared in one frame the instant this function ran - both
+  // from the pre-tour hand-off AND a returning user's direct Guide
+  // click ("sudden screen change"). Round 101 shipped a setTimeout-
+  // delayed opacity flip as the fix, reasoning that spotlight/card were
+  // brand-new elements (just created by ensureDom()) whose first-ever
+  // style change can never animate, and that the delay just needed to
+  // guarantee an intervening paint. That diagnosis was real but
+  // incomplete: lengthening the fade from .4s to .75s in round 103
+  // (per "I want more of a fade in") exposed a second, subtler bug the
+  // .4s version had been accidentally hiding - direct instrumentation
+  // (transitionrun timing + computed-opacity sampling at 50ms steps,
+  // not eyeballing a screenshot) showed the browser doesn't reliably
+  // commit a brand-new element's inline opacity into computed style
+  // right away, so it kept transitioning FROM the CSS-default opacity
+  // of 1 toward the just-set 0 for a while on its own, and the real
+  // 0->1 fade then had to interrupt/reverse that mid-flight - which the
+  // CSS transitions spec's reversing-shortening logic rendered as
+  // anywhere from a near-instant snap to a real fade depending on
+  // timing that had nothing to do with our own setTimeout delay. No
+  // fixed delay value fixes that reliably, since it's fighting a race,
+  // not just waiting one out. The actual fix lives in ensureDom() now:
+  // spotlight/card are created once, unconditionally, on every page
+  // load (see the call near the bottom of this script), pinned to
+  // opacity:0 immediately - by the time startTour() ever runs, they've
+  // already had a real, settled, painted frame at opacity:0, so this
+  // flip is a completely ordinary transition with nothing left to race.
   spotlight.style.opacity='0';card.style.opacity='0';
   var skipBtn=document.getElementById('tour-skip-btn');if(skipBtn)skipBtn.style.display='';
   renderStop(0);
@@ -5424,8 +5459,18 @@ function finish(){
   state.active=false;
   endDemoMode();
   if(blocker)blocker.style.display='none';
-  if(spotlight)spotlight.style.display='none';
-  if(card)card.style.display='none';
+  // Round 103: opacity (not display:none) is what hides these now, to
+  // keep them "already painted, never brand-new" for the NEXT startTour()
+  // call too - see ensureDom()'s comment. A side effect worth knowing:
+  // closing the tour now fades the dimmed overlay/card out over the same
+  // .75s instead of vanishing instantly, even though blocker's display:none
+  // above already makes the real app interactive again immediately - the
+  // app underneath is never actually blocked during that fade-out, it's
+  // purely visual. Not explicitly asked for, but keeping the same motion
+  // language on the way out as the way in reads more consistent than an
+  // abrupt snap after a deliberate fade-in would.
+  if(spotlight)spotlight.style.opacity='0';
+  if(card){card.style.opacity='0';card.style.pointerEvents='';}
   var skipBtn=document.getElementById('tour-skip-btn');if(skipBtn)skipBtn.style.display='none';
   window.removeEventListener('resize',onResize);
 }
@@ -6100,6 +6145,16 @@ window.startIntroSequence=startIntroSequence;
 // hidden behind the opaque #pre-veil/.intro-overlay until the sequence
 // below finishes, per those elements' own zero-flash design.
 startAppFlakeField();
+
+// Round 103: creates the tour's blocker/spotlight/skip/card up front,
+// on every page load, instead of waiting for the first startTour() call
+// - see ensureDom()'s own comment for why (its fade-in needs these to
+// already have a settled, painted opacity:0 baseline well before the
+// tour ever starts, not to be brand-new elements at that exact moment).
+// All four stay fully inert until startTour() actually runs (blocker/
+// skip via display:none, spotlight/card via opacity:0 + pointer-events),
+// so this has no visible or interactive effect on ordinary app use.
+ensureDom();
 
 // Round 102b: launches on every page load UNLESS real data already
 // exists (see hasRealData() above, just below finish(), for exactly
