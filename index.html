@@ -86,25 +86,37 @@ html,body{height:100%;background:#04060a;color:#e2e6ed;font-family:'Inter',sans-
    applies cleanly to flex/table containers too without needing
    position/overflow tricks on each one.
    Round 104: blur dropped from 26px to 10px (and fill eased .42->.37)
-   specifically so the app-level ambient flake field reads through
-   these panels — a small (~1-3px) flake particle is a much smaller
-   feature than a 26px blur radius, so at the old setting the blur
-   smeared every flake to total invisibility no matter how bright it
-   drew. 10px still visibly frosts/softens whatever's behind (the
-   panel is still legibly "glass", not a clear pane) while letting a
-   flake's own glow survive as a faint, recognizably round bloom
-   instead of being flattened away. Still "not completely
-   transparent" per that request: fill + border + box-shadow below
-   are untouched, so panels keep their edges, depth and text
-   contrast. */
+   so the app-level ambient flake field reads through these panels.
+   Round 105: 10px was still not enough - user-reported, and confirmed
+   directly (a fixed test flake behind blur(10px)/.37, screenshotted
+   and inspected pixel-by-pixel): a moving flake WAS detectable frame-
+   to-frame, but the peak delta was only a few units out of 255 - far
+   below what anyone would notice by eye. First pass dropped to
+   blur(3px)/.30, tested with a MAX-brightness flake (baseA .3, r 2.3
+   - the top of initAppFlakes()'s range) and that looked clearly
+   visible - but most real flakes sit well below max most of the time
+   (twinkle cycles baseA by 0.55-1.0x, and baseA itself only reaches
+   .3 at the very top of its .08-.3 range), so re-tested against a
+   TYPICAL flake (baseA~.147, r~1.5) instead and blur(3px)/.30 was
+   basically invisible for that - the first pass was tuned to a case
+   real flakes rarely hit. Settled on blur(1px)/.28, re-verified
+   against the typical-case flake, not the best case. Still not a
+   clear pane: fill + border + box-shadow below are untouched, and
+   backdrop-filter blur never touches the panel's own text/content
+   (only what's BEHIND it), so this costs nothing on legibility -
+   confirmed via screenshot. Also bumped initAppFlakes()'s density
+   (see that function) since even a fully-visible flake is easy to
+   miss if the field is too sparse to ever put one behind a given
+   panel - visibility and encounter-rate are separate problems, both
+   were live. */
 .fc,.chart-panel,.diag,.grade-card,.jsec,.vs-card,.gauge-row,.wrc,
 .circ-panel-inner,.stats-inp,.stats-grid .sg,.inp-grp,
 .spark-cell,.jhist,.friction-breakdown,.tbl-controls,.dv-half,
 .mbox,.ibox,.sc-s,.mode-row,.tb-card{
-  background-color:rgba(18,23,33,.37) !important;
+  background-color:rgba(18,23,33,.28) !important;
   background-image:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,0) 55%) !important;
-  -webkit-backdrop-filter:blur(10px) saturate(1.7);
-  backdrop-filter:blur(10px) saturate(1.7);
+  -webkit-backdrop-filter:blur(1px) saturate(1.7);
+  backdrop-filter:blur(1px) saturate(1.7);
   border-color:rgba(255,255,255,.09) !important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.06),
              0 10px 28px -10px rgba(0,0,0,.55);
@@ -5792,7 +5804,15 @@ function sizeAppFlakeCanvas(){
   appFlakeCtx.setTransform(dpr,0,0,dpr,0,0);
 }
 function initAppFlakes(){
-  var n=Math.round(Math.min(46,Math.max(18,(appFlakeW*appFlakeH)/16000)));
+  // Round 105: density roughly doubled (divisor 16000->9000, cap 46->60,
+  // floor 18->24) - the panel-transparency fix (see the shared glass rule's
+  // comment) was correct on its own terms (verified a flake IS clearly
+  // visible through blur(3px)/alpha(.3) when one happens to be there) but a
+  // ~20-particle field spread across the whole screen rarely put one behind
+  // any single panel at a given moment - too sparse to ever actually notice,
+  // even though the effect worked when it did line up. More particles means
+  // panels show one regularly instead of by rare chance.
+  var n=Math.round(Math.min(60,Math.max(24,(appFlakeW*appFlakeH)/9000)));
   appFlakeParticles=[];
   for(var i=0;i<n;i++){
     appFlakeParticles.push({
