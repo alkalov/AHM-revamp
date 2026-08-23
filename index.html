@@ -971,7 +971,14 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 #dv-gauge-cv{width:100%;height:100%;display:block;}
 /* ── Table tab: flat split-screen, no nested scroll chains ── */
 .dv-half{flex:1 1 0;min-height:0;display:flex;flex-direction:column;border-bottom:1px solid #232b3d;overflow:hidden;}
-.dv-half:last-child{border-bottom:none;}
+/* Round 107: the table half no longer stretches to a 50/50 split with
+   the chart half above it - now that .tbl-scroll below is capped to 7
+   rows (see that rule), letting this half keep flex:1 1 0 would leave
+   dead empty space under the capped table. flex:0 0 auto settles it to
+   exactly its content height (tbl-controls + the capped table); the
+   chart half's own flex:1 1 0 is untouched, so it just absorbs
+   whatever height that frees up instead of splitting evenly. */
+.dv-half:last-child{border-bottom:none;flex:0 0 auto;}
 .dv-empty{padding:32px;text-align:center;font-size:10px;color:#4d5a6e;}
 /* Original wide table, restored — now contained in the bottom .dv-half
    instead of the whole screen. tbl-scroll is the ONE scroll context in
@@ -982,13 +989,24 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    confirmed: overflow-x:auto forces the "visible" overflow-y on the
    inner wrapper to compute as auto too, which makes thead stick to
    THAT inner box instead of the outer scroller, so it scrolls away
-   with the rows instead of staying pinned). Axis-lock is instead done
-   in JS (see initTableAxisLock) by toggling overflow-x/y off for the
-   duration of a gesture once its dominant direction is known — same
-   single scroll element throughout, so sticky is never at risk. */
-.tbl-scroll{flex:1;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px));}
-.tbl-scroll.lock-x{overflow-x:hidden;}
-.tbl-scroll.lock-y{overflow-y:hidden;}
+   with the rows instead of staying pinned). Round 107: a JS touch
+   axis-lock used to sit here (watch the first few px of a gesture,
+   then hide overflow on the OTHER axis via .lock-x/.lock-y for that
+   gesture) - reverted per direct feedback ("more annoying than
+   helpful"): free native two-axis scroll on this one element again,
+   nothing toggled in JS. The single-scroll-element architecture above
+   stays exactly as it was (still the reason sticky thead survives),
+   only the lock behavior on top of it is gone. */
+/* Round 107: "I want the table to only show 7 rows" - max-height caps it
+   instead of filling the rest of the screen (flex:1's old behavior,
+   which varied with device height). 176px = thead (21.5px, measured) +
+   7 data rows (22px each, measured) + a hair of slack; everything past
+   row 7 is still there, just scrollable. The lower .dv-half switches to
+   flex:0 0 auto (see that rule) so it settles to exactly this content
+   height instead of stretching to match the chart panel's 50/50 flex
+   share - the chart panel (flex:1 1 0, unchanged) absorbs whatever
+   height that frees up instead. */
+.tbl-scroll{flex:1;max-height:176px;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px));}
 table{width:100%;border-collapse:collapse;min-width:580px;}
 thead{background:#161b26;position:sticky;top:0;z-index:5;}
 th{font-family:'Roboto Mono',monospace;font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.04em;padding:6px 7px;text-align:right;border-bottom:1px solid #232b3d;white-space:nowrap;}
@@ -3164,13 +3182,20 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   // doesn't have to give up real estate for them. The topmost label
   // drops below its line instead of above so it isn't clipped by the
   // canvas edge.
+  // Round 107: internal crisscross gridlines removed per feedback ("just a
+  // y and x axis with no grid in the middle"). i===0 in each loop always
+  // lands exactly on the plot's bottom edge (horizontal) / left edge
+  // (vertical) regardless of data range, so it doubles as the single axis
+  // line. All labels stay unconditional/unchanged for every i.
   const gridN=4;
   ctx.font='8px Roboto Mono';ctx.textAlign='left';
   for(let i=0;i<=gridN;i++){
     const cap=minCap+(capRng*i/gridN);
     const gy=yS(cap);
-    ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(pd.l,gy);ctx.lineTo(pd.l+pw,gy);ctx.stroke();
+    if(i===0){
+      ctx.strokeStyle='rgba(255,255,255,.14)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(pd.l,gy);ctx.lineTo(pd.l+pw,gy);ctx.stroke();
+    }
     const ly=(i===gridN)?gy+11:gy-3;
     ctx.fillStyle='rgba(163,173,190,.85)';ctx.fillText('$'+fmt(cap,0),pd.l+4,ly);
   }
@@ -3181,8 +3206,10 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   for(let i=0;i<=vGridN;i++){
     const day=Math.round((maxDay*i)/vGridN);
     const gx=xS(day);
-    ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(gx,pd.t);ctx.lineTo(gx,pd.t+ph);ctx.stroke();
+    if(i===0){
+      ctx.strokeStyle='rgba(255,255,255,.14)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(gx,pd.t);ctx.lineTo(gx,pd.t+ph);ctx.stroke();
+    }
     ctx.fillStyle='#4d5a6e';ctx.fillText(cal(dayToCal(day)),gx,pd.t+ph+13);
   }
 
@@ -3573,37 +3600,6 @@ function dvDrawGaugeRow(cv,hoverDay){
 function dvRedrawChart(){
   const cv=$('dv-cv');if(cv)dvDrawRaceChart(cv,null,dvSelDay);
   const gcv=$('dv-gauge-cv');if(gcv)dvDrawGaugeRow(gcv,dvSelDay);
-}
-
-/* Axis-lock the table scroll: touch devices (iOS Safari especially)
-   don't reliably direction-lock a two-axis overflow:auto scroller on
-   their own, so a mostly-vertical swipe can drift the columns
-   sideways. Fix: watch the first few pixels of a touch gesture, decide
-   whether it's predominantly vertical or horizontal, then hide
-   overflow on the OTHER axis for just that gesture (via .lock-x/
-   .lock-y, see CSS) so the browser has nowhere to drift to. Released
-   on touchend so the next gesture re-decides fresh. A vertical swipe
-   stays vertical-only; a horizontal swipe stays horizontal-only. */
-function initTableAxisLock(){
-  const el=$('tbl-scroll');if(!el)return;
-  let startX=0,startY=0,decided=false;
-  const THRESH=6;
-  el.addEventListener('touchstart',e=>{
-    if(e.touches.length!==1)return;
-    startX=e.touches[0].clientX;startY=e.touches[0].clientY;
-    decided=false;
-    el.classList.remove('lock-x','lock-y');
-  },{passive:true});
-  el.addEventListener('touchmove',e=>{
-    if(decided||e.touches.length!==1)return;
-    const dx=e.touches[0].clientX-startX,dy=e.touches[0].clientY-startY;
-    if(Math.abs(dx)<THRESH&&Math.abs(dy)<THRESH)return;
-    decided=true;
-    el.classList.add(Math.abs(dy)>=Math.abs(dx)?'lock-x':'lock-y');
-  },{passive:true});
-  const release=()=>{decided=false;el.classList.remove('lock-x','lock-y');};
-  el.addEventListener('touchend',release,{passive:true});
-  el.addEventListener('touchcancel',release,{passive:true});
 }
 
 // Shows the floating day-count circle and arms a short "went idle" timer
@@ -4818,7 +4814,6 @@ function wirePanes(){
   });
   tcSyncQuickUI(0);
   dvWireTableScroll();
-  initTableAxisLock();
   const gcEl=$('gc-stepper');
   if(gcEl){
     const el=mkStp('gcStartCap',0,'$');gcEl.appendChild(el);
