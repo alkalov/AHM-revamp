@@ -350,21 +350,22 @@ tr.sel-day{transition:background .5s ease;}
    bar + the interval stepper + the data grid all sharing one screen)
    and doesn't apply to Sim's own pane. */
 #scr-sim .sbar{gap:5px;padding:8px 16px;border-bottom:none;background:transparent;}
-/* Round 111: .sbtn switched from <button> to <div role="button"> here and
-   in #scr-tbl below, so a real <input> (.sb-name, the new per-strategy
-   name field - "compare tickers with the same strategy or different
-   strategies with the same ticker") can live inside it without nesting
-   interactive content inside a <button>, which real touch browsers
-   handle inconsistently (focus/keyboard can misbehave). initPressBloom's
-   press-state selector list targets `.sbtn` by CLASS, not tag, so the
-   press-bloom feedback is unaffected by the tag change. .sb-name has its
-   own onclick:stopPropagation so tapping in to type never ALSO fires the
-   outer div's switchStrat/switchTblStrat. Height grew (52->64, 38->50) to
-   fit the extra line - see setStratName()/stratNameInput() for the JS
-   half of this. */
+/* Round 111 had put a real <input> (.sb-name) inside each of these,
+   growing the tile to fit a 3rd line - round 112 REMOVED that per direct
+   correction ("I want the name edit field to populate inside the core
+   tab. Not on the button. It can get annoying to have to press the
+   button on the side"): the name field now lives as its own card at the
+   top of each strategy's Core category panel instead (see buildPanes()'s
+   `nameCard`/`corename` below), and these switcher tiles are back to
+   their pre-round-111 heights (52/38) and letter+stat-only content.
+   `.sbtn` is STILL a <div role="button"> rather than reverted to
+   <button> - no interactive content lives inside it anymore so either
+   tag would work, but reverting the tag bought nothing and only risked
+   re-touching initPressBloom's selector list/tour selectors for no
+   visible benefit, so it was left alone. */
 #scr-sim .sbtn{
   --rgb:82,181,224;
-  height:64px;border-radius:7px;border:1px solid #1c2333;background:rgba(255,255,255,.02);
+  height:52px;border-radius:7px;border:1px solid #1c2333;background:rgba(255,255,255,.02);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   font-size:11px;font-weight:600;letter-spacing:.05em;color:#7d8699;cursor:pointer;
 }
@@ -376,9 +377,6 @@ tr.sel-day{transition:background .5s ease;}
 #scr-sim .sb-top{display:flex;align-items:center;gap:6px;}
 #scr-sim .sb-ring{display:inline-block;width:6px;height:6px;border-radius:50%;border:1.4px solid #2a3244;background:transparent;}
 #scr-sim .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
-#scr-sim .sb-name{width:88%;max-width:72px;background:transparent;border:none;border-bottom:1px solid transparent;color:#7d8699;font-family:'Inter',sans-serif;font-size:8.5px;font-weight:500;letter-spacing:.01em;text-align:center;padding:0 0 1px;outline:none;text-overflow:ellipsis;}
-#scr-sim .sb-name::placeholder{color:#454e60;}
-#scr-sim .sb-name:focus{border-bottom-color:rgba(255,255,255,.35);}
 #scr-sim .sb-stat{font-family:'Roboto Mono',monospace;font-size:7.3px;font-weight:500;letter-spacing:.02em;color:#75859e;font-variant-numeric:tabular-nums;}
 #scr-sim .sbtn.on{
   border-color:rgba(var(--rgb),.9);
@@ -387,14 +385,11 @@ tr.sel-day{transition:background .5s ease;}
 }
 #scr-sim .sbtn.on .sb-top{color:#0a0d13;font-weight:800;}
 #scr-sim .sbtn.on .sb-ring{background:#0a0d13;border-color:#0a0d13;}
-#scr-sim .sbtn.on .sb-name{color:rgba(10,13,19,.85);}
-#scr-sim .sbtn.on .sb-name::placeholder{color:rgba(10,13,19,.4);}
-#scr-sim .sbtn.on .sb-name:focus{border-bottom-color:rgba(10,13,19,.4);}
 #scr-sim .sbtn.on .sb-stat{color:rgba(10,13,19,.75);font-weight:700;}
 #scr-tbl .sbar{display:flex;flex-shrink:0;gap:4px;padding:6px 16px;border-bottom:none;background:transparent;}
 #scr-tbl .sbtn{
   --rgb:82,181,224;
-  height:50px;border-radius:7px;border:none;background:transparent;
+  height:38px;border-radius:7px;border:none;background:transparent;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   font-size:9.5px;font-weight:600;letter-spacing:.04em;color:#7d8699;cursor:pointer;
 }
@@ -406,9 +401,6 @@ tr.sel-day{transition:background .5s ease;}
 #scr-tbl .sb-top{display:flex;align-items:center;gap:4px;}
 #scr-tbl .sb-ring{display:inline-block;width:5px;height:5px;border-radius:50%;border:1.2px solid #2a3244;background:transparent;}
 #scr-tbl .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
-#scr-tbl .sb-name{width:92%;max-width:56px;background:transparent;border:none;border-bottom:1px solid transparent;color:#7d8699;font-family:'Inter',sans-serif;font-size:7px;font-weight:500;letter-spacing:.01em;text-align:center;padding:0;outline:none;text-overflow:ellipsis;}
-#scr-tbl .sb-name::placeholder{color:#454e60;}
-#scr-tbl .sb-name:focus{border-bottom-color:rgba(255,255,255,.35);}
 #scr-tbl .sb-stat{font-family:'Roboto Mono',monospace;font-size:6.3px;font-weight:500;letter-spacing:.02em;color:#75859e;font-variant-numeric:tabular-nums;}
 #scr-tbl .sbtn.on{
   border-color:rgba(var(--rgb),.9);
@@ -417,10 +409,17 @@ tr.sel-day{transition:background .5s ease;}
 }
 #scr-tbl .sbtn.on .sb-top{color:#0a0d13;font-weight:800;}
 #scr-tbl .sbtn.on .sb-ring{background:#0a0d13;border-color:#0a0d13;}
-#scr-tbl .sbtn.on .sb-name{color:rgba(10,13,19,.85);}
-#scr-tbl .sbtn.on .sb-name::placeholder{color:rgba(10,13,19,.4);}
-#scr-tbl .sbtn.on .sb-name:focus{border-bottom-color:rgba(10,13,19,.4);}
 #scr-tbl .sbtn.on .sb-stat{color:rgba(10,13,19,.75);font-weight:700;}
+/* Strategy Name field, round 112: lives inside each strategy's Core
+   category card now (buildPanes()'s `nameCard`) rather than inside the
+   switcher tile above - reuses the generic .ni input look app-wide, just
+   shrunk: "I also want the text 60% smaller" - read as 60% smaller than
+   .ni's normal 16px (the size it would render at with no override),
+   landing at 6.4px, in the same tier as the app's smallest existing text
+   (Table's .sb-stat is 6.3px) rather than an arbitrary new number. .ni's
+   own font-size carries !important, so overriding it needs a selector
+   that's both more specific AND !important - .ni.sname-core covers both. */
+.ni.sname-core{font-size:6.4px !important;text-align:left;width:100%;height:22px;}
 .ovr-badge{font-size:7px;background:rgba(251,191,36,.1);color:#fbbf24;padding:1px 6px;border-radius:2px;letter-spacing:.1em;text-transform:uppercase;display:none;border:1px solid rgba(251,191,36,.2);}
 .ovr-badge.on{display:block;}
 
@@ -1035,11 +1034,10 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    empty space under the capped table. flex:0 0 auto settles it to
    exactly its content height; the chart half's own flex:1 1 0 is
    untouched, so it just absorbs whatever height that frees up instead
-   of splitting evenly. Round 111: this half's content grew (gauge-row +
-   switcher moved in from the chart half, see their own comment above
-   .dv-gauge-row) - same mechanism, just a taller content height to
-   settle to now, and the chart half above gets that much MORE room in
-   return since it's the only flex:1 1 0 item left splitting nothing. */
+   of splitting evenly. (Round 111 briefly moved the gauge-row+switcher
+   into THIS half, reverted round 112 - see the HTML comment above
+   #scr-tbl - so this half is back to holding only tbl-controls +
+   tbl-scroll, same as round 107-110.) */
 .dv-half:last-child{border-bottom:none;flex:0 0 auto;}
 .dv-empty{padding:32px;text-align:center;font-size:10px;color:#75859e;}
 /* Original wide table, restored — now contained in the bottom .dv-half
@@ -1069,7 +1067,26 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    stretching to match the chart panel's flex share - the chart panel
    (flex:1 1 0, unchanged) absorbs whatever height that frees up
    instead. */
-.tbl-scroll{flex:1;max-height:220px;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px));}
+/* Round 112: found while tracking down the user's screenshotted "void"
+   at the bottom of the table half. This element used to ALSO carry its
+   own padding-bottom:calc(84px + safe-area) bottom-nav clearance - the
+   same reservation #scr-tbl itself already applies at the outer flex-
+   container level (see #scr-tbl's own rule, and .screen's base rule
+   above that). Three nested elements were all reserving the identical
+   84px, and this innermost one was pure leftover: back before round
+   107 made .dv-half:last-child settle to content height, THIS element
+   used to be the one actually touching the bottom of the viewport, so
+   it needed its own clearance; round 107 moved that job outward to
+   #scr-tbl's padding instead but never removed the now-redundant copy
+   here. With real table rows the max-height cap clipped the extra 84px
+   invisibly (you just had to scroll 84px past the last row to find it)
+   - but in the empty "no sim data yet" state, nothing clips it, so it
+   rendered as a large dead gap below the empty-state message, inflating
+   this half's flex:0 0 auto content height and taking that much room
+   AWAY from the chart's flex:1 1 0 share above. Removed here entirely;
+   #scr-tbl's own padding-bottom is the one correct place this
+   reservation belongs. */
+.tbl-scroll{flex:1;max-height:220px;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 table{width:100%;border-collapse:collapse;min-width:580px;}
 thead{background:#161b26;position:sticky;top:0;z-index:5;}
 th{font-family:'Roboto Mono',monospace;font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.04em;padding:6px 7px;text-align:right;border-bottom:1px solid #232b3d;white-space:nowrap;}
@@ -1279,8 +1296,22 @@ canvas.spark{width:100%;height:34px;display:block;}
 .modal,.imodal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;align-items:flex-end;justify-content:center;}
 .modal.open,.imodal.open{display:flex;}
 .mbox,.ibox{background:#10141c;border-top:1px solid var(--accent-cyan);max-width:600px;width:100%;padding:14px 16px 32px;max-height:80vh;overflow-y:auto;border-radius:8px 8px 0 0;position:relative;}
+/* Round 112: .ibox (the "?" info popup) was still on the app's old
+   cyan/gold accent pair, left over from before round 109 standardized
+   everything else on the single var(--accent-solid) blue. Scoped here
+   instead of editing the shared .mbox,.ibox rule above, so other modals
+   that use .mbox alone are untouched. Needs !important: the shared glass
+   rule up top (".fc,...,.mbox,.ibox,...{border-color:rgba(255,255,255,.09)
+   !important;...}") sets border-color (the shorthand, all four sides)
+   with !important too - without matching it here, that rule silently
+   wins regardless of selector specificity or source order, and this
+   border-top-color override would sit dead in the file the same way the
+   OLD var(--accent-cyan) one already was (confirmed by direct computed-
+   style check before adding !important here - it really was invisible,
+   not just visually similar). */
+.ibox{border-top-color:var(--accent-solid) !important;}
 .mx{position:absolute;top:10px;right:14px;background:transparent;border:1px solid #232b3d;color:#75859e;font-family:'Inter',sans-serif;font-size:8px;padding:2px 8px;cursor:pointer;border-radius:2px;}
-.ibox h2{font-family:'Inter',sans-serif;font-size:10px;color:#fbbf24;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;}
+.ibox h2{font-family:'Inter',sans-serif;font-size:10px;color:var(--accent-solid);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;}
 .ibox p,.ibox li{font-size:11px;color:#8892a4;line-height:1.65;margin-bottom:3px;}
 .ibox ul{padding-left:14px;}
 .friction-breakdown{background:#161b26;border:1px solid #232b3d;border-radius:3px;padding:6px 8px;margin-top:6px;}
@@ -1409,6 +1440,13 @@ canvas.spark{width:100%;height:34px;display:block;}
 .scr-title{font-family:'Inter',sans-serif;font-size:19px;font-weight:700;color:#f4f6fa;line-height:1.4;max-width:300px;margin-bottom:14px;animation:scrFadeUp .55s cubic-bezier(.25,.46,.45,.94) both;animation-delay:.14s;}
 .scr-body{font-family:'Inter',sans-serif;font-size:12.5px;color:#a7b0bf;line-height:1.7;max-width:300px;animation:scrFadeUp .55s cubic-bezier(.25,.46,.45,.94) both;animation-delay:.28s;}
 .scr-body+.scr-body{margin-top:11px;}
+/* Round 112: for EV_INSIGHT, whose payoff genuinely needs a formula (see
+   the JS comment above EV_INSIGHT) - pulls that formula onto its own
+   line, set apart in mono/tabular numerals like every other on-screen
+   number in the app, so a skimmer's eye can separate "the point" (the
+   plain sentence above it) from "the proof" (this line) at a glance,
+   same intent as the "Math:" paragraphs added to INFO{} this round. */
+.scr-body p.insight-math{margin-top:9px;font-family:'Roboto Mono',monospace;font-size:11px;color:#75859e;font-variant-numeric:tabular-nums;}
 /* Round 96/97: renderReadiness() used to stack several .scr-body
    paragraphs on one screen (one per flagged gap) - centered multi-
    paragraph prose reads as a dense, hard-to-scan block, so that
@@ -1510,12 +1548,12 @@ canvas.spark{width:100%;height:34px;display:block;}
       <div class="fc-note" style="padding:0 12px 8px;">Shared starting capital across all six strategies — makes A–F directly comparable on the same account size. Each strategy still sets its own ticker, price, and share count.</div>
     </div>
     <div class="sbar">
-      <div class="sbtn on" id="stb0" role="button" onclick="switchStrat(0)"><span class="sb-top">A<i class="sb-ring" id="sbr0"></i></span><input class="sb-name" id="sname0" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(0,this)" onblur="stratNameCommit(0)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="sbs0">—</span></div>
-      <div class="sbtn sc-b" id="stb1" role="button" onclick="switchStrat(1)"><span class="sb-top">B<i class="sb-ring" id="sbr1"></i></span><input class="sb-name" id="sname1" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(1,this)" onblur="stratNameCommit(1)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="sbs1">—</span></div>
-      <div class="sbtn sc-c" id="stb2" role="button" onclick="switchStrat(2)"><span class="sb-top">C<i class="sb-ring" id="sbr2"></i></span><input class="sb-name" id="sname2" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(2,this)" onblur="stratNameCommit(2)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="sbs2">—</span></div>
-      <div class="sbtn sc-d" id="stb3" role="button" onclick="switchStrat(3)"><span class="sb-top">D<i class="sb-ring" id="sbr3"></i></span><input class="sb-name" id="sname3" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(3,this)" onblur="stratNameCommit(3)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="sbs3">—</span></div>
-      <div class="sbtn sc-e" id="stb4" role="button" onclick="switchStrat(4)"><span class="sb-top">E<i class="sb-ring" id="sbr4"></i></span><input class="sb-name" id="sname4" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(4,this)" onblur="stratNameCommit(4)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="sbs4">—</span></div>
-      <div class="sbtn sc-f" id="stb5" role="button" onclick="switchStrat(5)"><span class="sb-top">F<i class="sb-ring" id="sbr5"></i></span><input class="sb-name" id="sname5" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(5,this)" onblur="stratNameCommit(5)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="sbs5">—</span></div>
+      <div class="sbtn on" id="stb0" role="button" onclick="switchStrat(0)"><span class="sb-top">A<i class="sb-ring" id="sbr0"></i></span><span class="sb-stat" id="sbs0">—</span></div>
+      <div class="sbtn sc-b" id="stb1" role="button" onclick="switchStrat(1)"><span class="sb-top">B<i class="sb-ring" id="sbr1"></i></span><span class="sb-stat" id="sbs1">—</span></div>
+      <div class="sbtn sc-c" id="stb2" role="button" onclick="switchStrat(2)"><span class="sb-top">C<i class="sb-ring" id="sbr2"></i></span><span class="sb-stat" id="sbs2">—</span></div>
+      <div class="sbtn sc-d" id="stb3" role="button" onclick="switchStrat(3)"><span class="sb-top">D<i class="sb-ring" id="sbr3"></i></span><span class="sb-stat" id="sbs3">—</span></div>
+      <div class="sbtn sc-e" id="stb4" role="button" onclick="switchStrat(4)"><span class="sb-top">E<i class="sb-ring" id="sbr4"></i></span><span class="sb-stat" id="sbs4">—</span></div>
+      <div class="sbtn sc-f" id="stb5" role="button" onclick="switchStrat(5)"><span class="sb-top">F<i class="sb-ring" id="sbr5"></i></span><span class="sb-stat" id="sbs5">—</span></div>
     </div>
     <div id="sp0"></div>
     <div id="sp1" style="display:none;"></div>
@@ -1526,6 +1564,21 @@ canvas.spark{width:100%;height:34px;display:block;}
   </div>
 
   <div class="screen" id="scr-tbl">
+    <!-- Round 111 had moved the gauge-row+switcher OUT of this .dv-half
+         and into the table's, on the theory that the chart's .dv-half
+         (flex:1 1 0) would then get their combined ~114px back. Round 112
+         reversed that per direct correction ("you did the opposite...
+         Keep the share gauges and buttons part of the chart territory")
+         AND found the real bug behind the "void" screenshot along the
+         way: it was never about which .dv-half held the gauges/switcher
+         (moving fixed-size chrome between two flex siblings was always a
+         wash, confirmed by direct measurement both rounds) - it was
+         .tbl-scroll's own redundant bottom-nav padding (see the CSS
+         comment on .tbl-scroll) inflating the table's box height for no
+         reason, most visibly in the empty "no sim data yet" state, where
+         it left a large dead gap below the message. With that fixed, the
+         chart's .dv-half genuinely gets back whatever the table isn't
+         using - real growth, not just a reshuffle. -->
     <div class="dv-half">
       <div class="chart-wrap" style="flex:1;min-height:0;">
         <canvas class="eqcv" id="dv-cv"></canvas>
@@ -1542,40 +1595,19 @@ canvas.spark{width:100%;height:34px;display:block;}
           <span class="dv-dt-cal" id="dv-dt-cal"></span>
         </div>
       </div>
-    </div>
-    <!-- Round 111: gauge-row + switcher moved OUT of the chart's .dv-half
-         and into the table's, reversing round 106's placement per direct
-         feedback — "the table... kept in place, infringing on the real
-         estate of the chart... bring the table down to fill the void...
-         the share gauges and buttons should move with the table, leaving
-         the chart to reap the benefit of the extra space." Round 106's
-         own reasoning (avoid a bare "dark strip" sandwiched between two
-         independently-boxed panels) still holds here — gauges+switcher
-         now live as the first children of the TABLE's .dv-half instead,
-         so they're still inside one shared bordered container with the
-         table beneath them, never their own floating strip between two
-         panels. Net effect: the chart's .dv-half now contains ONLY
-         .chart-wrap, so its flex:1 1 0 share goes entirely to the
-         canvas instead of being split three ways with gauges/switcher;
-         the table's .dv-half absorbs the gauges+switcher's combined
-         ~114px into its own flex:0 0 auto content height, sizing itself
-         (and its position) to fit them the same way it already sizes
-         itself to the row-capped table. TOUR_STOPS' "Table — the race"
-         stop's selector was widened to explicitly union the chart with
-         the (now relocated) gauge row, since its copy still describes
-         both together as one spotlighted moment. -->
-    <div class="dv-half">
       <div class="dv-gauge-row">
         <canvas id="dv-gauge-cv"></canvas>
       </div>
       <div class="sbar">
-        <div class="sbtn on" id="tsb0" role="button" onclick="switchTblStrat(0)"><span class="sb-top">A<i class="sb-ring" id="tbr0"></i></span><input class="sb-name" id="tname0" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(0,this)" onblur="stratNameCommit(0)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="tbs0">—</span></div>
-        <div class="sbtn sc-b" id="tsb1" role="button" onclick="switchTblStrat(1)"><span class="sb-top">B<i class="sb-ring" id="tbr1"></i></span><input class="sb-name" id="tname1" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(1,this)" onblur="stratNameCommit(1)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="tbs1">—</span></div>
-        <div class="sbtn sc-c" id="tsb2" role="button" onclick="switchTblStrat(2)"><span class="sb-top">C<i class="sb-ring" id="tbr2"></i></span><input class="sb-name" id="tname2" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(2,this)" onblur="stratNameCommit(2)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="tbs2">—</span></div>
-        <div class="sbtn sc-d" id="tsb3" role="button" onclick="switchTblStrat(3)"><span class="sb-top">D<i class="sb-ring" id="tbr3"></i></span><input class="sb-name" id="tname3" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(3,this)" onblur="stratNameCommit(3)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="tbs3">—</span></div>
-        <div class="sbtn sc-e" id="tsb4" role="button" onclick="switchTblStrat(4)"><span class="sb-top">E<i class="sb-ring" id="tbr4"></i></span><input class="sb-name" id="tname4" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(4,this)" onblur="stratNameCommit(4)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="tbs4">—</span></div>
-        <div class="sbtn sc-f" id="tsb5" role="button" onclick="switchTblStrat(5)"><span class="sb-top">F<i class="sb-ring" id="tbr5"></i></span><input class="sb-name" id="tname5" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(5,this)" onblur="stratNameCommit(5)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="tbs5">—</span></div>
+        <div class="sbtn on" id="tsb0" role="button" onclick="switchTblStrat(0)"><span class="sb-top">A<i class="sb-ring" id="tbr0"></i></span><span class="sb-stat" id="tbs0">—</span></div>
+        <div class="sbtn sc-b" id="tsb1" role="button" onclick="switchTblStrat(1)"><span class="sb-top">B<i class="sb-ring" id="tbr1"></i></span><span class="sb-stat" id="tbs1">—</span></div>
+        <div class="sbtn sc-c" id="tsb2" role="button" onclick="switchTblStrat(2)"><span class="sb-top">C<i class="sb-ring" id="tbr2"></i></span><span class="sb-stat" id="tbs2">—</span></div>
+        <div class="sbtn sc-d" id="tsb3" role="button" onclick="switchTblStrat(3)"><span class="sb-top">D<i class="sb-ring" id="tbr3"></i></span><span class="sb-stat" id="tbs3">—</span></div>
+        <div class="sbtn sc-e" id="tsb4" role="button" onclick="switchTblStrat(4)"><span class="sb-top">E<i class="sb-ring" id="tbr4"></i></span><span class="sb-stat" id="tbs4">—</span></div>
+        <div class="sbtn sc-f" id="tsb5" role="button" onclick="switchTblStrat(5)"><span class="sb-top">F<i class="sb-ring" id="tbr5"></i></span><span class="sb-stat" id="tbs5">—</span></div>
       </div>
+    </div>
+    <div class="dv-half">
       <div class="tbl-controls">
         <span class="tc-lbl">Every</span>
         <div class="tc-quick" id="tc-quick">
@@ -1834,14 +1866,17 @@ const simResults=[null,null,null,null,null,null];
 // people can compare tickers with the same strategy or different
 // strategies with the same ticker." Plain user-typed labels, e.g. "AAPL
 // Scalp" / "TSLA Scalp" - purely cosmetic, never read by any sim/scoring
-// logic. One canonical value per strategy slot (stratNames), mirrored
-// into BOTH switcher copies (#scr-sim's sname0-5, #scr-tbl's tname0-5) -
-// same "one underlying value, two DOM mirrors" shape updateStratTab()
-// already uses for the ring/stat, not a new pattern. Persisted as its
-// own top-level save-blob key (see save()/load()) rather than folded
-// into the generic getStpIds()/SDEFS pipeline, since that pipeline is
-// built around exactly one DOM id per stored value and this field needs
-// two.
+// logic. Round 112 moved the actual input OUT of the switcher tiles and
+// into a single field per strategy inside its Core category card
+// (id="corename"+suffix, see buildPanes()'s `nameCard`) - "I want the
+// name edit field to populate inside the core tab. Not on the button.
+// It can get annoying to have to press the button on the side." One
+// canonical value per strategy slot (stratNames) with exactly ONE DOM
+// mirror now (not two, since there's only one field left) - still kept
+// as its own top-level save-blob key (see save()/load()) rather than
+// folded into the generic getStpIds()/SDEFS pipeline, mostly so this
+// stays a drop-in match for the shape that pipeline already isn't built
+// for (it predates this field, no need to force it in retroactively).
 let stratNames=['','','','','',''];
 
 function switchStrat(n){
@@ -1875,38 +1910,28 @@ function updateStratTab(tab){
     stat.textContent=statTxt;
   });
 }
-// Live-mirrors a keystroke in one .sb-name input into its counterpart in
-// the OTHER switcher copy, without saving on every keystroke (that
-// happens on blur, see stratNameCommit) and without disturbing whichever
-// input the user is actually typing in - only the other one gets its
-// .value reassigned, so the caret/selection in the active input is never
-// touched by its own mirrored write.
-function stratNameInput(tab,el){
-  const otherId=(el.id.charAt(0)==='s'?'tname':'sname')+tab;
-  const other=$(otherId);
-  if(other)other.value=el.value;
-}
-// Commits whichever input just lost focus as the canonical value for
-// that strategy slot, re-mirrors it into the other copy (covers a
-// non-typing change, e.g. autofill), and persists.
+// Commits the Core-tab name field's current value as the canonical
+// value for that strategy slot and persists. Round 112 simplified this
+// down from a two-DOM-mirror commit (Sim switcher + Table switcher) to
+// one, now that the field only exists in a single place (the strategy's
+// Core category card) - no more stratNameInput() live-mirror function
+// either, since there's nothing left to mirror TO.
 function stratNameCommit(tab){
-  const src=$('sname'+tab)||$('tname'+tab);
-  const val=(src?src.value:'').slice(0,12);
+  const s=tab===0?'':'_'+tab;
+  const el=$('corename'+s);
+  const val=(el?el.value:'').slice(0,12);
   stratNames[tab]=val;
-  const sEl=$('sname'+tab),tEl=$('tname'+tab);
-  if(sEl)sEl.value=val;
-  if(tEl)tEl.value=val;
+  if(el)el.value=val;
   save();
 }
-// Pushes the loaded/initial stratNames[] into both DOM mirrors for every
-// strategy - called once from init() after load() resolves, same moment
-// every other loaded field gets hydrated into its input.
+// Pushes the loaded/initial stratNames[] into each strategy's Core-tab
+// name field - called once from init() after load() resolves, same
+// moment every other loaded field gets hydrated into its input.
 function hydrateStratNames(){
   [0,1,2,3,4,5].forEach(i=>{
-    const v=stratNames[i]||'';
-    const sEl=$('sname'+i),tEl=$('tname'+i);
-    if(sEl)sEl.value=v;
-    if(tEl)tEl.value=v;
+    const s=i===0?'':'_'+i;
+    const el=$('corename'+s);
+    if(el)el.value=stratNames[i]||'';
   });
 }
 /* Table tab's interval control: default view is a segmented quick-pick
@@ -4726,36 +4751,53 @@ function exportLogCSV(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
+// Round 112: rewritten app-wide for plain, short, everyday language
+// ("use grade two reading level as your standard for the guides and the
+// question mark text"). True grade-2 text can't carry words like
+// "commission" or "Sharpe ratio" and still mean anything - those terms
+// stay (there's no simpler word for them, and this app's whole premise
+// is accuracy over comfort), but every SENTENCE around them is now
+// short and plain, and every formula/number that used to sit inside a
+// sentence is pulled onto its own line, tagged "Math:" - so the message
+// reads on its own, and the math is there to check, not to wade
+// through first (same principle the intro copy now follows). Same pass
+// fixed two other reported bugs: 4 entries (sh, cmpev, cmpmo,
+// cmpsortino) had a literal "’" typed into the string - a doubled
+// backslash meant it never became a real apostrophe, it just printed
+// as those 6 characters - gone now, replaced with a real apostrophe
+// like everywhere else in this file. And the popup's own look (see the
+// .ibox CSS rule) was still on the app's old gold/cyan accent instead
+// of its current single blue one - fixed there, not here.
 const INFO={
-  dist:{t:'Distribution',b:'<p>Shows the simulated split between winning, breakeven, and losing trades based on your Win Rate and Breakeven settings. The EV figure shows estimated net profit per day after friction.</p>'},
-  wr:{t:'Win Rate',b:'<p>% of trades hitting profit target before stop. Set a range to simulate daily variation.</p><ul><li>50% WR with 2:1 R:R is profitable</li><li>40% WR with 1.5:1 R:R can still be viable</li></ul>'},
-  be:{t:'Breakeven Rate',b:'<p>Trades closed at entry. Zero P&L before costs. Still costs you in friction.</p>'},
-  profit:{t:'Profit Target',b:'<p>Ticks captured on a win. 15t × 100sh × $0.01 = <b>$15/win</b>. Larger targets take longer to hit and are more exposed to pullbacks.</p>'},
-  loss:{t:'Stop Loss',b:'<p>Ticks lost before closing a loser. R:R = Profit Target ÷ Stop Loss.</p>'},
-  trades:{t:'Trades / Day',b:'<p>More trades = more edge exposure if EV is positive, more friction drag if EV is thin.</p>'},
-  dpm:{t:'Days You Trade',b:'<p>How many days a month you actually place trades — not every session has to be a trading day. Fits swing and lower-frequency styles: fewer active days, same Trades / Day when you do trade.</p><p>21 (a full trading month) behaves exactly like leaving this untouched. Dial it down and the same trade frequency spreads across more calendar time to reach your goal.</p>'},
-  cap:{t:'Daily Loss Cap',b:'<p>Hard limit on tick losses per day. Prevents revenge spirals from appearing in your results. 0 = disabled.</p>'},
-  spread:{t:'Bid/Ask Spread',b:'<p>Gap between buy and sell price. Every round trip costs at least 1 tick. For liquid US stocks: usually 1 tick.</p>'},
-  slip:{t:'Slippage',b:'<p>Difference between expected and actual fill price. 1 tick is a reasonable conservative estimate for retail scalpers.</p>'},
-  comm:{t:'Commission (Tiered)',b:'<p>Tiered commission model:</p><ul><li><b>Under 100 shares:</b> $0.35 flat per round trip</li><li><b>100 shares and above:</b> $0.0035/share × 2 legs</li></ul><p>This scales correctly as your position size grows through compounding — small positions pay the flat fee, larger positions pay the per-share rate.</p>'},
-  fees:{t:'Exchange + Clearing + Reg Fees',b:'<p>Toggleable overhead layer separate from commission:</p><ul><li><b>Exchange + clearing + regulatory:</b> $0.0067/share</li><li><b>Spread:</b> $0.01/share (set via Spread field above)</li></ul><p>These are real costs charged by exchanges and regulators on top of your broker commission. Toggle OFF to see strategy performance in isolation from these overheads.</p>'},
-  price:{t:'Share Price Range',b:'<p>Used for account size and share purchase cost. Set min/max to reflect daily price variation.</p>'},
-  sh:{t:'Starting Shares',b:'<p>Fully determined by the shared Capital field above — not a manual entry. Shares = Capital ÷ this strategy\\u2019s average price.</p><p>This is what keeps A, B, and C directly comparable: same capital, different tickers, share count falls out automatically for each.</p>'},
-  goal:{t:'Share Goal',b:'<p>Target share count. Simulation runs until you reach this, hit the Volume Ceiling (if set), or the 5,000 day cap.</p>'},
-  globalcap:{t:'Capital',b:'<p>One shared starting capital value used by every strategy — A, B, and C all compound from the same account size, regardless of what ticker or share price each is testing.</p><p>Set to $0, each strategy falls back to its own Starting Shares × Price Range as its account base — same as before, just per-strategy again in that case.</p><p>Keeping this shared is what makes the Strategy Comparison and combined equity curve genuinely apples-to-apples.</p>'},
-  volceil:{t:'Volume Ceiling',b:'<p>A hard cap on share count growth, separate from your Share Goal. Prevents the simulation from over-compounding indefinitely — once shares reach this ceiling, compounding stops even if the Share Goal is higher.</p><p>Acts like the other overrides: when enabled, it constrains the simulation regardless of other settings. Set to 0 to disable.</p>'},
-  swing:{t:'Avg Swing',b:'<p>Tick range of a typical price move. Swing Capture % = your profit target as a percentage of the full swing.</p>'},
-  pullback:{t:'Pullback',b:'<p>If pullback ≥ effective target, win becomes stop-out (Pullback Kill).</p>'},
-  eo:{t:'Entry Offset',b:'<p>Ticks lost entering late. Cuts your effective profit target immediately.</p>'},
-  disc:{t:'Discipline Rate',b:'<p>Undisciplined days: simulated WR drops 30%. Set honestly — most traders overestimate this.</p>'},
-  buf:{t:'Cash Buffer',b:'<p>Surplus required before buying another share. Higher = slower but more stable compounding.</p>'},
-  bd:{t:'Bad Days',b:'<p>Blow-up sessions modelled as % loss of starting account. Frequency × size both matter.</p>'},
-  gd:{t:'Good Days',b:'<p>Exceptional sessions. Cannot occur same day as bad day.</p>'},
-  bias:{t:'Skill Growth',b:'<p>WR drifts from min toward max over 365 days. Curve shape controls the pace of improvement.</p>'},
-  rr:{t:'R:R Override',b:'<p>Forces a specific reward:risk. Stop loss = Profit Target ÷ R:R. 0 = disabled.</p>'},
-  tick:{t:'Tick Value',b:'<p>Dollar value of one tick per share. US equities: $0.01.</p>'},
-  dp:{t:'Daily % Override',b:'<p>Bypasses tick math entirely. Applies a random % to account equity each day. Ignores friction, pullback, bad/good days.</p>'},
-  vw:{t:'Volume Windows',b:'<p>Custom per ticker — no assumptions baked in. Set typical volume/minute for three session windows: First Hour, Midday, Last Hour.</p><p>Your Participation Rate (%) determines your comfortable share of that flow. If your Starting Shares exceeds what your participation rate allows for a window volume, that window gets a "squeeze" — extra entry offset and slippage applied to trades landing in it, since you are pushing more size into less liquidity than you would comfortably want.</p><p>Trades are distributed across the three windows automatically based on their position in each simulated day trade sequence — early trades skew toward First Hour, late toward Last Hour.</p><p>Works for any ticker: a thin stock and a liquid one just get different volume numbers — the math scales itself.</p>'},
+  dist:{t:'Distribution',b:'<p>This shows your wins, breakevens, and losses as a split, based on your Win Rate and Breakeven settings.</p><p>EV is what you can expect to make (or lose) per day, after costs.</p>'},
+  wr:{t:'Win Rate',b:'<p>How often a trade hits your profit target instead of your stop. Set a range - it will not be the same every day.</p><p>You do not need a high win rate to make money. A 50% win rate can be profitable if wins are twice your losses. Even 40% can work, if wins are bigger still.</p>'},
+  be:{t:'Breakeven Rate',b:'<p>A trade that closes flat - no win, no loss, before costs. It still costs you something, since every trade pays friction (commission and fees) either way.</p>'},
+  profit:{t:'Profit Target',b:'<p>How many ticks you aim to capture on a winning trade. A bigger target takes longer to hit, and a pullback is more likely to knock you out first.</p><p>Math: 15 ticks × 100 shares × $0.01 = $15 per win.</p>'},
+  loss:{t:'Stop Loss',b:'<p>How many ticks you let a trade lose before you close it.</p><p>Math: Reward:Risk = Profit Target ÷ Stop Loss.</p>'},
+  trades:{t:'Trades / Day',b:'<p>More trades a day means more chances for your edge to show up - but also more cost from friction if that edge is thin.</p>'},
+  dpm:{t:'Days You Trade',b:'<p>How many days a month you actually place a trade. Not every day has to be a trading day - this fits a slower, less frequent style too.</p><p>21 (a full trading month) behaves like leaving this alone. A lower number spreads the same trades across more calendar time.</p>'},
+  cap:{t:'Daily Loss Cap',b:'<p>A hard stop on how many ticks you can lose in one day. Keeps one bad day from spiraling. Set to 0 to turn it off.</p>'},
+  spread:{t:'Bid/Ask Spread',b:'<p>The small gap between the buy price and the sell price. Every round trip costs at least one tick because of it. For a liquid US stock, one tick is typical.</p>'},
+  slip:{t:'Slippage',b:'<p>The gap between the price you expected and the price you actually got. One tick is a fair, cautious estimate for a retail trader.</p>'},
+  comm:{t:'Commission (Tiered)',b:'<p>What your broker charges to place a trade. It scales with position size, so it stays accurate as your account grows.</p><p>Math: under 100 shares, $0.35 flat per round trip. 100 shares or more, $0.0035 per share × 2 (buy and sell).</p>'},
+  fees:{t:'Exchange + Clearing + Reg Fees',b:'<p>Real costs charged by exchanges and regulators, on top of your broker’s own commission. You can toggle this off to see a strategy’s performance without them.</p><p>Math: exchange, clearing, and regulatory fees run $0.0067 per share. Spread runs $0.01 per share (set above).</p>'},
+  price:{t:'Share Price Range',b:'<p>Sets your account size and what each share costs. Use a min and max, since price moves during the day.</p>'},
+  sh:{t:'Starting Shares',b:'<p>Set automatically by the shared Capital field above - not something you type in yourself.</p><p>Math: Shares = Capital ÷ this strategy’s average price.</p><p>This is what lets you compare strategies fairly: same money in, share count works itself out per ticker.</p>'},
+  goal:{t:'Share Goal',b:'<p>The share count you are aiming for. The simulation runs until you reach it, hit a Volume Ceiling (if you set one), or hit the 5,000-day limit.</p>'},
+  globalcap:{t:'Capital',b:'<p>One starting amount, shared by every strategy - A through F all grow from the same size account, no matter what ticker or price each one tests.</p><p>Set this to $0 and each strategy goes back to sizing itself from its own Starting Shares and Price Range instead.</p><p>Sharing it is what makes comparing strategies side by side a fair comparison.</p>'},
+  volceil:{t:'Volume Ceiling',b:'<p>A hard cap on how many shares you can grow into, separate from your Share Goal. Once you hit it, growth stops even if the Share Goal is higher.</p><p>Set to 0 to turn it off.</p>'},
+  swing:{t:'Avg Swing',b:'<p>How many ticks a typical price move covers. Your Swing Capture % is your profit target measured against that full move.</p>'},
+  pullback:{t:'Pullback',b:'<p>A dip against you before your trade can win. If it is big enough to reach your target size, the trade counts as a loss instead of a win.</p>'},
+  eo:{t:'Entry Offset',b:'<p>Ticks lost from entering a little late. It shrinks your real profit target right from the start.</p>'},
+  disc:{t:'Discipline Rate',b:'<p>How often you actually stick to the plan. On an undisciplined day, your win rate drops by 30% in the simulation. Be honest here - most traders rate themselves too high.</p>'},
+  buf:{t:'Cash Buffer',b:'<p>Extra cash kept in reserve before buying another share. A bigger buffer grows more slowly, but more steadily.</p>'},
+  bd:{t:'Bad Days',b:'<p>Rare bad sessions, modeled as a percent loss of your account. Both how often they happen and how big they are matter.</p>'},
+  gd:{t:'Good Days',b:'<p>Rare great sessions. Never on the same day as a bad one.</p>'},
+  bias:{t:'Skill Growth',b:'<p>Your win rate slowly climbs from its low end toward its high end over a year, as if you were improving. The curve shape sets how fast.</p>'},
+  rr:{t:'R:R Override',b:'<p>Locks in a specific reward-to-risk ratio instead of using Profit Target and Stop Loss directly.</p><p>Math: Stop Loss = Profit Target ÷ Reward:Risk. Set to 0 to turn it off.</p>'},
+  tick:{t:'Tick Value',b:'<p>What one tick is worth, per share. For US stocks, that is $0.01.</p>'},
+  dp:{t:'Daily % Override',b:'<p>Skips the tick math entirely and applies a random percent to your account each day instead. Ignores friction, pullback, and bad/good days.</p>'},
+  vw:{t:'Volume Windows',b:'<p>Set separately for each ticker - nothing is assumed for you. Enter typical shares-per-minute for three parts of the day: First Hour, Midday, Last Hour.</p><p>Your Participation Rate is the share of that volume you are comfortable trading. Ask for more than that in a thin window, and you pay for it - extra entry offset and slippage on trades that land there.</p><p>Trades are spread across the three windows on their own: earlier trades lean toward First Hour, later ones toward Last Hour.</p>'},
   // Round 109: "buttons on the categories in the info comparison to
   // explain what each means" - the Strategy Comparison card's metric
   // rows (renderStratComparison() below), which previously had no
@@ -4764,16 +4806,17 @@ const INFO={
   // app's OWN formula for that metric (checked against the actual
   // function, not a generic textbook definition), since a plausible-
   // sounding but slightly-off explanation would be its own "made up
-  // info" problem.
-  cmpev:{t:'EV / Day',b:'<p>Average dollar profit or loss this strategy is expected to produce per trading day, net of its modeled friction (commission, exchange/clearing/reg fees, spread, and slippage). This is the daily version of the exact math the intro\\u2019s expected-value walkthrough runs on a hypothetical — here it\\u2019s run on your own settings.</p>'},
-  cmpmo:{t:'Monthly Est',b:'<p>Projected monthly dollar growth at the strategy\\u2019s CURRENT pace — computed from roughly its last 15% of simulated days, not the full-history average. Reflects where the strategy is trending now, not how it started.</p>'},
-  cmptg:{t:'Time to Goal',b:'<p>How many months of simulated trading it took to reach the Share Goal set for this strategy (or is on pace to take, if the simulation is still running toward it).</p>'},
-  cmpwr:{t:'Win Rate (realized)',b:'<p>The actual share of trades that closed at profit target rather than stop, across the whole simulation — not just the Win Rate range you set going in. Discipline %, Bad/Good Days, and Skill Growth all pull this around as the simulation plays out.</p>'},
-  cmprr:{t:'R:R Ratio (realized)',b:'<p>Average dollar size of a winning trade divided by average dollar size of a losing trade, across everything the simulation actually produced — not just the Profit Target ÷ Stop Loss ratio dialed in on the Risk tab.</p>'},
-  cmpfr:{t:'Friction / Day',b:'<p>Average dollar cost per trading day from commission, exchange/clearing/reg fees, spread, and slippage combined — the same real-cost model the Ticker settings compute (see Commission/Exchange+Clearing+Reg above), rolled up to a daily figure.</p>'},
-  cmpsharpe:{t:'Sharpe',b:'<p>Return per unit of risk: average daily return divided by how much daily returns swing around — both up and down — annualized. Higher means steadier gains for the risk taken; a volatile strategy can average the same return as a smooth one and still score much lower here.</p>'},
-  cmpsortino:{t:'Sortino',b:'<p>The same idea as Sharpe, but only downside swings count against it — big winning days aren\\u2019t penalized the way a plain volatility measure would. A strategy that scores notably better on Sortino than Sharpe is one whose swings are mostly big wins, not big losses.</p>'},
-  cmpcalmar:{t:'Calmar',b:'<p>Annualized return divided by the worst peak-to-trough drawdown the strategy experienced. A high Calmar means it earned a lot relative to the deepest hole it ever dug — the most direct answer to "how bad did the worst stretch get, relative to what this actually earned."</p>'},
+  // info" problem. Round 112: reworded for plain language, math
+  // unchanged.
+  cmpev:{t:'EV / Day',b:'<p>The average dollar profit or loss this strategy is expected to make per trading day, after modeled costs (commission, fees, spread, slippage).</p><p>Same math as the intro’s expected-value walkthrough - run here on your own settings instead of a hypothetical.</p>'},
+  cmpmo:{t:'Monthly Est',b:'<p>Projected monthly growth at this strategy’s CURRENT pace, based on roughly its last 15% of simulated days - not its whole history. Shows where it is trending now, not how it started.</p>'},
+  cmptg:{t:'Time to Goal',b:'<p>How many months of simulated trading it took (or is on pace to take) to reach this strategy’s Share Goal.</p>'},
+  cmpwr:{t:'Win Rate (realized)',b:'<p>The share of trades that actually closed as a win, across the whole simulation - not just the Win Rate range you set going in. Discipline, Bad/Good Days, and Skill Growth all move this as the simulation plays out.</p>'},
+  cmprr:{t:'R:R Ratio (realized)',b:'<p>The average size of a winning trade divided by the average size of a losing trade, across what actually happened - not just the Profit Target ÷ Stop Loss you dialed in.</p>'},
+  cmpfr:{t:'Friction / Day',b:'<p>The average daily cost from commission, fees, spread, and slippage combined - the same real-cost model from the Ticker settings, rolled up per day.</p>'},
+  cmpsharpe:{t:'Sharpe',b:'<p>Return for the risk taken: average daily return divided by how much daily returns swing up and down. Higher means steadier gains for the same risk - a bumpy strategy can average the same return as a smooth one and still score much lower here.</p>'},
+  cmpsortino:{t:'Sortino',b:'<p>Like Sharpe, but only downside swings count against it - big winning days are not penalized. A strategy that scores much better on Sortino than Sharpe is one whose swings are mostly big wins, not big losses.</p>'},
+  cmpcalmar:{t:'Calmar',b:'<p>Yearly return divided by the worst losing stretch the strategy went through. A high Calmar means it earned a lot relative to the deepest hole it ever fell into.</p>'},
 };
 
 const SDEFS=[['minP',15,'t'],['maxP',30,'t'],['minL',5,'t'],['maxL',15,'t'],['minWR',55,'%'],['maxWR',65,'%'],['minBE',10,'%'],['maxBE',20,'%'],['minT',2,''],['maxT',5,''],['dpm',21,''],['sh',100,''],['goal',500,''],['minPr',43,''],['maxPr',47,''],['spread',1,'t'],['slip',1,'t'],['buf',1,''],['cap',0,'t'],['disc',85,'%'],['bf',3,'%'],['bs',2,'%'],['gf',3,'%'],['gs_',2,'%'],['minPB',3,'t'],['maxPB',8,'t'],['minEO',1,'t'],['maxEO',4,'t'],['minSw',15,'t'],['maxSw',40,'t'],['rrSlider',0,''],['tickSz',1,'¢'],['minDp',-2,'%'],['maxDp',3,'%'],['bias',50,'%'],['intv',5,''],['volCeil',0,'sh'],['vwFH_min',60000,'/m'],['vwFH_max',120000,'/m'],['vwMD_min',15000,'/m'],['vwMD_max',40000,'/m'],['vwLH_min',30000,'/m'],['vwLH_max',70000,'/m'],['partRate',10,'%']];
@@ -4813,7 +4856,15 @@ function buildPanes(){
       </div>
     </div>`;
 
-    const core=fc('wr','Win Rate %','#34d399','wr',dph('minWR','maxWR'))+fc('be','Breakeven %','#60a5fa','be',dph('minBE','maxBE'))+roLoss+distCard;
+    // Round 112: strategy name field relocated here from the switcher
+    // tile (see the CSS comment above #scr-sim .sbtn and the JS comment
+    // above stratNames) - top of Core, ahead of every other Core field,
+    // since naming a strategy is the first thing you'd reach for when
+    // setting one up. No info ("?") button - a name field is self-
+    // explanatory - and no ON/OFF toggle (hasTog=false), unlike every
+    // other Core field, since there's nothing to disable.
+    const nameCard=fc('name','Strategy Name','#38bdf8','',`<input class="ni sname-core" id="corename${s}" type="text" maxlength="12" autocomplete="off" placeholder="e.g. AAPL Scalp" value="" onblur="stratNameCommit(${n})" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">`,false);
+    const core=nameCard+fc('wr','Win Rate %','#34d399','wr',dph('minWR','maxWR'))+fc('be','Breakeven %','#60a5fa','be',dph('minBE','maxBE'))+roLoss+distCard;
     const risk=fc('p','Profit Target','#fbbf24','profit',dph('minP','maxP'))+fc('l','Stop Loss','#f87171','loss',dph('minL','maxL'))+fc('t','Trades / Day','#fb923c','trades',dph('minT','maxT'))+fc('dpm','Days You Trade','#fb923c','dpm',ph('dpm'))+fc('cap','Daily Loss Cap','#f87171','cap',ph('cap'));
 
     const shGoalCard=`<div class="fc" id="fc-sh${s}" style="border-left-color:#fbbf24"><div class="fc-top"><span class="fc-lbl">Starting Shares <button class="ib" onclick="openInfo('sh')">?</button></span></div>${ph('sh')}<div class="fc-note" id="sh-derived-note${s}"></div></div><div class="fc" id="fc-goal${s}" style="border-left-color:#34d399"><div class="fc-top"><span class="fc-lbl">Share Goal <button class="ib" onclick="openInfo('goal')">?</button></span></div>${ph('goal')}</div>`;
@@ -5220,29 +5271,39 @@ function tourCircSelect(tab,catKey){
   if(cluster&&cluster.dataset.sel===catKey)cluster.dataset.sel='';
   circSelect(tab,catKey);
 }
+// Round 112: rewritten app-wide for plain, short, everyday language
+// ("use grade two reading level for the guides"). Same standard as the
+// INFO{} rewrite above - short sentences, common words, technical terms
+// kept only where the field genuinely needs them (Sharpe, EV, and so on
+// don't have grade-2 substitutes that still mean anything). Also fixes
+// one stale line: "Six strategies, one account" used to tell you to tap
+// the name field "under any letter" - that field now lives inside Core
+// instead (see the nameCard comment in buildPanes() and the CSS comment
+// above #scr-sim .sbtn), so this stop's body was rewritten to match and
+// "Core — your edge" now mentions it instead.
 var TOUR_STOPS=[
-  {sel:null,title:"Welcome to the Anti-Hope Machine",body:"A quick tour of every screen — nothing here changes any of your settings. Skip anytime, and you can reopen this tour later from Guide, up top."},
-  {screen:'sim',sel:'.global-capital',title:"Starting Capital",body:"One shared capital value every strategy compounds from — A through F all start on equal footing, so comparing them stays apples-to-apples no matter what ticker or share price each is testing."},
-  {screen:'sim',sel:'#scr-sim .sbar',title:"Six strategies, one account",body:"Switch between Strategies A–F here. Each keeps its own ticker, targets, and risk settings, but they all draw from the same Starting Capital above, so you can genuinely compare six different ideas side by side. Tap the small text field under any letter to name it — useful once you're comparing the same ticker across strategies, or the same strategy across tickers."},
-  {screen:'sim',sel:'#seg-bar',title:"Five setting groups",body:"Every field for the active strategy lives in one of five categories: Core, Risk, Ticker, Psych, and Overrides. Tap a segment to open it — the next few stops walk through each one."},
-  {screen:'sim',before:function(){tourCircSelect(0,'core');},sel:'.circ-panel[data-cat="core"]',title:"Core — your edge",body:"Win Rate % and Breakeven % define how often you win versus scratch a trade. Loss Rate fills in automatically from what's left. Distribution (off by default) shows the resulting win/breakeven/loss split and an estimated EV per trade."},
-  {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'risk');},sel:'.circ-panel[data-cat="risk"]',title:"Risk — targets and frequency",body:"Profit Target and Stop Loss are set in ticks — one tick is $0.01/share on US equities, and Reward:Risk is just Profit Target ÷ Stop Loss. Trades / Day sets how many trades you take on a trading day; Days You Trade lets swing-style traders spread that same frequency across fewer active days a month. Daily Loss Cap puts a hard ceiling on how bad one day can get."},
-  {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'ticker');},sel:'.circ-panel[data-cat="ticker"]',title:"Ticker — price and real costs",body:"Price Range and Starting Shares (derived from your shared Capital) set the account size for this ticker. Commission, exchange/clearing fees, spread, and slippage are all modeled here too — this is what keeps results honest instead of showing a fantasy of gross P&L."},
-  {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'psych');},sel:'.circ-panel[data-cat="psych"]',title:"Psych — the human variance",body:"Bad Days and Good Days simulate the emotional swings real trading has — stretches that run worse or better than your baseline edge. Discipline % and Skill Growth % model how consistently you follow your own rules, and whether your edge improves with experience."},
-  {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'ovr');},sel:'.circ-panel[data-cat="ovr"]',title:"Overrides — advanced, opt-in",body:"All off by default. R:R Override replaces your Stop Loss with a fixed ratio off Profit Target. Daily % Override skips tick math and applies a percentage straight to equity. Volume Ceiling caps share growth so compounding can't run away indefinitely."},
-  {screen:'sim',sel:'#sp0 .sim-row',title:"Run it",body:"Simulate runs this strategy forward using everything you just configured. CSV exports the full day-by-day result. Reset only clears this strategy's last results — it never touches your settings."},
-  {screen:'sim',sel:'#sp0 .chart-panel, #sp0 .diag, #sp0 .vs-card',title:"Your results",body:"Once you simulate, the equity curve, a plain-English Diagnostics verdict, and a Strategy Comparison against any other strategies you've run all appear right here. Not every ticker suits every strategy equally — this comparison is how you find which combination your own numbers actually support."},
-  {screen:'tbl',dock:'bottom',sel:'#scr-tbl > .dv-half:first-child, #scr-tbl .dv-gauge-row',title:"Table — the race",body:"Every simulated strategy's equity curve races on one chart. The gauges below show each strategy's current share count and capital at a glance."},
-  {screen:'tbl',sel:'#scr-tbl .sbar',title:"Pick a strategy to inspect",body:"Switch which strategy's day-by-day numbers you're looking at below — this doesn't affect the race chart above, which always shows all six."},
-  {screen:'tbl',sel:'.tbl-controls',title:"How often to show a row",body:"The table can show every single day, or thin itself out to every 5th, 10th, 20th day, or a custom interval, so a multi-year simulation stays scannable instead of thousands of rows deep."},
-  {screen:'tbl',sel:'.tbl-scroll',title:"Day-by-day breakdown",body:"Every column from share count to win rate to cumulative P&L, scrollable both directions. This is the same data the CSV export gives you, just live on screen."},
-  {screen:'log',sel:'#jcirc-mount',title:"Log — your journal",body:"Six categories — Soul, Mind, Body, Grade, Market, Outcome — for tracking the human side of trading day to day: sleep, stress, discipline, how the day actually went. Tap a category to open it. What you log here — diet, rule breaks, sleep, and the rest — is exactly what feeds the Variable Gauges you'll see under Stats, so it's worth being honest with."},
-  {screen:'log',sel:'#log-save-btn',title:"Save Entry",body:"Saves everything in the journal cluster above as today's entry. Save it again later the same day and it overwrites rather than duplicating — one entry per calendar date."},
-  {screen:'log',sel:'#scr-log .inp-grp, #scr-log .tb-card',title:"Your actual trading results",body:"Separate from the journal — this is where you enter what really happened: wins, losses, breakevens, tick averages, net P&L, and a breakdown of how much of each trade's move you actually captured."},
-  {screen:'log',sel:'#scr-log .sess-btns, #scr-log .g3, #scr-log .grade-card',title:"Log Day",body:"Adds today's numbers to your running log — unlike Save Entry, this appends every time rather than overwriting. Once you've logged a few days, Win Rate, Expectancy, and a Grade vs. your own baseline all compute automatically."},
-  {screen:'log',sel:'#log-export-btn, #scr-log .jhist',title:"Export and history",body:"One CSV combines your trading log and journal entries by date, one row per day. Your full logged history sits below it, scrollable."},
-  {screen:'stats',sel:'.vs-card',title:"Stats — reality check",body:"Once you've logged real trading days, this compares what actually happened against your simulation's targets for the same strategy — the whole point of building the simulation in the first place."},
-  {screen:'stats',sel:'#scirc-mount',title:"Enter real broker data",body:"Feed in figures straight from your broker statement to keep the Real vs Sim comparison accurate and current."},
+  {sel:null,title:"Welcome to the Anti-Hope Machine",body:"Here's a quick tour of every screen. It will not change any of your settings. Skip anytime. You can open this tour again later from Guide, up top."},
+  {screen:'sim',sel:'.global-capital',title:"Starting Capital",body:"One shared amount of money. Every strategy grows from it. A through F all start equal, so comparing them is fair, no matter what stock or price each one tests."},
+  {screen:'sim',sel:'#scr-sim .sbar',title:"Six strategies, one account",body:"Switch between Strategies A–F here. Each one keeps its own stock, targets, and risk settings. But they all use the same Starting Capital above, so you can compare six ideas side by side."},
+  {screen:'sim',sel:'#seg-bar',title:"Five setting groups",body:"Every setting for the active strategy lives in one of five groups: Core, Risk, Ticker, Psych, and Overrides. Tap a group to open it. The next few stops walk through each one."},
+  {screen:'sim',before:function(){tourCircSelect(0,'core');},sel:'.circ-panel[data-cat="core"]',title:"Core — your edge",body:"Win Rate % and Breakeven % set how often you win versus just break even. Loss Rate fills in on its own. You can also name this strategy here, at the top. Distribution (off by default) shows the win/breakeven/loss split as a picture, with an estimated profit per trade."},
+  {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'risk');},sel:'.circ-panel[data-cat="risk"]',title:"Risk — targets and frequency",body:"Profit Target and Stop Loss are set in ticks. One tick is $0.01 a share on US stocks. Trades / Day sets how many trades you take on a trading day. Days You Trade lets you spread that same amount across fewer days a month, for a slower style. Daily Loss Cap puts a hard limit on how bad one day can get."},
+  {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'ticker');},sel:'.circ-panel[data-cat="ticker"]',title:"Ticker — price and real costs",body:"Price Range and Starting Shares set the account size for this stock. Commission, fees, spread, and slippage are modeled here too. These are real costs that eat into profit — this is what keeps your results honest."},
+  {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'psych');},sel:'.circ-panel[data-cat="psych"]',title:"Psych — the human side",body:"Bad Days and Good Days act like the ups and downs real trading has. Discipline % and Skill Growth % model how well you stick to your own plan, and whether you improve with practice."},
+  {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'ovr');},sel:'.circ-panel[data-cat="ovr"]',title:"Overrides — advanced, optional",body:"All off by default. R:R Override replaces your Stop Loss with a fixed ratio. Daily % Override skips the tick math and applies a percent straight to your account. Volume Ceiling caps how big your share count can grow."},
+  {screen:'sim',sel:'#sp0 .sim-row',title:"Run it",body:"Simulate runs this strategy forward with everything you just set up. CSV downloads the full day-by-day result. Reset only clears this strategy's last results — it never touches your settings."},
+  {screen:'sim',sel:'#sp0 .chart-panel, #sp0 .diag, #sp0 .vs-card',title:"Your results",body:"Once you simulate, you'll see the equity curve, a plain verdict, and a comparison against any other strategies you've run. Not every stock suits every strategy — this is how you find out which pair actually works."},
+  {screen:'tbl',dock:'bottom',sel:'#scr-tbl > .dv-half:first-child',title:"Table — the race",body:"Every strategy's equity curve races on one chart. The gauges below show each strategy's current share count and capital at a glance."},
+  {screen:'tbl',sel:'#scr-tbl .sbar',title:"Pick a strategy to inspect",body:"Switch which strategy's day-by-day numbers show below. This does not change the race chart above — that always shows all six."},
+  {screen:'tbl',sel:'.tbl-controls',title:"How often to show a row",body:"The table can show every day, or thin itself out to every 5th, 10th, or 20th day. That keeps a long simulation easy to scan instead of thousands of rows deep."},
+  {screen:'tbl',sel:'.tbl-scroll',title:"Day-by-day breakdown",body:"Every column, from share count to win rate to running profit, scrolls both ways. This is the same data the CSV gives you, just live on screen."},
+  {screen:'log',sel:'#jcirc-mount',title:"Log — your journal",body:"Six groups — Soul, Mind, Body, Grade, Market, Outcome — for tracking the human side of trading each day: sleep, stress, discipline, how the day went. Tap a group to open it. What you log here is exactly what feeds the Variable Gauges under Stats, so it's worth being honest."},
+  {screen:'log',sel:'#log-save-btn',title:"Save Entry",body:"Saves everything in the journal above as today's entry. Save it again later the same day and it replaces the old one — one entry per date."},
+  {screen:'log',sel:'#scr-log .inp-grp, #scr-log .tb-card',title:"Your actual trading results",body:"This is separate from the journal. Here you enter what really happened: wins, losses, breakevens, average ticks, and net profit."},
+  {screen:'log',sel:'#scr-log .sess-btns, #scr-log .g3, #scr-log .grade-card',title:"Log Day",body:"Adds today's numbers to your running log. Unlike Save Entry, this adds a new line every time instead of replacing one. Once you've logged a few days, Win Rate, Expectancy, and a Grade against your own baseline all show up on their own."},
+  {screen:'log',sel:'#log-export-btn, #scr-log .jhist',title:"Export and history",body:"One CSV combines your trading log and journal by date, one row per day. Your full history sits below it, and you can scroll through it."},
+  {screen:'stats',sel:'.vs-card',title:"Stats — reality check",body:"Once you've logged real trading days, this compares what actually happened against your simulation's targets for the same strategy. This comparison is the whole point of building the simulation."},
+  {screen:'stats',sel:'#scirc-mount',title:"Enter real broker data",body:"Type in numbers straight from your broker statement, to keep the Real vs Sim comparison accurate."},
   // Round 108: this used to be one stop covering #weekly-report AND
   // #gauge-wrap together - on a real phone screen the two combined are
   // taller than the viewport, so centering the union always clipped one
@@ -5250,10 +5311,10 @@ var TOUR_STOPS=[
   // so each gets its own clean, fully-visible highlight - "more buttons
   // to press" was explicitly fine per the user's own words, as long as
   // each thing shown is actually fully shown.
-  {screen:'stats',sel:'#weekly-report',title:"Weekly grading",body:"A week-by-week report card, computed automatically from what you've logged — Win Rate, P&L, sleep, stress, and more, graded against your own baseline."},
-  {screen:'stats',sel:'#gauge-wrap',title:"Variable gauges",body:"This is where the diet, rule-breaks, sleep, and other Log inputs turn into results: each gauge shows whether that variable actually correlates with your P&L, once it's cleared a real statistical bar — not just a hunch."},
-  {screen:'stats',sel:'#scr-stats .chart-panel',title:"Real equity, three ways",body:"Your actual cumulative P&L, plus weekly and monthly rollups, built entirely from your logged trading results, not the simulation."},
-  {sel:null,title:"That's everything",body:"Reopen this tour anytime from Guide, up top — it never touches your settings, so there's no harm coming back whenever something's unclear."},
+  {screen:'stats',sel:'#weekly-report',title:"Weekly grading",body:"A week-by-week report card, built automatically from what you've logged — Win Rate, profit, sleep, stress, and more, graded against your own baseline."},
+  {screen:'stats',sel:'#gauge-wrap',title:"Variable gauges",body:"This is where your diet, rule-breaks, sleep, and other Log inputs turn into answers. Each gauge shows whether that habit actually lines up with your profit — not just a guess, but a real pattern in your own numbers."},
+  {screen:'stats',sel:'#scr-stats .chart-panel',title:"Real equity, three ways",body:"Your actual running profit, plus weekly and monthly totals, built entirely from what you've logged — not the simulation."},
+  {sel:null,title:"That's everything",body:"Open this tour again anytime from Guide, up top. It never touches your settings, so come back whenever something's unclear."},
   // Round 108: round 101's "Good Luck Out There" send-off (compounding/
   // no-withdrawal message) moved to the END OF THE INTRO instead - see
   // CLOSING_ENCOURAGEMENT and renderReadiness() below - per direct
@@ -5263,7 +5324,7 @@ var TOUR_STOPS=[
   // sequence too, just a different one - this ties to what the tour
   // itself just walked through (Real vs Sim, Log Day) rather than
   // repeating the intro's capital-growth point.
-  {sel:null,title:"You're All Set",body:"Every number in here is only as useful as what you feed it — log the rough days as carefully as the good ones, and the gap between Sim and Real becomes the most honest mirror you'll find. That habit is worth more than any one strategy."}
+  {sel:null,title:"You're All Set",body:"Every number in here is only as good as what you put in. Log the rough days as carefully as the good ones. The gap between Sim and Real becomes the most honest mirror you'll find — worth more than any one strategy."}
 ];
 
 var state={idx:0,active:false};
@@ -5859,48 +5920,51 @@ function hasRealData(){
    reveal, which are one-directional narrative beats, not form fields
    - Skip is the only way out of those.
    ══════════════════════════════════════════════════════════════ */
+// Round 112: rewritten for plain, short, everyday language ("use grade
+// two reading level as your standard for the intro verbiage"). Same
+// standard as TOUR_STOPS and INFO{} above.
 var INTRO_BEATS=[
-  {title:'Right now, somewhere, someone is opening a trade they haven’t earned the right to make.'},
-  {eyebrow:'The Anti-Hope Machine',title:'This isn’t built to make trading feel easier.',body:'It’s built to show you, in cold and unsentimental numbers, whether what you’re doing actually works. Most tools flatter you. This one is built not to.'},
-  {eyebrow:'Before You Begin',title:'What it ends up showing you depends entirely on what you’re willing to feed it.',body:'A few honest questions, first — not to judge you, but to calibrate what you’re about to see.',btn:'I’m Ready'}
+  {title:'Right now, someone is placing a trade. They have not earned the right to make it yet.'},
+  {eyebrow:'The Anti-Hope Machine',title:'This isn’t built to make trading feel easier.',body:'It shows you the truth, in plain numbers: does what you’re doing actually work? Most tools tell you what you want to hear. This one doesn’t.'},
+  {eyebrow:'Before You Begin',title:'What you get out of this depends on what you put in.',body:'First, a few honest questions. Not to judge you — just to see where you’re starting from.',btn:'I’m Ready'}
 ];
 
 var QUIZ_QUESTIONS=[
   {q:'Have you traded before — live or demo?',
    opts:[
-     {t:'No, never',s:0,reaction:'Then everything from here is a first look, not a test you can fail — just a mirror with nothing on it yet.'},
-     {t:'Demo or paper trading only',s:1,reaction:'Paper trading proves you can follow a plan when nothing real is at stake. It’s never once proven anyone can hold that plan once their own money is watching them break it.'},
-     {t:'Yes, with real money',s:2,reaction:'Then you already know the gap between a plan on paper and a plan with your own money on the line.'}
+     {t:'No, never',s:0,reaction:'Then everything here is brand new. You can’t fail a first look — think of it as a mirror with nothing on it yet.'},
+     {t:'Demo or paper trading only',s:1,reaction:'Paper trading shows you can follow a plan when nothing real is on the line. It doesn’t show you can hold that plan once your own money is watching.'},
+     {t:'Yes, with real money',s:2,reaction:'Then you already know the gap. A plan on paper feels easy. A plan with real money on the line does not.'}
    ],
-   gap:'Simulated reps still count for something — but nothing rehearses the pull to override your own plan quite like real money on the line. Until you’ve felt that, treat every number in here as a rehearsal, not a verdict.'},
+   gap:'Practice still counts for something. But nothing trains you for the pull to break your own plan like real money does. Until you’ve felt that pull, treat every number in here as practice, not a final answer.'},
   {q:'Have you backtested a strategy over at least 50 trades?',
    opts:[
-     {t:'No',s:0,reaction:'So there isn’t a strategy yet — just an instinct wearing a strategy’s name.'},
-     {t:'Some, but fewer than 50',s:1,reaction:'Close enough to see a shape, not close enough to trust it. Most false edges reveal themselves right around there.'},
-     {t:'Yes, 50 or more',s:2,reaction:'Good. That’s roughly where luck starts running out of places to hide.'}
+     {t:'No',s:0,reaction:'So there isn’t a real strategy yet — just a hunch wearing a strategy’s name.'},
+     {t:'Some, but fewer than 50',s:1,reaction:'Close enough to see a shape. Not close enough to trust it yet — most fake edges fall apart right around 50 trades.'},
+     {t:'Yes, 50 or more',s:2,reaction:'Good. Around 50 trades, luck starts running out of places to hide.'}
    ],
-   gap:'Under about 50 trades, a hot streak and a real edge look identical. That’s not this app being strict — it’s just how small samples work.'},
+   gap:'Under about 50 trades, a hot streak and a real edge look the same. That’s not this app being strict — it’s just how small samples work.'},
   {q:'Do you have real trade data ready to log — broker exports, a journal, anything?',
    opts:[
-     {t:'Not yet',s:0,reaction:'That’s fine, for today. But everything after this point stays a demonstration, not a diagnosis, until you bring it real numbers.'},
-     {t:'Some, scattered',s:1,reaction:'Scattered still counts. Gathering it into one place is half the discipline this app is actually trying to teach.'},
-     {t:'Yes, ready to go',s:2,reaction:'Then this tool can start doing its job on you, not just in front of you.'}
+     {t:'Not yet',s:0,reaction:'That’s fine for today. But everything after this stays a demo, not a diagnosis, until you bring real numbers.'},
+     {t:'Some, scattered',s:1,reaction:'Scattered still counts. Gathering it into one place is half the discipline this app teaches.'},
+     {t:'Yes, ready to go',s:2,reaction:'Then this tool can start doing its real job on you, not just in front of you.'}
    ],
-   gap:'This tool is only as sharp as what you feed it. Without real trades behind the numbers, what you’ll see here is a demonstration — not a conclusion about you.'},
+   gap:'This tool is only as sharp as what you feed it. Without real trades behind the numbers, what you see here is a demo — not a conclusion about you.'},
   {q:'What are you hoping day trading gives you right now?',
    opts:[
-     {t:'Steady income to replace or supplement my job',s:0,reaction:'Worth saying plainly, once: most people chasing that outcome lose money for a long stretch first — some never stop. This app can’t shortcut that. It can only show you the truth faster.'},
-     {t:'To learn the mechanics and build discipline',s:1,reaction:'A realistic place to start. Discipline is the one part of this entirely within your control.'},
-     {t:'To stress-test an edge I already trade',s:2,reaction:'Then you’re not here to be convinced trading works. You’re here to find out if you do. That’s the right question.'}
+     {t:'Steady income to replace or supplement my job',s:0,reaction:'Here’s the plain truth: most people chasing that goal lose money for a long time first. Some never stop losing. This app can’t skip that part — it can only show you the truth faster.'},
+     {t:'To learn the mechanics and build discipline',s:1,reaction:'A solid place to start. Discipline is the one part fully in your control.'},
+     {t:'To stress-test an edge I already trade',s:2,reaction:'Then you’re not here to be told trading works. You’re here to find out if you do. That’s the right question.'}
    ],
-   gap:'Worth saying plainly: most people who start day trading expecting steady income end up losing money, often for a long stretch, before they stop — if they stop. This app won’t shortcut that. What it’s built for is showing you, in cold numbers, whether your process is actually working. That’s the only real way through.'}
+   gap:'Here’s the plain truth: most people who start day trading for steady income end up losing money — often for a long stretch, before they stop, if they stop. This app won’t skip that part. What it does is show you, in plain numbers, whether your process really works. That’s the only real way through.'}
 ];
 
 var GUT_CHECK={
-  q:'If this app told you the truth about your trading — the real numbers, no excuses — would you actually want to see it?',
+  q:'If this app told you the truth about your trading — real numbers, no excuses — would you want to see it?',
   opts:[
     {t:'Yes — that’s exactly why I’m here',line:'Good. That’s the only honest way to start.'},
-    {t:'Honestly, I’m not sure',line:'Fair answer. Most people aren’t, until the numbers make them.'}
+    {t:'Honestly, I’m not sure',line:'Fair answer. Most people aren’t, until the numbers make them sure.'}
   ]
 };
 
@@ -5915,7 +5979,7 @@ var GUT_CHECK={
 // readiness level, so it applies whether you're Ready, Getting There,
 // or Start Here. The App Tour's own final stop now carries a different,
 // tour-specific closing line instead (see TOUR_STOPS' last entry).
-var CLOSING_ENCOURAGEMENT='Once you find a strategy your real numbers actually support, the growth comes from consistency and sizing up — not from chasing something new every time results dip. The part most people don\'t expect going in: the less you pull out along the way, the more it compounds. Given enough time, that difference alone can end up being the whole game.';
+var CLOSING_ENCOURAGEMENT='Once your real numbers back up a strategy, growth comes from staying consistent and sizing up — not from chasing something new every time results dip. Here’s the part most people don\'t expect: the less money you pull out along the way, the more it compounds. Given enough time, that one choice can be the whole game.';
 
 // Round 100's three "thinking exercise" beats - user asked for ideas beyond
 // the questionnaire itself ("short thinking exercises to prune better
@@ -5960,22 +6024,29 @@ var CLOSING_ENCOURAGEMENT='Once you find a strategy your real numbers actually s
 // Worth a follow-up primary-source check before ever citing this stat
 // somewhere more formal than this app.
 var LOSS_INSIGHT={
-  q:'Quick one. Which hits harder — losing $200 you already had, or missing out on a trade that would’ve made you $200?',
+  q:'Quick one. Which hurts more — losing $200 you already had, or missing a trade that would have made you $200?',
   opts:[
-    {t:'Losing the $200',line:'That instinct is well documented.'},
-    {t:'About the same, honestly',line:'Worth watching for — most people don’t actually feel it that way.'},
+    {t:'Losing the $200',line:'Studies back up that feeling.'},
+    {t:'About the same, honestly',line:'Worth noticing — most people don’t actually feel it that way.'},
     {t:'Missing the gain hits harder',line:'That’s the less common answer.'}
   ],
-  fact:'Most people rate a loss as roughly twice as painful as an equal-sized gain feels good — a bias called loss aversion. It’s why traders hold losing trades hoping they’ll turn around, and cut winning trades short just to lock in the relief. The math doesn’t care how a trade feels. Your discipline has to cover for what your instincts won’t.'
+  fact:'Most people feel a loss about twice as strongly as they feel an equal gain. This is called loss aversion. It’s why traders hold losing trades, hoping they turn around. It’s also why traders sell winning trades too soon, just to feel relief. Your account doesn’t care how a trade feels. Your discipline has to make up for what your instincts get wrong.'
 };
+// Round 112: q stays a live math setup (it IS the question being asked),
+// but fact is now split - a plain message first, the actual arithmetic
+// pulled onto its own "Math:" line after, same pattern as INFO{} above
+// ("for math stuff, separate it from the message you're saying, so if
+// someone's skimming they don't have to go through the math equation
+// just to get the message"). Figures unchanged from round 100/101 -
+// still the same verified 40%*200-60%*100=+20/trade, *100=+2000.
 var EV_INSIGHT={
-  q:'Quick math. Risk $100 a trade, win 40% of the time, winners pay 2x the risk, losers cost 1x the risk. Over 100 trades — profitable, or not?',
+  q:'Quick math test. You risk $100 on each trade. You win 40% of the time. A win pays double your risk. A loss costs your full risk. Over 100 trades, do you come out ahead?',
   opts:[
     {t:'Clearly profitable',line:'Good instinct.'},
     {t:'Roughly breakeven',line:'Close, but not quite.'},
-    {t:'Losing money',line:'The 40% made it feel that way — a fair guess.'}
+    {t:'Losing money',line:'The 40% win rate makes it feel that way. Fair guess.'}
   ],
-  fact:'Run it: 40% × $200 minus 60% × $100 comes out to +$20 of expected value per trade. Over 100 trades, that’s +$2,000 — profitable, on a strategy that loses more often than it wins. Win rate alone never tells the whole story; reward-to-risk is doing just as much work. This is the exact math Sim mode runs for you, on your own numbers instead of a hypothetical.'
+  fact:'You come out ahead — even though you lose more often than you win. Win rate alone never tells the whole story; reward-to-risk matters just as much. This is the same math Sim mode runs for you, using your own numbers instead of a made-up example.<p class="insight-math">Math: (40% × $200) − (60% × $100) = +$20 per trade. Over 100 trades: +$2,000.</p>'
 };
 // Round 111: "Instead of making a mathematical lesson on the
 // commission, just plainly state it... the math and extra jargon is
@@ -5991,32 +6062,37 @@ var EV_INSIGHT={
 // itself - the question now states the $7 figure directly and asks
 // what it does to the edge, same as every other insight in this
 // sequence poses a question rather than teaching a formula.
+// Round 112: same math/message split as EV_INSIGHT above - the plain
+// sentence (what happens, and why it still matters) now comes first, the
+// $700/$2,000 arithmetic that backs it up is pulled onto its own
+// .insight-math line after. Figures unchanged from round 108's IBKR-
+// sourced rate (see that round's comment trail above COST_INSIGHT).
 var COST_INSIGHT={
-  q:'Same $100-risk strategy, one more variable: it nets +$20 per trade before costs, and a real broker’s commission on a trade like this runs about $7 round trip. Over 100 trades, what happens to the edge?',
+  q:'Same strategy, same $100 risk. It nets +$20 per trade before costs. A real broker charges about $7 in commission per round trip. Over 100 trades, what happens to your edge?',
   opts:[
-    {t:'Barely dented',line:'That’s the common read — commission feels small next to the P&L.'},
+    {t:'Barely dented',line:'That’s the common guess — commission feels small next to the profit.'},
     {t:'Cut by roughly a third, still profitable',line:'That’s exactly it.'},
-    {t:'Wiped out completely',line:'A fair guess — costs get talked about like they’re that brutal — but this one doesn’t go that far.'}
+    {t:'Wiped out completely',line:'Fair guess — people talk about costs like they’re that brutal — but this one isn’t.'}
   ],
-  fact:'$700 in commission comes out of the $2,000 gross edge — about a third of it, gone before spread or slippage even enter the picture. The strategy is still profitable. It’s just not the number you saw on paper, and that gap is exactly what a real broker statement shows you that a backtest won’t.'
+  fact:'Commission eats about a third of your edge — gone before spread or slippage even show up. The strategy is still profitable. It’s just not the number you saw on paper, and that gap is exactly what a real broker statement shows you that a backtest won’t.<p class="insight-math">Math: $700 commission ÷ $2,000 gross edge ≈ one third.</p>'
 };
 var STAT_INSIGHT={
-  q:'One more, before the diagnosis. Guess: among people who day trade persistently — not a week, a sustained stretch — what share end up losing money?',
+  q:'One more question before your results. Guess: among people who day trade for a long stretch — not just a week — what share end up losing money?',
   opts:[
-    {t:'Less than half',line:'Optimistic — and not what the data shows.'},
+    {t:'Less than half',line:'Hopeful guess — not what the data shows.'},
     {t:'Roughly half to three-quarters',line:'Closer, but still short.'},
     {t:'The large majority',line:'That’s the right instinct.'}
   ],
-  fact:'A widely cited academic study tracking Brazilian futures day traders found that among those who kept trading for more than 300 days, about 97% still lost money. Persistence alone didn’t save them. It rarely does — process does, or it doesn’t.'
+  fact:'A well-known study tracked day traders in Brazil. Among those who kept trading for more than 300 days, about 97% still lost money. Sticking with it didn’t save them. It rarely does — what matters is your process, not how long you stick around.'
 };
 var AI_INSIGHT={
-  q:'Do you currently track your real trades in any organized way — broker exports, a spreadsheet, a journal?',
+  q:'Do you track your real trades in an organized way — broker exports, a spreadsheet, a journal?',
   opts:[
     {t:'Yes, consistently',line:'Good — that’s the hard part most people skip.'},
     {t:'Sort of, scattered',line:'Scattered still counts for something.'},
     {t:'Not really',line:'That’s the most common answer, and the easiest one to fix.'}
   ],
-  fact:'Whichever it is — you don’t have to be a spreadsheet wizard or a mathematician to do this well. AI tools can help pull structure out of a messy broker export, calculate your real win rate and expected value, and translate what actually happened into the numbers this app wants. Understanding the math matters far more than performing it by hand.'
+  fact:'Whichever it is, you don’t need to be a spreadsheet expert or a math whiz. AI tools can turn a messy broker export into clean numbers — your real win rate, your real expected value. Understanding the math matters far more than doing it by hand.'
 };
 
 var introOverlay,introCanvas,introFg,introSkipBtn;
@@ -6504,21 +6580,25 @@ function buildReadinessSteps(){
   var total=quizAnswers.reduce(function(a,x){return a+(x?x.s:0);},0);
   var gaps=quizAnswers.filter(function(x){return x&&x.s<=1;}).map(function(x){return QUIZ_QUESTIONS[x.qi].gap;});
   var eyebrow,title,lead,elaboration;
+  // Round 112: tier copy simplified for plain language, same standard as
+  // the rest of the intro sequence - the gaps/lead strings themselves
+  // already come from QUIZ_QUESTIONS' own (now simplified) gap text, so
+  // only the eyebrow/title/elaboration lines needed rewriting here.
   if(total>=6){
     eyebrow='You’re Ready';
-    title='You’ve already done the part most people skip.';
-    lead='This tool won’t predict the market for you. What it will do is tell you the truth about your own process — usually the part traders spend the most energy avoiding.';
+    title='You already did the part most people skip.';
+    lead='This tool can’t predict the market. What it can do is tell you the truth about your own process — the part most traders work hardest to avoid.';
     elaboration=gaps.length?gaps[0]:null;
   }else if(total>=3){
     eyebrow='Getting There';
-    title='Real gaps, worth carrying into what comes next.';
+    title='You have real gaps. Worth keeping in mind for what’s next.';
     lead=gaps.slice(0,2).join(' ');
-    elaboration='None of that locks you out. It just means the next stretch in here should be treated as practice, not proof.';
+    elaboration='None of that locks you out. It just means what comes next is practice, not proof.';
   }else{
     eyebrow='Start Here, Not There';
-    title='Day trading is unforgiving of accounts that skip the groundwork.';
+    title='Day trading is tough on accounts that skip the groundwork.';
     lead=gaps.slice(0,2).join(' ');
-    elaboration='That’s not a reason to stop. It’s exactly what Simulate mode is for — build the history first, and let the app show you the truth instead of you having to guess at it.';
+    elaboration='That’s not a reason to stop. It’s exactly what Simulate mode is for: build your history first, and let the app show you the truth instead of guessing.';
   }
   var steps=[{eyebrow:eyebrow,title:title,body:lead}];
   // At most one more beat of tier-specific substance - never one beat
