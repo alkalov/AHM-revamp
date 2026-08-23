@@ -339,7 +339,7 @@ tr.sel-day{transition:background .5s ease;}
 #scr-sim .sbtn.on .sb-top{color:#0a0d13;font-weight:800;}
 #scr-sim .sbtn.on .sb-ring{background:#0a0d13;border-color:#0a0d13;}
 #scr-sim .sbtn.on .sb-stat{color:rgba(10,13,19,.75);font-weight:700;}
-#scr-tbl .sbar{display:flex;gap:4px;padding:6px 16px;border-bottom:none;background:transparent;}
+#scr-tbl .sbar{display:flex;flex-shrink:0;gap:4px;padding:6px 16px;border-bottom:none;background:transparent;}
 #scr-tbl .sbtn{
   --rgb:82,181,224;
   height:38px;border-radius:7px;border:none;background:transparent;
@@ -1445,27 +1445,31 @@ canvas.spark{width:100%;height:34px;display:block;}
       <div class="dv-gauge-row">
         <canvas id="dv-gauge-cv"></canvas>
       </div>
-    </div>
-    <!-- Round 92: pulled the strategy tabs out of the lower .dv-half
-         entirely (rather than just styling .sbtn/.sbar transparent, as
-         round 90 did). They used to be the FIRST child inside that
-         glass-boxed .dv-half, so the box's own top inset highlight sat
-         right above them, and .tbl-controls (also independently boxed,
-         being the very next child) put a second highlight right below
-         them — sandwiching the tab row in what read as its own bordered
-         "window" even though .sbar/.sbtn had no fill of their own. Now
-         .sbar sits as a plain screen-level sibling between the two
-         .dv-half blocks, same as the Sim tab's own .sbar — nothing but
-         the ambient bloom behind it. The lower .dv-half's box now starts
-         cleanly at .tbl-controls, so the actual data table keeps its
-         window (data still gets one); only the tab buttons lost theirs. -->
-    <div class="sbar">
+      <!-- Round 106: moved back INSIDE the upper .dv-half, reversing
+           round 92's extraction (see git history / memory for that
+           reasoning) per direct request — "put the strategy buttons
+           inside the graph window... instead of having a dark strip,
+           it will be more congruent structurally." Round 92's problem
+           was the tab row being SANDWICHED between two independently-
+           boxed panels (each contributing its own top/bottom inset
+           highlight right at the row's edges, reading as a phantom
+           third window); this is a different placement, not a revival
+           of that one - the switcher now lives INSIDE a single panel
+           as its last child, sharing that ONE box/highlight/backdrop
+           rather than being framed by two neighboring ones. Order on
+           screen is unchanged (chart, then gauges, then switcher) —
+           only the visual container changed, so the race chart +
+           gauges + switcher now read as one window, and that window's
+           own bottom border is what used to be the bare "dark strip"
+           gap above the table. -->
+      <div class="sbar">
         <button class="sbtn on" id="tsb0" onclick="switchTblStrat(0)"><span class="sb-top">A<i class="sb-ring" id="tbr0"></i></span><span class="sb-stat" id="tbs0">—</span></button>
         <button class="sbtn sc-b" id="tsb1" onclick="switchTblStrat(1)"><span class="sb-top">B<i class="sb-ring" id="tbr1"></i></span><span class="sb-stat" id="tbs1">—</span></button>
         <button class="sbtn sc-c" id="tsb2" onclick="switchTblStrat(2)"><span class="sb-top">C<i class="sb-ring" id="tbr2"></i></span><span class="sb-stat" id="tbs2">—</span></button>
         <button class="sbtn sc-d" id="tsb3" onclick="switchTblStrat(3)"><span class="sb-top">D<i class="sb-ring" id="tbr3"></i></span><span class="sb-stat" id="tbs3">—</span></button>
         <button class="sbtn sc-e" id="tsb4" onclick="switchTblStrat(4)"><span class="sb-top">E<i class="sb-ring" id="tbr4"></i></span><span class="sb-stat" id="tbs4">—</span></button>
         <button class="sbtn sc-f" id="tsb5" onclick="switchTblStrat(5)"><span class="sb-top">F<i class="sb-ring" id="tbr5"></i></span><span class="sb-stat" id="tbs5">—</span></button>
+      </div>
     </div>
     <div class="dv-half">
       <div class="tbl-controls">
