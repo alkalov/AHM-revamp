@@ -176,7 +176,29 @@ html,body{height:100%;background:#04060a;color:#e2e6ed;font-family:'Inter',sans-
   box-shadow:inset 0 1px 0 rgba(255,255,255,.14);touch-action:manipulation;}
 .stat-actbtn svg:not(.stat-actbtn-chev){filter:drop-shadow(0 0 3px rgba(var(--glow-rgb),.55));flex-shrink:0;}
 .stat-actbtn span{flex:1;text-align:left;}
-.stat-actbtn-chev{transition:transform .2s ease;flex-shrink:0;color:#4d5a6e;}
+/* Round 109: #75859e is the app's "muted label" text colour - EVERY
+   instance of it below (87 sites: field labels, table cells, chart axis
+   text, info-button glyphs, empty-state copy, and more) used to be
+   #4d5a6e, a color that measured out at only ~2.6:1 contrast against the
+   app's various dark panel backgrounds - well under WCAG AA's 4.5:1 floor
+   for normal text, and this app's labels routinely run 7-9px, where low
+   contrast reads as outright illegible rather than just "subtle." User
+   feedback: "The info buttons should be legible and not faded. We have
+   an issue with faded text all over the app." Verified the contrast math
+   directly (not by eye) before picking a fix - same hue, lightness raised
+   until it cleared ~4.9:1 against every background shade this color
+   actually appears on in the file (#10141c/#04060a/#161b26/#0b0e14 all
+   checked individually, not just the most common one), so the "muted
+   label" tier reads clearly now without brightening into the app's OTHER
+   secondary-text tier (#8892a4, ~5.9:1, used for slightly more prominent
+   body/detail text elsewhere - kept deliberately distinct so the two-tier
+   label/body hierarchy the app already had stays intact, just both tiers
+   legible now instead of one of them being close to invisible). The
+   .sc-dir "(lower is better)" annotation was its own even-more-muted
+   #3a4356 (~1.9:1, worse than the rest) - bumped separately to #677798
+   (~4.1:1), same reasoning, kept a shade darker than #75859e on purpose
+   since it's genuinely secondary to the label it sits next to. */
+.stat-actbtn-chev{transition:transform .2s ease;flex-shrink:0;color:#75859e;}
 .stat-actbtn.sel .stat-actbtn-chev{transform:rotate(180deg);}
 .stat-actbtn.sel{border-color:rgba(56,189,248,.4);}
 
@@ -244,19 +266,31 @@ tr.sel-day{transition:background .5s ease;}
 .topbar{height:48px;background:#10141c;border-bottom:1px solid #232b3d;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;z-index:50;}
 .brand{display:flex;align-items:baseline;gap:8px;}
 .brand-name{font-family:'Inter',sans-serif;font-size:14px;font-weight:800;color:#e2e6ed;text-transform:uppercase;letter-spacing:-.01em;}
-.brand-ver{font-size:8px;color:#4d5a6e;letter-spacing:.15em;text-transform:uppercase;}
+.brand-ver{font-size:8px;color:#75859e;letter-spacing:.15em;text-transform:uppercase;}
 .top-r{display:flex;align-items:center;gap:10px;}
 .pulse{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 3s infinite;}
 @keyframes blink{0%,90%,100%{opacity:1;}95%{opacity:.15;}}
-.guide-btn{height:24px;padding:0 10px;background:transparent;border:1px solid #232b3d;color:#4d5a6e;font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:3px;}
+.guide-btn{height:24px;padding:0 10px;background:transparent;border:1px solid #232b3d;color:#75859e;font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:3px;}
 .guide-btn:active{border-color:var(--accent-solid);color:var(--accent-solid);}
 .screens{flex:1;overflow:hidden;position:relative;}
 .screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px));display:none;}
 .screen.active{display:block;}
 /* Table tab only: flat flex column, no outer scroll — each .dv-half manages
    its own scroll independently. Deliberately avoids nested auto-overflow
-   chains, since that pattern is what broke scrolling in a prior version. */
-#scr-tbl{padding-bottom:0;}
+   chains, since that pattern is what broke scrolling in a prior version.
+   Round 108: this used to zero out the shared .screen padding-bottom
+   entirely, on the reasoning that .tbl-scroll's OWN padding-bottom (see
+   that rule) already reserves nav clearance for it. That reasoning only
+   covered the SCROLLED-to-the-end state, though - it did nothing for the
+   table's RESTING (unscrolled) position, which this non-scrolling screen
+   places wherever the flex layout naturally lands it. With round 107's
+   7/9-row max-height cap, that resting position now sits low enough that
+   its last couple of rows land directly under the floating .bnav pill
+   (verified via getBoundingClientRect() overlap, not just eyeballing) -
+   every OTHER screen avoids this via the same 84px reservation restored
+   here; the chart panel above (flex:1 1 0) absorbs the small height
+   difference, same as it already absorbs any other free space. */
+#scr-tbl{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px));}
 #scr-tbl.active{display:flex;flex-direction:column;overflow:hidden;}
 /* Bottom nav, round 77: was a flush edge-to-edge bar with icon+label
    columns and a thin top-border active indicator. Reimagined as a
@@ -269,7 +303,7 @@ tr.sel-day{transition:background .5s ease;}
    across .screen and #scr-tbl's .tbl-scroll to cover the island's
    bottom offset + height + breathing room. */
 .bnav{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:auto;height:52px;background:#10141c;border:1px solid #232b3d;border-radius:26px;display:flex;align-items:center;justify-content:center;gap:4px;padding:0 10px;z-index:100;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 0 1px rgba(255,255,255,.02),0 10px 28px -8px rgba(0,0,0,.6);}
-.nb{flex:0 0 44px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;padding:0;position:relative;color:#4d5a6e;transition:color .12s;touch-action:manipulation;}
+.nb{flex:0 0 44px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;padding:0;position:relative;color:#75859e;transition:color .12s;touch-action:manipulation;}
 .nb.on{color:var(--accent-solid);}
 .nb.on::before{content:'';position:absolute;inset:4px;border-radius:50%;background:radial-gradient(ellipse 130% 160% at 50% 0%,rgba(255,255,255,.22) 0%,rgba(56,189,248,.22) 55%);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 0 12px -2px rgba(56,189,248,.4);z-index:0;}
 .nb svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;position:relative;z-index:1;}
@@ -277,9 +311,9 @@ tr.sel-day{transition:background .5s ease;}
 .nb span{display:none;}
 .nb-pip{position:absolute;top:4px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--accent);display:none;z-index:2;}
 .nb-pip.on{display:block;}
-.slbl{padding:5px 16px 4px;font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.2em;border-bottom:1px solid #232b3d;background:#04060a;position:sticky;top:0;z-index:20;}
+.slbl{padding:5px 16px 4px;font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.2em;border-bottom:1px solid #232b3d;background:#04060a;position:sticky;top:0;z-index:20;}
 .sbar{display:grid;grid-template-columns:repeat(3,1fr);}
-.sbtn{flex:1;height:34px;background:none;border:none;border-bottom:1px solid transparent;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#4d5a6e;cursor:pointer;transition:color .12s,border-color .12s;}
+.sbtn{flex:1;height:34px;background:none;border:none;border-bottom:1px solid transparent;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#75859e;cursor:pointer;transition:color .12s,border-color .12s;}
 .sbtn.on{color:#38bdf8;border-color:#38bdf8;}
 .sbtn.on.sc-b{color:#fb923c;border-color:#fb923c;}
 .sbtn.on.sc-c{color:#a78bfa;border-color:#a78bfa;}
@@ -330,7 +364,7 @@ tr.sel-day{transition:background .5s ease;}
 #scr-sim .sb-top{display:flex;align-items:center;gap:6px;}
 #scr-sim .sb-ring{display:inline-block;width:6px;height:6px;border-radius:50%;border:1.4px solid #2a3244;background:transparent;}
 #scr-sim .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
-#scr-sim .sb-stat{font-family:'Roboto Mono',monospace;font-size:7.3px;font-weight:500;letter-spacing:.02em;color:#4d5a6e;font-variant-numeric:tabular-nums;}
+#scr-sim .sb-stat{font-family:'Roboto Mono',monospace;font-size:7.3px;font-weight:500;letter-spacing:.02em;color:#75859e;font-variant-numeric:tabular-nums;}
 #scr-sim .sbtn.on{
   border-color:rgba(var(--rgb),.9);
   background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(var(--rgb));
@@ -354,7 +388,7 @@ tr.sel-day{transition:background .5s ease;}
 #scr-tbl .sb-top{display:flex;align-items:center;gap:4px;}
 #scr-tbl .sb-ring{display:inline-block;width:5px;height:5px;border-radius:50%;border:1.2px solid #2a3244;background:transparent;}
 #scr-tbl .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
-#scr-tbl .sb-stat{font-family:'Roboto Mono',monospace;font-size:6.3px;font-weight:500;letter-spacing:.02em;color:#4d5a6e;font-variant-numeric:tabular-nums;}
+#scr-tbl .sb-stat{font-family:'Roboto Mono',monospace;font-size:6.3px;font-weight:500;letter-spacing:.02em;color:#75859e;font-variant-numeric:tabular-nums;}
 #scr-tbl .sbtn.on{
   border-color:rgba(var(--rgb),.9);
   background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(var(--rgb));
@@ -390,7 +424,7 @@ tr.sel-day{transition:background .5s ease;}
 .circ-panel-wrap{overflow:hidden;max-height:0;opacity:0;transform:scale(.94);transform-origin:top center;transition:max-height .38s cubic-bezier(.25,.46,.45,.94),opacity .3s ease,transform .34s cubic-bezier(.25,.46,.45,.94);}
 .circ-panel-wrap.open{max-height:9999px;opacity:1;transform:scale(1);}
 .circ-panel-inner{padding:10px 16px 14px;background:#161b26;border-radius:14px;margin:8px 0;}
-.circ-hint{text-align:center;font-size:9px;color:#4d5a6e;letter-spacing:.06em;padding:2px 0 6px;}
+.circ-hint{text-align:center;font-size:9px;color:#75859e;letter-spacing:.06em;padding:2px 0 6px;}
 
 /* ══════════════════════════════════════════════════════════════
    SEGMENTED GLASS BAR — Sim tab's Core/Risk/Ticker/Psych/Overrides
@@ -444,22 +478,22 @@ tr.sel-day{transition:background .5s ease;}
 .fc.off{opacity:.22;pointer-events:none;}
 .fc.off .fc-top{pointer-events:auto;opacity:1;}
 .fc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
-.fc-lbl{font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#4d5a6e;display:flex;align-items:center;gap:4px;}
-.ib{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border:1px solid #232b3d;font-size:8px;color:#4d5a6e;cursor:pointer;border-radius:2px;background:#10141c;font-family:'Inter',sans-serif;}
+.fc-lbl{font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#75859e;display:flex;align-items:center;gap:4px;}
+.ib{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border:1px solid #232b3d;font-size:8px;color:#75859e;cursor:pointer;border-radius:2px;background:#10141c;font-family:'Inter',sans-serif;}
 .ib:active{color:var(--accent-solid);border-color:var(--accent-solid);}
-.fc-note{font-size:9px;color:#4d5a6e;margin-top:4px;line-height:1.55;}
+.fc-note{font-size:9px;color:#75859e;margin-top:4px;line-height:1.55;}
 .tog-wrap{display:flex;align-items:center;gap:5px;cursor:pointer;}
 .tog{appearance:none;-webkit-appearance:none;width:28px;height:15px;border-radius:100px;background:#232b3d;border:1px solid #232b3d;position:relative;cursor:pointer;outline:none;transition:background .15s;flex-shrink:0;}
 .tog:checked{background:var(--accent);border-color:var(--accent-cyan);}
 .tog::after{content:'';position:absolute;width:9px;height:9px;border-radius:50%;background:#0a0d13;top:2px;left:2px;transition:transform .15s;}
 .tog:checked::after{transform:translateX(13px);}
-.tog-lbl{font-size:8px;color:#4d5a6e;letter-spacing:.07em;}
+.tog-lbl{font-size:8px;color:#75859e;letter-spacing:.07em;}
 .stp{display:flex;align-items:center;width:100%;background:#161b26;border:1px solid #232b3d;border-radius:3px;overflow:hidden;}
 .stp-btn{width:36px;height:32px;background:#10141c;border:none;color:#8892a4;font-family:'Inter',sans-serif;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;user-select:none;-webkit-user-select:none;touch-action:manipulation;border-right:1px solid #232b3d;}
 .stp-btn:last-child{border-right:none;border-left:1px solid #232b3d;}
 .stp-btn:active{background:#1c2333;color:var(--accent-solid);}
 .stp-val{flex:1;text-align:center;font-family:'Roboto Mono',monospace;font-size:16px !important;color:#e2e6ed;background:#161b26;border:none;outline:none;height:32px;padding:0 4px;min-width:0;}
-.stp-unit{font-size:8px;color:#4d5a6e;padding-right:7px;flex-shrink:0;background:#161b26;}
+.stp-unit{font-size:8px;color:#75859e;padding-right:7px;flex-shrink:0;background:#161b26;}
 /* Sim tab only (this same .stp component is reused for the Table tab's
    interval stepper too) — bumps every hand-entered number to the same
    700-weight tabular mono as .cmv/.dval above, so a value the user typed
@@ -470,7 +504,7 @@ tr.sel-day{transition:background .5s ease;}
 .ro-pill{display:inline-flex;align-items:center;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:2px;padding:2px 8px;margin-top:4px;}
 .ro-pill span{font-size:11px;color:#f87171;}
 .dist-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
-.dist-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;}
+.dist-lbl{font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.14em;}
 .ev-tag{font-size:11px;font-weight:500;}
 .dist-bar{height:4px;border-radius:2px;overflow:hidden;display:flex;background:#1c2333;}
 .db-g{background:#34d399;}.db-b{background:#60a5fa;}.db-r{background:#f87171;}
@@ -491,7 +525,7 @@ tr.sel-day{transition:background .5s ease;}
 .sim-btn.sc-d{--rgb:126,180,44;}
 .sim-btn.sc-e{--rgb:217,89,89;}
 .sim-btn.sc-f{--rgb:215,91,153;}
-.exp-btn{height:42px;padding:0 12px;background:transparent;border:none;color:#4d5a6e;font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:7px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:5px;}
+.exp-btn{height:42px;padding:0 12px;background:transparent;border:none;color:#75859e;font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:7px;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:5px;}
 .exp-btn svg{flex-shrink:0;}
 .exp-btn:active{color:var(--accent-solid);opacity:.72;}
 /* Round 78: Randomise Daily is the only mode that models real day-to-day
@@ -502,7 +536,7 @@ tr.sel-day{transition:background .5s ease;}
    already re-selects it) but the picker itself is hidden — nothing here
    for a user to change, on purpose. */
 .mode-row{padding:5px 16px 7px;border-bottom:1px solid #232b3d;align-items:center;gap:8px;background:#10141c;display:none;}
-.mode-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;white-space:nowrap;}
+.mode-lbl{font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.14em;white-space:nowrap;}
 .mode-sel{flex:1;background:#161b26;border:1px solid #232b3d;color:#8892a4;font-family:'Inter',sans-serif;font-size:11px !important;height:28px;padding:0 7px;outline:none;border-radius:3px;}
 .chart-panel{margin:8px 0;background:#10141c;border:1px solid #232b3d;border-radius:12px;overflow:hidden;}
 /* Round 90: "I don't want the equity curve or its stats at the bottom
@@ -519,7 +553,7 @@ tr.sel-day{transition:background .5s ease;}
   box-shadow:none !important;
 }
 .chart-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 12px 3px;}
-.chart-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;}
+.chart-lbl{font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.14em;}
 .chart-tt{font-size:10px;color:#34d399;min-height:14px;text-align:right;font-weight:500;}
 .chart-wrap{height:120px;position:relative;}
 canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:none;}
@@ -834,13 +868,13 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .cm{padding:7px 10px;border-right:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);}
 .cm:nth-child(even){border-right:none;}
 .cm:nth-last-child(-n+2){border-bottom:none;}
-.cml{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;}
+.cml{font-size:7px;color:#75859e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;}
 /* Bumped to the same 700-weight Roboto Mono + tabular figures used on
    the Table tab's share gauges/capital tallies, so this tab's own summary
    numbers read as the same "material" instead of a plain lighter-weight
    readout. */
 .cmv{font-family:'Roboto Mono',monospace;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
-.cms{font-size:8px;color:#4d5a6e;margin-top:2px;}
+.cms{font-size:8px;color:#75859e;margin-top:2px;}
 .cmv.go{color:#34d399;}.cmv.stop{color:#f87171;}.cmv.amb{color:#fbbf24;}.cmv.steel{color:#60a5fa;}
 /* .chart-metrics scoped overrides: the shared .cm/.cml/.cmv/.cms classes above
    stay untouched (diag-tiles reuses them at their original size/border), this
@@ -896,7 +930,7 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .diag-detail summary .chev{transition:transform .2s ease;font-size:9px;}
 .diag-detail[open] summary .chev{transform:rotate(180deg);}
 .diag-grp{padding:8px 12px 0;}
-.diag-grp-lbl{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#4d5a6e;margin-bottom:5px;}
+.diag-grp-lbl{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#75859e;margin-bottom:5px;}
 .diag-grp-rows{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
 .diag-grp-row{font-size:10.5px;color:#7d8699;padding:2px 0 5px;display:flex;justify-content:space-between;gap:6px;}
 .diag-grp-row.full{grid-column:1/-1;}
@@ -910,11 +944,11 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .dneg{font-family:'Roboto Mono',monospace;color:#f87171;font-weight:700;font-variant-numeric:tabular-nums;}
 .dneu{font-family:'Roboto Mono',monospace;color:#fbbf24;font-weight:700;font-variant-numeric:tabular-nums;}
 .dval{font-family:'Roboto Mono',monospace;color:#e2e6ed;font-weight:700;font-variant-numeric:tabular-nums;}
-.dnote{font-size:9px;color:#4d5a6e;}
+.dnote{font-size:9px;color:#75859e;}
 .disc{margin:8px 16px 16px;}
-.disc p{font-size:9px;color:#4d5a6e;line-height:1.6;}
+.disc p{font-size:9px;color:#75859e;line-height:1.6;}
 .tbl-controls{display:flex;gap:6px;padding:5px 16px;border-bottom:1px solid #232b3d;align-items:center;background:#10141c;}
-.tc-lbl{font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;white-space:nowrap;}
+.tc-lbl{font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.12em;white-space:nowrap;}
 .tc-stp{flex:none;}
 /* "the header for the table will also be updated to reflect the sim
    section" — this interval stepper already shares its underlying glass
@@ -957,9 +991,9 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .tc-quick{display:flex;align-items:center;gap:3px;background:rgba(12,15,22,.44);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:2px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
 .tc-qbtn{border:none;background:transparent;color:#7d8699;font-family:'Roboto Mono',monospace;font-size:9.5px;font-weight:600;padding:4px 8px;border-radius:7px;cursor:pointer;touch-action:manipulation;}
 .tc-qbtn.on{background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(56,189,248);color:#0a0d13;font-weight:800;box-shadow:0 2px 8px -2px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
-.tc-qbtn-custom{color:#4d5a6e;font-family:'Roboto Mono',monospace;letter-spacing:.04em;padding:4px 7px;min-width:14px;text-align:center;}
+.tc-qbtn-custom{color:#75859e;font-family:'Roboto Mono',monospace;letter-spacing:.04em;padding:4px 7px;min-width:14px;text-align:center;}
 .tc-qbtn-custom.on{background:rgba(56,189,248,.16);color:var(--accent-solid);box-shadow:none;font-weight:700;}
-.tc-close{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #232b3d;border-radius:5px;color:#4d5a6e;font-size:10px;cursor:pointer;touch-action:manipulation;}
+.tc-close{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #232b3d;border-radius:5px;color:#75859e;font-size:10px;cursor:pointer;touch-action:manipulation;}
 /* Share gauges used to be drawn on-canvas inside the race chart itself,
    docked bottom-right during a hover. With six strategies now instead of
    three, that many gauges crowded into the chart's own corner read as
@@ -979,7 +1013,7 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    chart half's own flex:1 1 0 is untouched, so it just absorbs
    whatever height that frees up instead of splitting evenly. */
 .dv-half:last-child{border-bottom:none;flex:0 0 auto;}
-.dv-empty{padding:32px;text-align:center;font-size:10px;color:#4d5a6e;}
+.dv-empty{padding:32px;text-align:center;font-size:10px;color:#75859e;}
 /* Original wide table, restored — now contained in the bottom .dv-half
    instead of the whole screen. tbl-scroll is the ONE scroll context in
    this half; thead sticks to its top correctly since overflow-y lives
@@ -999,17 +1033,18 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
    only the lock behavior on top of it is gone. */
 /* Round 107: "I want the table to only show 7 rows" - max-height caps it
    instead of filling the rest of the screen (flex:1's old behavior,
-   which varied with device height). 176px = thead (21.5px, measured) +
-   7 data rows (22px each, measured) + a hair of slack; everything past
-   row 7 is still there, just scrollable. The lower .dv-half switches to
-   flex:0 0 auto (see that rule) so it settles to exactly this content
-   height instead of stretching to match the chart panel's 50/50 flex
-   share - the chart panel (flex:1 1 0, unchanged) absorbs whatever
-   height that frees up instead. */
-.tbl-scroll{flex:1;max-height:176px;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px));}
+   which varied with device height). Round 108: "I want 9 rows to show
+   now" - 220px = thead (21.5px, measured) + 9 data rows (22px each,
+   measured) + a hair of slack; everything past row 9 is still there,
+   just scrollable. The lower .dv-half switches to flex:0 0 auto (see
+   that rule) so it settles to exactly this content height instead of
+   stretching to match the chart panel's flex share - the chart panel
+   (flex:1 1 0, unchanged) absorbs whatever height that frees up
+   instead. */
+.tbl-scroll{flex:1;max-height:220px;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px));}
 table{width:100%;border-collapse:collapse;min-width:580px;}
 thead{background:#161b26;position:sticky;top:0;z-index:5;}
-th{font-family:'Roboto Mono',monospace;font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.04em;padding:6px 7px;text-align:right;border-bottom:1px solid #232b3d;white-space:nowrap;}
+th{font-family:'Roboto Mono',monospace;font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.04em;padding:6px 7px;text-align:right;border-bottom:1px solid #232b3d;white-space:nowrap;}
 th:nth-child(1),th:nth-child(2){text-align:center;}th:nth-child(4){text-align:left;}
 tbody tr{border-bottom:1px solid #161b26;}
 tr.rl{background:rgba(248,113,113,.05);}tr.rb_{background:rgba(96,165,250,.04);}
@@ -1017,8 +1052,8 @@ tr.rms-w{background:rgba(52,211,153,.07);}tr.rms-w td{color:#34d399 !important;}
 tr.rms-l{background:rgba(248,113,113,.07);}tr.rms-l td{color:#f87171 !important;}
 tr.sel-day{background:rgba(var(--glow-rgb),.08) !important;}tr.sel-day td{color:var(--accent-solid) !important;}
 td{font-family:'Roboto Mono',monospace;padding:5px 7px;text-align:right;font-size:10px;white-space:nowrap;color:#e2e6ed;}
-td:nth-child(1),td:nth-child(2){text-align:center;color:#4d5a6e;font-size:9px;}
-td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
+td:nth-child(1),td:nth-child(2){text-align:center;color:#75859e;font-size:9px;}
+td:nth-child(4){text-align:left;font-size:9px;color:#75859e;}
 /* Capital used to read as just another settings row (same 32px stepper
    every field elsewhere uses) despite being the one number every one of
    the six strategies shares and compares against - given real card
@@ -1065,11 +1100,11 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 .cap-quick{display:flex;align-items:center;gap:6px;padding:3px 0;}
 .cap-qbtn{flex:1;border:none;background:transparent;color:#7d8699;font-family:'Roboto Mono',monospace;font-size:12px;font-weight:700;padding:10px 4px;border-radius:9px;cursor:pointer;touch-action:manipulation;}
 .cap-qbtn.on{background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(56,189,248);color:#0a0d13;font-weight:800;box-shadow:0 2px 8px -2px rgba(56,189,248,.5),inset 0 1px 0 rgba(255,255,255,.5);}
-.cap-qbtn-custom{flex:0 0 36px;color:#4d5a6e;letter-spacing:.02em;font-size:11px;}
+.cap-qbtn-custom{flex:0 0 36px;color:#75859e;letter-spacing:.02em;font-size:11px;}
 .cap-qbtn-custom.on{background:rgba(56,189,248,.16);color:var(--accent-solid);box-shadow:none;font-weight:700;}
 .cap-stp-row{display:flex;align-items:center;gap:6px;}
 .cap-stp-row #gc-stepper{flex:1;}
-.cap-close{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #232b3d;border-radius:8px;color:#4d5a6e;font-size:13px;cursor:pointer;touch-action:manipulation;}
+.cap-close{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #232b3d;border-radius:8px;color:#75859e;font-size:13px;cursor:pointer;touch-action:manipulation;}
 #gc-stepper .stp{
   height:44px;border-radius:6px;overflow:hidden;
   /* Neutral liquid, not a tinted one — same pooled-top/dark-bottom
@@ -1088,7 +1123,7 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 #gc-stepper .stp-btn:last-child{border-right:none;border-left:1px solid rgba(var(--glow-rgb),.18);}
 #gc-stepper .stp-val{font-family:'Roboto Mono',monospace;font-size:22px !important;font-weight:700;color:#e2e6ed;background:transparent;}
 #gc-stepper .stp-unit{font-size:12px;font-weight:700;color:var(--accent-solid);background:transparent;padding-right:12px;}
-.tbl-empty{padding:32px;text-align:center;font-size:10px;color:#4d5a6e;}
+.tbl-empty{padding:32px;text-align:center;font-size:10px;color:#75859e;}
 .log-body{padding:8px 16px;}
 /* Round 78: was boxed via the shared card-glass list (a window around
    one line of meta-text); now just accent-colored text so it stands
@@ -1103,25 +1138,25 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 .ni:focus{border-color:var(--accent-solid);}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:6px;}
 .sc-s{background:#10141c;padding:7px 8px;border-radius:10px;text-align:center;border:1px solid #232b3d;}
-.scl{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;}
+.scl{font-size:7px;color:#75859e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;}
 .scv{font-size:12px;font-weight:600;color:#e2e6ed;}
 .sess-btns{display:flex;gap:6px;margin-bottom:7px;}
 .sess-btn{flex:1;height:36px;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:7px;border:1px solid;touch-action:manipulation;}
 .sess-btn.log{background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.3);color:var(--accent-solid);}
-.sess-btn.clr{background:transparent;border-color:#232b3d;color:#4d5a6e;}
+.sess-btn.clr{background:transparent;border-color:#232b3d;color:#75859e;}
 .grade-card{background:#10141c;border:1px solid #232b3d;border-radius:12px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;margin:0 -16px 10px;}
-.grade-info .gt{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;margin-bottom:3px;}
+.grade-info .gt{font-size:7px;color:#75859e;text-transform:uppercase;letter-spacing:.12em;margin-bottom:3px;}
 .grade-info .gs{font-size:10px;color:#8892a4;}
 .grade-big{font-family:'Inter',sans-serif;font-size:40px;font-weight:800;line-height:1;color:#e2e6ed;}
 .log-divider{border-top:1px solid #232b3d;margin:4px 0 8px;}
-.jdate{font-size:9px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;text-align:center;margin-bottom:7px;}
+.jdate{font-size:9px;color:#75859e;text-transform:uppercase;letter-spacing:.14em;text-align:center;margin-bottom:7px;}
 .jsec{background:#10141c;border-radius:3px;margin-bottom:6px;overflow:hidden;border:1px solid #232b3d;}
-.jsec-hd{padding:5px 12px;font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.15em;border-bottom:1px solid #232b3d;background:transparent;}
+.jsec-hd{padding:5px 12px;font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.15em;border-bottom:1px solid #232b3d;background:transparent;}
 .jrow{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-bottom:1px solid #1c2333;}
 .jrow:last-child{border:none;}
 .jrow label{font-size:10px;color:#8892a4;}
 .scale-row{display:flex;gap:3px;}
-.scale-btn{width:28px;height:24px;border-radius:2px;border:1px solid #232b3d;background:#161b26;font-size:10px;font-family:'Inter',sans-serif;color:#4d5a6e;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;}
+.scale-btn{width:28px;height:24px;border-radius:2px;border:1px solid #232b3d;background:#161b26;font-size:10px;font-family:'Inter',sans-serif;color:#75859e;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;}
 .scale-btn.on{border-color:rgba(251,191,36,.4);color:#fbbf24;background:rgba(251,191,36,.07);}
 .jsel{background:#161b26;border:1px solid #232b3d;color:#e2e6ed;font-family:'Inter',sans-serif;font-size:13px !important;height:28px;padding:0 7px;outline:none;border-radius:3px;min-width:120px;}
 .jnote{width:100%;background:#161b26;border:1px solid #232b3d;color:#e2e6ed;font-family:'Inter',sans-serif;font-size:14px;padding:7px 10px;outline:none;border-radius:3px;resize:none;min-height:56px;line-height:1.5;}
@@ -1132,17 +1167,17 @@ td:nth-child(4){text-align:left;font-size:9px;color:#4d5a6e;}
 .j-save-btn:active{background:rgba(56,189,248,.1);}
 .spark-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px;}
 .spark-cell{background:#10141c;padding:7px 9px;border-radius:3px;border:1px solid #232b3d;}
-.spark-lbl{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
+.spark-lbl{font-size:7px;color:#75859e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
 canvas.spark{width:100%;height:34px;display:block;}
 .jhist{background:#10141c;border-radius:12px;overflow:hidden;border:1px solid #232b3d;margin:0 -16px;}
-.jhist-hd{padding:5px 12px;font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.15em;border-bottom:1px solid #232b3d;background:transparent;}
+.jhist-hd{padding:5px 12px;font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.15em;border-bottom:1px solid #232b3d;background:transparent;}
 .jentry{padding:7px 12px;border-bottom:1px solid #1c2333;}
 .jentry:last-child{border:none;}
-.jentry-date{font-size:8px;color:#4d5a6e;margin-bottom:3px;}
+.jentry-date{font-size:8px;color:#75859e;margin-bottom:3px;}
 .jentry-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;}
 .jentry-cell{font-size:9px;color:#8892a4;display:flex;flex-direction:column;gap:1px;}
-.jentry-cell .jk{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;}
-.jentry-note{font-size:9px;color:#4d5a6e;margin-top:4px;border-left:1px solid #232b3d;padding-left:8px;font-style:italic;}
+.jentry-cell .jk{font-size:7px;color:#75859e;text-transform:uppercase;letter-spacing:.1em;}
+.jentry-note{font-size:9px;color:#75859e;margin-top:4px;border-left:1px solid #232b3d;padding-left:8px;font-style:italic;}
 .stats-body{padding:8px 16px;}
 .vs-card{background:#10141c;border-radius:12px;margin-bottom:7px;overflow:hidden;border:1px solid #232b3d;}
 /* .vs-hd used to paint a solid #161b26 bar over its parent .vs-card,
@@ -1162,12 +1197,12 @@ canvas.spark{width:100%;height:34px;display:block;}
 .vs-badge.on-track{background:rgba(52,211,153,.1);color:#34d399;}
 .vs-badge.behind{background:rgba(248,113,113,.1);color:#f87171;}
 .vs-badge.ahead{background:rgba(96,165,250,.1);color:#60a5fa;}
-.vs-badge.nosim{background:#161b26;color:#4d5a6e;}
+.vs-badge.nosim{background:#161b26;color:#75859e;}
 .sc-verdict{padding:9px 12px 11px;font-size:10.5px;color:#8892a4;line-height:1.55;border-bottom:1px solid rgba(255,255,255,.06);}
 .sc-verdict b{color:#c7cedb;}
 .sc-metric{padding:8px 12px 2px;}
-.sc-metric-lbl{font-size:7.3px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;}
-.sc-dir{text-transform:none;letter-spacing:normal;color:#3a4356;}
+.sc-metric-lbl{font-size:7.3px;color:#75859e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;display:flex;align-items:center;gap:4px;}
+.sc-dir{text-transform:none;letter-spacing:normal;color:#677798;}
 .sc-bar-row{display:flex;align-items:center;gap:6px;margin-bottom:3px;}
 .sc-bar-name{font-size:7.5px;color:#7d8699;width:11px;flex-shrink:0;}
 .sc-bar-track{flex:1;height:10px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;}
@@ -1182,7 +1217,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 .vs-rl{font-size:9px;color:#8892a4;}
 .vs-rv{display:flex;align-items:center;gap:7px;font-size:9px;}
 .vs-real{color:#fbbf24;font-weight:600;}
-.vs-sim{color:#4d5a6e;}
+.vs-sim{color:#75859e;}
 .vd{padding:1px 5px;border-radius:2px;font-size:8px;font-weight:600;}
 .vd.pos{background:rgba(52,211,153,.1);color:#34d399;}
 .vd.neg{background:rgba(248,113,113,.1);color:#f87171;}
@@ -1193,7 +1228,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 .si label{font-size:9px;color:#8892a4;}
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px;}
 .sg{background:#10141c;padding:7px 9px;border-radius:3px;border:1px solid #232b3d;}
-.sgl{font-size:7px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;}
+.sgl{font-size:7px;color:#75859e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;}
 .sgv{font-family:'Roboto Mono',monospace;font-size:13px;font-weight:600;color:#e2e6ed;}
 .gauge-row{background:#10141c;border:1px solid #232b3d;border-radius:3px;padding:8px 10px;margin:0 -16px 6px;}
 .wrc{background:#10141c;border:1px solid #232b3d;border-radius:3px;overflow:hidden;margin:0 -16px 5px;}
@@ -1205,25 +1240,25 @@ canvas.spark{width:100%;height:34px;display:block;}
 .wrc-row:last-child{border:none;}
 .wrc-lbl{color:#8892a4;}
 .wrc-val{font-weight:600;}
-.wrc-insight{font-size:9px;color:#4d5a6e;margin-top:6px;line-height:1.6;border-top:1px solid #232b3d;padding-top:6px;}
+.wrc-insight{font-size:9px;color:#75859e;margin-top:6px;line-height:1.6;border-top:1px solid #232b3d;padding-top:6px;}
 .gauge-lbl{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
 .gauge-lbl span:first-child{font-size:10px;color:#8892a4;font-weight:500;}
 .gauge-r{font-size:8px;font-weight:700;letter-spacing:.08em;}
 .gauge-track{position:relative;height:10px;background:#161b26;border-radius:2px;overflow:hidden;border:1px solid #232b3d;}
-.gauge-zero{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#4d5a6e;z-index:2;}
+.gauge-zero{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#75859e;z-index:2;}
 .gauge-bar{position:absolute;top:0;bottom:0;border-radius:2px;opacity:.85;}
-.gauge-sub{font-size:8px;color:#4d5a6e;margin-top:5px;}
+.gauge-sub{font-size:8px;color:#75859e;margin-top:5px;}
 .modal,.imodal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;align-items:flex-end;justify-content:center;}
 .modal.open,.imodal.open{display:flex;}
 .mbox,.ibox{background:#10141c;border-top:1px solid var(--accent-cyan);max-width:600px;width:100%;padding:14px 16px 32px;max-height:80vh;overflow-y:auto;border-radius:8px 8px 0 0;position:relative;}
-.mx{position:absolute;top:10px;right:14px;background:transparent;border:1px solid #232b3d;color:#4d5a6e;font-family:'Inter',sans-serif;font-size:8px;padding:2px 8px;cursor:pointer;border-radius:2px;}
+.mx{position:absolute;top:10px;right:14px;background:transparent;border:1px solid #232b3d;color:#75859e;font-family:'Inter',sans-serif;font-size:8px;padding:2px 8px;cursor:pointer;border-radius:2px;}
 .ibox h2{font-family:'Inter',sans-serif;font-size:10px;color:#fbbf24;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;}
 .ibox p,.ibox li{font-size:11px;color:#8892a4;line-height:1.65;margin-bottom:3px;}
 .ibox ul{padding-left:14px;}
 .friction-breakdown{background:#161b26;border:1px solid #232b3d;border-radius:3px;padding:6px 8px;margin-top:6px;}
 .fb-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #1c2333;}
 .fb-row:last-child{border:none;}
-.fb-lbl{font-size:8px;color:#4d5a6e;}
+.fb-lbl{font-size:8px;color:#75859e;}
 .fb-val{font-size:8px;color:#8892a4;font-weight:500;}
 .fb-total{display:flex;justify-content:space-between;padding:4px 0 0;}
 .fb-total .fb-lbl{color:#8892a4;font-weight:600;}
@@ -1378,17 +1413,20 @@ canvas.spark{width:100%;height:34px;display:block;}
      have data entered it shouldn't replay for them" - so the gate
      below is no longer about whether the intro was ever SEEN, only
      about whether the user has ever logged real session or journal
-     data (sessionLog/journalLog inside the ahm-v39 save blob) - synced
-     with the equivalent, non-hardcoded check in the main script's
-     hasRealData() far below (see the comment there for why this one
-     has to duplicate that logic instead of just calling it - the app's
-     own script hasn't run yet this early in parsing). A user with real
+     data (sessionLog/journalLog inside the ahm-v39 save blob), OR
+     (round 108) ever pressed Simulate at least once (hasSimulated in
+     that same blob - "once the simulate button is hit... [it]
+     shouldn't show on the next page load/refresh") - synced with the
+     equivalent, non-hardcoded check in the main script's hasRealData()
+     far below (see the comment there for why this one has to duplicate
+     that logic instead of just calling it - the app's own script
+     hasn't run yet this early in parsing). A user with real
      data keeps seeing NOTHING extra, same zero-flash guarantee as
      before; anyone else keeps this veil until the real .intro-overlay
      is ready to take over (see ensureIntroDom() far below) - both are
      opaque #000, so that handoff is an invisible swap, not a fade. -->
 <div id="pre-veil"></div>
-<script>try{var _r=localStorage.getItem('ahm-v39');if(_r){var _d=JSON.parse(_r);if(_d&&((_d.sessionLog&&_d.sessionLog.length)||(_d.journalLog&&_d.journalLog.length))){var _pv=document.getElementById('pre-veil');if(_pv)_pv.remove();}}}catch(e){}</script>
+<script>try{var _r=localStorage.getItem('ahm-v39');if(_r){var _d=JSON.parse(_r);if(_d&&((_d.sessionLog&&_d.sessionLog.length)||(_d.journalLog&&_d.journalLog.length)||_d.hasSimulated)){var _pv=document.getElementById('pre-veil');if(_pv)_pv.remove();}}}catch(e){}</script>
 <canvas id="app-flake-cv"></canvas>
 <div class="app">
 
@@ -1545,11 +1583,11 @@ canvas.spark{width:100%;height:34px;display:block;}
         <div class="inp-row"><label>Shares held</label><input class="ni" id="dShares" type="number" min="1" placeholder="100" oninput="onDaily()"></div>
       </div>
       <div class="tb-card">
-        <div style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;">Trade Breakdown</div>
+        <div style="font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;">Trade Breakdown</div>
         <div class="inp-row" style="border-bottom:1px solid #1c2333;padding:5px 0;"><label style="font-size:9px;color:#34d399;">Profitable</label><div style="display:flex;gap:5px;"><input class="ni" id="dTotW" type="number" min="0" placeholder="0" oninput="onDaily()" style="width:50px;" title="Count"><input class="ni" id="dCapW" type="number" min="0" max="100" step="0.1" placeholder="%" oninput="onDaily()" style="width:56px;" title="% capture"></div></div>
         <div class="inp-row" style="border-bottom:1px solid #1c2333;padding:5px 0;"><label style="font-size:9px;color:#60a5fa;">Breakeven</label><div style="display:flex;gap:5px;"><input class="ni" id="dTotBE" type="number" min="0" placeholder="0" oninput="onDaily()" style="width:50px;" title="Count"><input class="ni" id="dCapBE" type="number" min="0" max="100" step="0.1" placeholder="%" oninput="onDaily()" style="width:56px;" title="% capture"></div></div>
         <div class="inp-row" style="padding:5px 0;"><label style="font-size:9px;color:#f87171;">Losers</label><div style="display:flex;gap:5px;"><input class="ni" id="dTotL" type="number" min="0" placeholder="0" oninput="onDaily()" style="width:50px;" title="Count"><input class="ni" id="dCapL" type="number" min="0" max="100" step="0.1" placeholder="%" oninput="onDaily()" style="width:56px;" title="% capture"></div></div>
-        <div style="font-size:8px;color:#4d5a6e;margin-top:5px;letter-spacing:.04em;">Count · % capture each</div>
+        <div style="font-size:8px;color:#75859e;margin-top:5px;letter-spacing:.04em;">Count · % capture each</div>
       </div>
       <div class="g3">
         <div class="sc-s"><div class="scl">Win Rate</div><div class="scv" id="dd-wr" style="color:#34d399">—</div></div>
@@ -1572,7 +1610,7 @@ canvas.spark{width:100%;height:34px;display:block;}
 
       <button class="j-save-btn" id="log-export-btn" onclick="exportLogCSV()" style="border-color:#60a5fa;color:#60a5fa;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Export Log + Journal CSV</span></button>
       <div class="spark-grid" id="spark-grid" style="display:none;"></div>
-      <div class="jhist" id="jhist"><div class="jhist-hd">History</div><div class="jentry" style="color:#4d5a6e;font-size:10px;text-align:center;padding:14px;">No entries yet.</div></div>
+      <div class="jhist" id="jhist"><div class="jhist-hd">History</div><div class="jentry" style="color:#75859e;font-size:10px;text-align:center;padding:14px;">No entries yet.</div></div>
     </div>
   </div>
 
@@ -1581,7 +1619,7 @@ canvas.spark{width:100%;height:34px;display:block;}
     <div class="stats-body">
       <div class="vs-card">
         <div class="vs-hd"><span class="vs-title">Real vs Sim</span><span class="vs-badge nosim" id="vs-badge">No Sim</span></div>
-        <div class="vs-rows" id="vs-rows"><div style="padding:8px 0;text-align:center;font-size:9px;color:#4d5a6e;">Run a simulation first.</div></div>
+        <div class="vs-rows" id="vs-rows"><div style="padding:8px 0;text-align:center;font-size:9px;color:#75859e;">Run a simulation first.</div></div>
       </div>
 
       <!-- Broker data entry, compartmentalized behind a single circle —
@@ -2155,6 +2193,7 @@ function _sim(tab){
   renderTable(tab,rows,acct0,c,msp,capped);
   renderStratComparison();
   updateStratTab(tab);
+  hasSimulated=true;
   save();
 }
 
@@ -2574,7 +2613,7 @@ function drawCombinedChart(cv,legendEl){
   const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
   /* canvas left transparent — the panel behind it is frosted glass */
   if(!active.length){
-    ctx.fillStyle='#4d5a6e';ctx.font='11px Roboto Mono';ctx.textAlign='center';
+    ctx.fillStyle='#75859e';ctx.font='11px Roboto Mono';ctx.textAlign='center';
     ctx.fillText('Run a simulation on any strategy to see it here',W/2,H/2);
     if(legendEl)legendEl.innerHTML='';
     return;
@@ -2603,7 +2642,7 @@ function drawCombinedChart(cv,legendEl){
   if(legendEl){
     legendEl.innerHTML=series.map(s=>{
       const last=s.pnls[s.pnls.length-1];const days=s.eq[s.eq.length-1].day;
-      return`<div style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0;"></span><span style="font-size:9px;color:#8892a4;">${s.label}</span><span style="font-size:9px;font-weight:600;color:${s.color};">${last>=0?'+$':'−$'}${fmt(Math.abs(last))}</span><span style="font-size:8px;color:#4d5a6e;">· ${days}d</span></div>`;
+      return`<div style="display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0;"></span><span style="font-size:9px;color:#8892a4;">${s.label}</span><span style="font-size:9px;font-weight:600;color:${s.color};">${last>=0?'+$':'−$'}${fmt(Math.abs(last))}</span><span style="font-size:8px;color:#75859e;">· ${days}d</span></div>`;
     }).join('');
   }
 }
@@ -2909,7 +2948,7 @@ function renderTable(tab,rowsIn,acct0In,cIn,mspIn,cappedIn){
     const pC=r.dayPnl>0?'#34d399':r.dayPnl<0?'#f87171':'#fbbf24';
     const moPnl=r.cumPnl-((msp||{})[r.mIdx]||0);
     const dpS=r.dayPct!=null?(r.dayPct>=0?'+':'')+r.dayPct.toFixed(2)+'%':'—';
-    const dpC=r.dayPct!=null?(r.dayPct>=0?'#34d399':'#f87171'):'#4d5a6e';
+    const dpC=r.dayPct!=null?(r.dayPct>=0?'#34d399':'#f87171'):'#75859e';
     let label='—';
     if(r.isMilestone)label='★ '+r.msVal.toLocaleString();
     else if(r.day===1)label='Start';
@@ -2917,7 +2956,7 @@ function renderTable(tab,rowsIn,acct0In,cIn,mspIn,cappedIn){
     const totTr=r.dayWinCt+r.dayLoseCt+r.dayBECt;
     const wrPct=totTr>0?((r.dayWinCt/totTr)*100).toFixed(0)+'%':'—';
     const rgBadge=idx===rgIdx?RG_BADGE_SVG:'';
-    tr.innerHTML=`<td>${rgBadge}${r.day}</td><td>${cal(r.calMo)}</td><td style="color:#e2e6ed">${(moPnl>=0?'+$':'−$')+fmt(Math.abs(moPnl))}</td><td>${label}</td><td style="color:#fbbf24;font-weight:600">${r.shares.toLocaleString()}</td><td style="color:#4d5a6e;font-size:9px">${wrPct}</td><td style="font-size:9px;color:#8892a4">${r.numTr||'—'}</td><td style="color:${r.dayTicks>0?'#34d399':r.dayTicks<0?'#f87171':'#4d5a6e'}">${r.dayTicks!==0?(r.dayTicks>0?'+':'')+r.dayTicks+'t':'—'}</td><td style="color:${dpC};font-size:9px">${dpS}</td><td style="color:${pC};font-weight:600">${sgn(r.dayPnl)}</td><td style="color:${(r.cumPnl/acct0*100)>=0?'#34d399':'#f87171'};font-size:9px">${pct(r.cumPnl/acct0*100,1)}</td><td style="color:#4d5a6e;font-size:9px">${r.dayFees>0?'−$'+fmt(r.dayFees):'—'}</td><td style="color:#4d5a6e;font-size:9px">${(r.surplus>=0?'$':'−$')+fmt(Math.abs(r.surplus))}</td><td style="color:#fbbf24;font-size:9px">${r.newSh>0?'+'+r.newSh:'—'}</td><td style="color:#e2e6ed;font-weight:600">${(r.cumPnl>=0?'$':'−$')+fmt(Math.abs(r.cumPnl))}</td>`;
+    tr.innerHTML=`<td>${rgBadge}${r.day}</td><td>${cal(r.calMo)}</td><td style="color:#e2e6ed">${(moPnl>=0?'+$':'−$')+fmt(Math.abs(moPnl))}</td><td>${label}</td><td style="color:#fbbf24;font-weight:600">${r.shares.toLocaleString()}</td><td style="color:#75859e;font-size:9px">${wrPct}</td><td style="font-size:9px;color:#8892a4">${r.numTr||'—'}</td><td style="color:${r.dayTicks>0?'#34d399':r.dayTicks<0?'#f87171':'#75859e'}">${r.dayTicks!==0?(r.dayTicks>0?'+':'')+r.dayTicks+'t':'—'}</td><td style="color:${dpC};font-size:9px">${dpS}</td><td style="color:${pC};font-weight:600">${sgn(r.dayPnl)}</td><td style="color:${(r.cumPnl/acct0*100)>=0?'#34d399':'#f87171'};font-size:9px">${pct(r.cumPnl/acct0*100,1)}</td><td style="color:#75859e;font-size:9px">${r.dayFees>0?'−$'+fmt(r.dayFees):'—'}</td><td style="color:#75859e;font-size:9px">${(r.surplus>=0?'$':'−$')+fmt(Math.abs(r.surplus))}</td><td style="color:#fbbf24;font-size:9px">${r.newSh>0?'+'+r.newSh:'—'}</td><td style="color:#e2e6ed;font-weight:600">${(r.cumPnl>=0?'$':'−$')+fmt(Math.abs(r.cumPnl))}</td>`;
     tr.addEventListener('click',()=>{dvSelDay=r.day;renderTable(tab);bloomRow($('main-tbody').querySelector('tr.sel-day'));});
     tbody.appendChild(tr);
   }
@@ -3131,7 +3170,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
   const realPts=sortedLog.length?sortedLog.map((e,i)=>{realCum+=e.pnl;return{idx:i,date:e.date,cap:realCapS+realCum};}):[];
   const hasReal=realPts.length>1&&realCapS>0;
   if(!active.length&&!hasReal){
-    ctx.fillStyle='#4d5a6e';ctx.font='11px Roboto Mono';ctx.textAlign='center';
+    ctx.fillStyle='#75859e';ctx.font='11px Roboto Mono';ctx.textAlign='center';
     ctx.fillText('Run a simulation to see the race to goal',W/2,H/2);
     if(legendEl)legendEl.innerHTML='';
     const bubblesElEmpty=$('dv-ep-bubbles');
@@ -3210,7 +3249,7 @@ function dvDrawRaceChart(cv,legendEl,hoverDay){
       ctx.strokeStyle='rgba(255,255,255,.14)';ctx.lineWidth=1;
       ctx.beginPath();ctx.moveTo(gx,pd.t);ctx.lineTo(gx,pd.t+ph);ctx.stroke();
     }
-    ctx.fillStyle='#4d5a6e';ctx.fillText(cal(dayToCal(day)),gx,pd.t+ph+13);
+    ctx.fillStyle='#75859e';ctx.fillText(cal(dayToCal(day)),gx,pd.t+ph+13);
   }
 
   // ── "Time to rapid growth" diagnostic ──
@@ -3530,7 +3569,7 @@ function dvDrawGaugeRow(cv,hoverDay){
   const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
   ctx.clearRect(0,0,W,H);
   if(!active.length){
-    ctx.fillStyle='#4d5a6e';ctx.font='9px Roboto Mono';ctx.textAlign='center';
+    ctx.fillStyle='#75859e';ctx.font='9px Roboto Mono';ctx.textAlign='center';
     ctx.fillText('Share gauges appear once a strategy is simulated',W/2,H/2);
     return;
   }
@@ -3567,7 +3606,14 @@ function dvDrawGaugeRow(cv,hoverDay){
   // the gauge claims that reclaimed headroom. Sized to fill whatever
   // space it actually has — bounded only by the row's own height and how
   // many gauges need to fit side by side — rather than an arbitrary cap.
-  const rMaxByHeight=gY-4;
+  // Round 109: reserves a bit more headroom above the dome (4 -> 10) than
+  // it strictly needs for the dome itself, so the leader triangle (see
+  // below) always has clear room to sit on top of it without ever getting
+  // clipped by the canvas's own top edge - verified empirically (pixel-
+  // scanned the canvas for the triangle's bright fill and confirmed its
+  // bounds never touch y=0) with all 6 strategies active, the tightest
+  // case since gR is largest and most likely height-bound then.
+  const rMaxByHeight=gY-10;
   const rMaxByWidth=(availW-(n-1)*gGap)/(n*2);
   const gR=Math.max(13,Math.min(rMaxByHeight,rMaxByWidth));
   const rowW=n*gR*2+(n-1)*gGap;
@@ -3583,13 +3629,29 @@ function dvDrawGaugeRow(cv,hoverDay){
     ctx.font='700 7.2px Roboto Mono';
     ctx.fillStyle=`rgba(${r},${g},${b},.9)`;
     ctx.fillText(txt,gX[i],gY+11);
+    // Round 109: leader marker moved from beside the capital-tally TEXT
+    // (to the right of it, at roughly the text's own vertical level) to
+    // directly ON the GAUGE dome itself - "on top of the share gauge that
+    // is highest in capital, not on the right side of it." The dome is a
+    // half-circle traced in dvGlassGauge with its flat base at gY and its
+    // highest point straight up at gY-gR (see that function). Centered on
+    // the dome's own x (gX[i], not offset by the text width any more);
+    // its base sits 2px INSIDE the dome's rim rather than floating above
+    // it with a gap, so it reads as a small flag planted in the dome
+    // rather than a separate badge hovering nearby - drawn after
+    // dvGlassGauge so it layers on top of the dome's own arc/fill.
+    // Scales mildly with gR (gauge size varies a lot with strategy count,
+    // 13px radius up to whatever the row has room for) - a fixed 3px
+    // marker would read fine over a small dome but look lost over a
+    // large one.
     if(hp.cap>=leaderCap){
-      const tw=ctx.measureText(txt).width;
-      const mx=gX[i]+tw/2+8,my=gY+8;
+      const triHalfW=Math.max(3,Math.min(6,gR*.16));
+      const triH=triHalfW*1.87;
+      const mx=gX[i],my=gY-gR+2;
       ctx.beginPath();
-      ctx.moveTo(mx,my-3.2);
-      ctx.lineTo(mx-3,my+2.4);
-      ctx.lineTo(mx+3,my+2.4);
+      ctx.moveTo(mx,my-triH*.57);
+      ctx.lineTo(mx-triHalfW,my+triH*.43);
+      ctx.lineTo(mx+triHalfW,my+triH*.43);
       ctx.closePath();
       ctx.fillStyle='rgba(255,255,255,.82)';
       ctx.fill();
@@ -3667,6 +3729,13 @@ function exportData(tab){
   const a=document.createElement('a');a.href=url;a.download='AHM-'+names[tab]+'-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
+// Round 108: "once the simulate button is hit, the intro and guide
+// don't show on the next page load/refresh" - a second, independent
+// signal alongside sessionLog/journalLog for hasRealData() below. Set
+// once _sim() ever completes (never reset), persisted through save()/
+// load() same as everything else. Demo mode's own simulate() calls (see
+// startDemoMode()) must NOT leak this - see demo.origHasSimulated.
+var hasSimulated=false;
 let sessionLog=[];
 function onDaily(){
   const w=+$('dWins').value||0,l=+$('dLoss').value||0,b=+$('dBE').value||0;
@@ -3786,9 +3855,9 @@ const JCATS=[
     <div class="jrow"><label>Market favorability</label><select class="jsel" id="j-marketfav"><option value="">—</option><option>Favorable for my style</option><option>Neutral</option><option>Unfavorable for my style</option></select></div>
     <div class="jrow"><label>Rule breaks (0–5)</label><div class="scale-row" id="jsc-rules"></div></div>
     <div class="jrow"><label>Pre-market prep</label><select class="jsel" id="j-prep"><option value="">—</option><option>None</option><option>Brief</option><option>Thorough</option></select></div>
-    <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">One focus point for tomorrow</label><textarea class="jnote" id="j-focus" rows="2" placeholder="The one thing that would most improve tomorrow's trading."></textarea></div>
-    <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">Best opportunity (taken or missed)</label><textarea class="jnote" id="j-bestop" rows="2" placeholder="What was the best setup of the day, whether or not you took it?"></textarea></div>
-    <div class="jnotes-wrap"><label style="font-size:9px;color:#4d5a6e;display:block;margin-bottom:4px;">Notes</label><textarea class="jnote" id="j-note" rows="3" placeholder="What happened today? What will you change?"></textarea></div>`},
+    <div class="jnotes-wrap"><label style="font-size:9px;color:#75859e;display:block;margin-bottom:4px;">One focus point for tomorrow</label><textarea class="jnote" id="j-focus" rows="2" placeholder="The one thing that would most improve tomorrow's trading."></textarea></div>
+    <div class="jnotes-wrap"><label style="font-size:9px;color:#75859e;display:block;margin-bottom:4px;">Best opportunity (taken or missed)</label><textarea class="jnote" id="j-bestop" rows="2" placeholder="What was the best setup of the day, whether or not you took it?"></textarea></div>
+    <div class="jnotes-wrap"><label style="font-size:9px;color:#75859e;display:block;margin-bottom:4px;">Notes</label><textarea class="jnote" id="j-note" rows="3" placeholder="What happened today? What will you change?"></textarea></div>`},
   {key:'market',title:'Market',body:()=>`
     <div class="jrow"><label>Price action character</label><select class="jsel" id="j-balance"><option value="">—</option><option>Balanced</option><option>Imbalanced</option></select></div>
     <div class="jrow"><label>Control</label><select class="jsel" id="j-control"><option value="">—</option><option>Buyers in control</option><option>Sellers in control</option><option>Balanced/contested</option></select></div>
@@ -3890,8 +3959,8 @@ function buildStatsCircle(){
       <div class="circ-panel-wrap" id="scirc-panel-wrap">
         <div class="circ-panel-inner">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-            <span style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;">Real Trading Data</span>
-            <button onclick="resetRealStats()" style="background:transparent;border:1px solid #232b3d;color:#4d5a6e;font-family:'Inter',sans-serif;font-size:8px;padding:2px 8px;border-radius:2px;cursor:pointer;letter-spacing:.08em;">↺ Auto-fill from Log</button>
+            <span style="font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.12em;">Real Trading Data</span>
+            <button onclick="resetRealStats()" style="background:transparent;border:1px solid #232b3d;color:#75859e;font-family:'Inter',sans-serif;font-size:8px;padding:2px 8px;border-radius:2px;cursor:pointer;letter-spacing:.08em;">↺ Auto-fill from Log</button>
           </div>
           <div class="stats-inp">
             <div class="si"><label>Total Trades</label><input class="ni" id="rTrades" type="number" placeholder="—" oninput="onReal()" style="width:78px;"></div>
@@ -4004,7 +4073,7 @@ function renderJournal(){
     sg.style.display='grid';
   }else if(sg){sg.style.display='none';}
   const hist=$('jhist');if(!hist)return;
-  if(!journalLog.length){hist.innerHTML='<div class="jhist-hd">History</div><div class="jentry" style="color:#4d5a6e;font-size:10px;text-align:center;padding:14px;">No entries yet.</div>';return;}
+  if(!journalLog.length){hist.innerHTML='<div class="jhist-hd">History</div><div class="jentry" style="color:#75859e;font-size:10px;text-align:center;padding:14px;">No entries yet.</div>';return;}
   const lvl=(n,max=5)=>'█'.repeat(n)+'░'.repeat(max-n);
   hist.innerHTML='<div class="jhist-hd">History — '+journalLog.length+' entries</div>'+
     journalLog.slice(0,10).map(e=>{
@@ -4241,7 +4310,7 @@ function renderWeeklyReport(){
     </div>
     <div class="wrc-body">
       <div class="wrc-row"><span class="wrc-lbl">Days logged</span><span class="wrc-val" style="color:#e2e6ed">${dy}</span></div>
-      <div class="wrc-row"><span class="wrc-lbl">Win rate</span><span class="wrc-val" style="color:${wrCol}">${wr.toFixed(1)}% <span style="font-size:8px;color:#4d5a6e;">vs ${allWR.toFixed(1)}% all-time</span></span></div>
+      <div class="wrc-row"><span class="wrc-lbl">Win rate</span><span class="wrc-val" style="color:${wrCol}">${wr.toFixed(1)}% <span style="font-size:8px;color:#75859e;">vs ${allWR.toFixed(1)}% all-time</span></span></div>
       <div class="wrc-row"><span class="wrc-lbl">Total P&L</span><span class="wrc-val" style="color:${pnlCol}">${sgn(totPnl)}</span></div>
       <div class="wrc-row"><span class="wrc-lbl">Avg P&L/day</span><span class="wrc-val" style="color:${avgPnl>=0?'#34d399':'#f87171'}">${sgn(avgPnl)}</span></div>
       ${best?`<div class="wrc-row"><span class="wrc-lbl">Best day</span><span class="wrc-val" style="color:#34d399">${best.date} · ${sgn(best.pnl)}</span></div>`:''}
@@ -4250,7 +4319,7 @@ function renderWeeklyReport(){
       ${avgStress>0?`<div class="wrc-row"><span class="wrc-lbl">Avg stress</span><span class="wrc-val" style="color:${avgStress<=2?'#34d399':avgStress<=3?'#fbbf24':'#f87171'}">${avgStress.toFixed(1)}/5</span></div>`:''}
       ${avgRules>0?`<div class="wrc-row"><span class="wrc-lbl">Avg rule breaks</span><span class="wrc-val" style="color:${avgRules<1?'#34d399':avgRules<2?'#fbbf24':'#f87171'}">${avgRules.toFixed(1)}/day</span></div>`:''}
       ${thisWeekJ.length?`<div class="wrc-row"><span class="wrc-lbl">Great Soul days</span><span class="wrc-val" style="color:${greatSoulDays>=4?'#34d399':greatSoulDays>=2?'#fbbf24':'#f87171'}">${greatSoulDays} / ${thisWeekJ.length}</span></div>`:''}
-      <div class="wrc-insight"><div style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px;">Alerts</div>${alertsHtml}</div>
+      <div class="wrc-insight"><div style="font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px;">Alerts</div>${alertsHtml}</div>
     </div>
   </div>`;
 }
@@ -4341,20 +4410,20 @@ function renderStratComparison(){
   // Diagnostics, but the content itself doesn't depend on which pane).
   let bodyHtml,badgeText,badgeCls;
   if(active.length<2){
-    bodyHtml='<div style="padding:8px 0;text-align:center;font-size:9px;color:#4d5a6e;">Run simulations on 2 or more strategies to compare.</div>';
+    bodyHtml='<div style="padding:8px 0;text-align:center;font-size:9px;color:#75859e;">Run simulations on 2 or more strategies to compare.</div>';
     badgeText='No Sims Run';badgeCls='vs-badge nosim';
   }else{
     badgeText=active.length+' Strategies';badgeCls='vs-badge ahead';
     const metrics=[
-      {lbl:'EV / Day',get:r=>r.c.evNet,fmt:v=>sgn(v),better:'higher'},
-      {lbl:'Monthly Est',get:r=>dvPlateauMoRate(r.rows.map(x=>({day:x.day,cap:r.acct0+x.cumPnl}))),fmt:v=>sgn(v),better:'higher'},
-      {lbl:'Time to Goal',get:r=>(r.rows.length/252)*12,fmt:v=>cal(v),better:'lower'},
-      {lbl:'Win Rate',get:r=>r.c.wr*100,fmt:v=>v.toFixed(1)+'%',better:'higher'},
-      {lbl:'R:R Ratio',get:r=>r.c.avgL>0?r.c.avgP/r.c.avgL:0,fmt:v=>v.toFixed(2)+':1',better:'higher'},
-      {lbl:'Friction / Day',get:r=>r.c.frDay,fmt:v=>'$'+fmt(v),better:'lower'},
-      {lbl:'Sharpe',get:r=>{const pnls=r.rows.map(e=>e.dayPnl);return sharpe(pnls,r.acct0)||0;},fmt:v=>v.toFixed(2),better:'higher'},
-      {lbl:'Sortino',get:r=>{const pnls=r.rows.map(e=>e.dayPnl);return sortino(pnls,r.acct0)||0;},fmt:v=>v.toFixed(2),better:'higher'},
-      {lbl:'Calmar',get:r=>calmar(r.rows,r.acct0)||0,fmt:v=>v.toFixed(2),better:'higher'},
+      {lbl:'EV / Day',ik:'cmpev',get:r=>r.c.evNet,fmt:v=>sgn(v),better:'higher'},
+      {lbl:'Monthly Est',ik:'cmpmo',get:r=>dvPlateauMoRate(r.rows.map(x=>({day:x.day,cap:r.acct0+x.cumPnl}))),fmt:v=>sgn(v),better:'higher'},
+      {lbl:'Time to Goal',ik:'cmptg',get:r=>(r.rows.length/252)*12,fmt:v=>cal(v),better:'lower'},
+      {lbl:'Win Rate',ik:'cmpwr',get:r=>r.c.wr*100,fmt:v=>v.toFixed(1)+'%',better:'higher'},
+      {lbl:'R:R Ratio',ik:'cmprr',get:r=>r.c.avgL>0?r.c.avgP/r.c.avgL:0,fmt:v=>v.toFixed(2)+':1',better:'higher'},
+      {lbl:'Friction / Day',ik:'cmpfr',get:r=>r.c.frDay,fmt:v=>'$'+fmt(v),better:'lower'},
+      {lbl:'Sharpe',ik:'cmpsharpe',get:r=>{const pnls=r.rows.map(e=>e.dayPnl);return sharpe(pnls,r.acct0)||0;},fmt:v=>v.toFixed(2),better:'higher'},
+      {lbl:'Sortino',ik:'cmpsortino',get:r=>{const pnls=r.rows.map(e=>e.dayPnl);return sortino(pnls,r.acct0)||0;},fmt:v=>v.toFixed(2),better:'higher'},
+      {lbl:'Calmar',ik:'cmpcalmar',get:r=>calmar(r.rows,r.acct0)||0,fmt:v=>v.toFixed(2),better:'higher'},
     ];
     // Redesign: was 7 metric-rows of full bordered boxes (up to 6 per row,
     // wrapping to 2 rows at 6 strategies) — starred EVERY box whenever
@@ -4410,7 +4479,8 @@ function renderStratComparison(){
     let html=`<div class="sc-verdict">${verdict}</div>`;
     varying.forEach(c=>{
       const dirNote=c.better==='lower'?' <span class="sc-dir">(lower is better)</span>':'';
-      html+=`<div class="sc-metric"><div class="sc-metric-lbl">${c.lbl}${dirNote}</div>`;
+      const ib=c.ik?` <button class="ib" onclick="openInfo('${c.ik}')">?</button>`:'';
+      html+=`<div class="sc-metric"><div class="sc-metric-lbl">${c.lbl}${dirNote}${ib}</div>`;
       // Bar length is each value's own ratio to the group's max (not a
       // min-max stretch) — validated visually in the mockups: it keeps
       // even the "worst" bar honestly proportioned instead of forcing it
@@ -4500,7 +4570,7 @@ function onReal(){
   const res=simResults[activeStrat];const vsB=$('vs-badge'),vsR=$('vs-rows');
   if(!res){
     if(vsB){vsB.textContent='No Sim';vsB.className='vs-badge nosim';}
-    if(vsR)vsR.innerHTML='<div style="padding:8px 0;text-align:center;font-size:9px;color:#4d5a6e;">Run a simulation first.</div>';
+    if(vsR)vsR.innerHTML='<div style="padding:8px 0;text-align:center;font-size:9px;color:#75859e;">Run a simulation first.</div>';
     const rp=$('rPace');if(rp)rp.textContent='—';
     return;
   }
@@ -4590,6 +4660,24 @@ const INFO={
   tick:{t:'Tick Value',b:'<p>Dollar value of one tick per share. US equities: $0.01.</p>'},
   dp:{t:'Daily % Override',b:'<p>Bypasses tick math entirely. Applies a random % to account equity each day. Ignores friction, pullback, bad/good days.</p>'},
   vw:{t:'Volume Windows',b:'<p>Custom per ticker — no assumptions baked in. Set typical volume/minute for three session windows: First Hour, Midday, Last Hour.</p><p>Your Participation Rate (%) determines your comfortable share of that flow. If your Starting Shares exceeds what your participation rate allows for a window volume, that window gets a "squeeze" — extra entry offset and slippage applied to trades landing in it, since you are pushing more size into less liquidity than you would comfortably want.</p><p>Trades are distributed across the three windows automatically based on their position in each simulated day trade sequence — early trades skew toward First Hour, late toward Last Hour.</p><p>Works for any ticker: a thin stock and a liquid one just get different volume numbers — the math scales itself.</p>'},
+  // Round 109: "buttons on the categories in the info comparison to
+  // explain what each means" - the Strategy Comparison card's metric
+  // rows (renderStratComparison() below), which previously had no
+  // explanation for what Sharpe/Sortino/Calmar even are, let alone how
+  // this app computes them. Each entry below is written to match this
+  // app's OWN formula for that metric (checked against the actual
+  // function, not a generic textbook definition), since a plausible-
+  // sounding but slightly-off explanation would be its own "made up
+  // info" problem.
+  cmpev:{t:'EV / Day',b:'<p>Average dollar profit or loss this strategy is expected to produce per trading day, net of its modeled friction (commission, exchange/clearing/reg fees, spread, and slippage). This is the daily version of the exact math the intro\\u2019s expected-value walkthrough runs on a hypothetical — here it\\u2019s run on your own settings.</p>'},
+  cmpmo:{t:'Monthly Est',b:'<p>Projected monthly dollar growth at the strategy\\u2019s CURRENT pace — computed from roughly its last 15% of simulated days, not the full-history average. Reflects where the strategy is trending now, not how it started.</p>'},
+  cmptg:{t:'Time to Goal',b:'<p>How many months of simulated trading it took to reach the Share Goal set for this strategy (or is on pace to take, if the simulation is still running toward it).</p>'},
+  cmpwr:{t:'Win Rate (realized)',b:'<p>The actual share of trades that closed at profit target rather than stop, across the whole simulation — not just the Win Rate range you set going in. Discipline %, Bad/Good Days, and Skill Growth all pull this around as the simulation plays out.</p>'},
+  cmprr:{t:'R:R Ratio (realized)',b:'<p>Average dollar size of a winning trade divided by average dollar size of a losing trade, across everything the simulation actually produced — not just the Profit Target ÷ Stop Loss ratio dialed in on the Risk tab.</p>'},
+  cmpfr:{t:'Friction / Day',b:'<p>Average dollar cost per trading day from commission, exchange/clearing/reg fees, spread, and slippage combined — the same real-cost model the Ticker settings compute (see Commission/Exchange+Clearing+Reg above), rolled up to a daily figure.</p>'},
+  cmpsharpe:{t:'Sharpe',b:'<p>Return per unit of risk: average daily return divided by how much daily returns swing around — both up and down — annualized. Higher means steadier gains for the risk taken; a volatile strategy can average the same return as a smooth one and still score much lower here.</p>'},
+  cmpsortino:{t:'Sortino',b:'<p>The same idea as Sharpe, but only downside swings count against it — big winning days aren\\u2019t penalized the way a plain volatility measure would. A strategy that scores notably better on Sortino than Sharpe is one whose swings are mostly big wins, not big losses.</p>'},
+  cmpcalmar:{t:'Calmar',b:'<p>Annualized return divided by the worst peak-to-trough drawdown the strategy experienced. A high Calmar means it earned a lot relative to the deepest hole it ever dug — the most direct answer to "how bad did the worst stretch get, relative to what this actually earned."</p>'},
 };
 
 const SDEFS=[['minP',15,'t'],['maxP',30,'t'],['minL',5,'t'],['maxL',15,'t'],['minWR',55,'%'],['maxWR',65,'%'],['minBE',10,'%'],['maxBE',20,'%'],['minT',2,''],['maxT',5,''],['dpm',21,''],['sh',100,''],['goal',500,''],['minPr',43,''],['maxPr',47,''],['spread',1,'t'],['slip',1,'t'],['buf',1,''],['cap',0,'t'],['disc',85,'%'],['bf',3,'%'],['bs',2,'%'],['gf',3,'%'],['gs_',2,'%'],['minPB',3,'t'],['maxPB',8,'t'],['minEO',1,'t'],['maxEO',4,'t'],['minSw',15,'t'],['maxSw',40,'t'],['rrSlider',0,''],['tickSz',1,'¢'],['minDp',-2,'%'],['maxDp',3,'%'],['bias',50,'%'],['intv',5,''],['volCeil',0,'sh'],['vwFH_min',60000,'/m'],['vwFH_max',120000,'/m'],['vwMD_min',15000,'/m'],['vwMD_max',40000,'/m'],['vwLH_min',30000,'/m'],['vwLH_max',70000,'/m'],['partRate',10,'%']];
@@ -4640,19 +4728,19 @@ function buildPanes(){
     const volWindowCard=`<div class="fc off" id="fc-vw${s}" style="border-left-color:#60a5fa;">
       <div class="fc-top"><span class="fc-lbl">Volume Windows <button class="ib" onclick="openInfo('vw')">?</button></span>${tog('vw',false)}</div>
       <div class="fc-note" style="margin-bottom:6px;">Custom per ticker — set typical volume/minute for each session window. Buffer, entry offset, and slippage are derived automatically from your participation rate against these numbers.</div>
-      <div style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin:6px 0 3px;">First Hour · 9:30–10:30</div>
+      <div style="font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.1em;margin:6px 0 3px;">First Hour · 9:30–10:30</div>
       ${dph('vwFH_min','vwFH_max')}
-      <div style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin:8px 0 3px;">Midday · 10:30–2:30</div>
+      <div style="font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.1em;margin:8px 0 3px;">Midday · 10:30–2:30</div>
       ${dph('vwMD_min','vwMD_max')}
-      <div style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin:8px 0 3px;">Last Hour · 2:30–4:00</div>
+      <div style="font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.1em;margin:8px 0 3px;">Last Hour · 2:30–4:00</div>
       ${dph('vwLH_min','vwLH_max')}
-      <div style="font-size:8px;color:#4d5a6e;text-transform:uppercase;letter-spacing:.1em;margin:8px 0 3px;">Participation Rate</div>
+      <div style="font-size:8px;color:#75859e;text-transform:uppercase;letter-spacing:.1em;margin:8px 0 3px;">Participation Rate</div>
       ${ph('partRate')}
       <div class="fc-note" id="vw-summary${s}" style="margin-top:6px;"></div>
     </div>`;
-    const ticker=fc('pr','Price Range','#4d5a6e','price',dph('minPr','maxPr'))+shGoalCard+frictionCard+fc('sp','Spread','#fb923c','spread',ph('spread'))+fc('buf','Cash Buffer','#4d5a6e','buf',ph('buf'))+fc('tk','Tick Value','#4d5a6e','tick',ph('tickSz'))+fc('sl','Slippage','#f87171','slip',ph('slip'))+swingCard+fc('pb','Pullback','#60a5fa','pullback',dph('minPB','maxPB'))+fc('eo','Entry Offset','#4d5a6e','eo',dph('minEO','maxEO'))+volWindowCard;
+    const ticker=fc('pr','Price Range','#75859e','price',dph('minPr','maxPr'))+shGoalCard+frictionCard+fc('sp','Spread','#fb923c','spread',ph('spread'))+fc('buf','Cash Buffer','#75859e','buf',ph('buf'))+fc('tk','Tick Value','#75859e','tick',ph('tickSz'))+fc('sl','Slippage','#f87171','slip',ph('slip'))+swingCard+fc('pb','Pullback','#60a5fa','pullback',dph('minPB','maxPB'))+fc('eo','Entry Offset','#75859e','eo',dph('minEO','maxEO'))+volWindowCard;
 
-    const psych=fc('bd','Bad Days','#f87171','bd',dph('bf','bs'))+fc('gd','Good Days','#34d399','gd',dph('gf','gs_'))+fc('cs','Discipline %','#4d5a6e','disc',ph('disc'))+fc('bias','Skill Growth %','#232b3d','bias',ph('bias')+sel('curve','<option value="slow" selected>Slow Start</option><option value="linear">Linear</option><option value="fast">Fast Start</option><option value="scurve">S-Curve</option>'));
+    const psych=fc('bd','Bad Days','#f87171','bd',dph('bf','bs'))+fc('gd','Good Days','#34d399','gd',dph('gf','gs_'))+fc('cs','Discipline %','#75859e','disc',ph('disc'))+fc('bias','Skill Growth %','#232b3d','bias',ph('bias')+sel('curve','<option value="slow" selected>Slow Start</option><option value="linear">Linear</option><option value="fast">Fast Start</option><option value="scurve">S-Curve</option>'));
 
     const ovr=`<div class="fc off" id="fc-rr${s}" style="border-left-color:#60a5fa"><div class="fc-top"><span class="fc-lbl">R:R Override <button class="ib" onclick="openInfo('rr')">?</button></span>${tog('rr',false)}</div>${ph('rrSlider')}<div class="fc-note">Overrides stop. Loss = profit ÷ R:R.</div></div><div class="fc off" id="fc-dp${s}" style="border-left-color:#fbbf24"><div class="fc-top"><span class="fc-lbl">Daily % Override <button class="ib" onclick="openInfo('dp')">?</button></span>${tog('dp',false)}</div>${dph('minDp','maxDp')}<div class="fc-note">Ignores tick math. Applies % directly to equity.</div></div><div class="fc off" id="fc-volceil${s}" style="border-left-color:#f87171"><div class="fc-top"><span class="fc-lbl">Volume Ceiling <button class="ib" onclick="openInfo('volceil')">?</button></span>${tog('volceil',false)}</div>${ph('volCeil')}<div class="fc-note">Hard cap on share growth. Prevents over-compounding.</div></div>`;
 
@@ -4749,7 +4837,7 @@ function buildPanes(){
       </div>
       <div class="vs-card" id="strat-cmp-card${s}">
         <div class="vs-hd"><span class="vs-title">Strategy Comparison</span><span class="vs-badge nosim" id="strat-cmp-badge${s}">No Sims Run</span></div>
-        <div id="strat-cmp-body${s}" style="padding:4px 12px 8px;"><div style="padding:8px 0;text-align:center;font-size:9px;color:#4d5a6e;">Run simulations on 2 or more strategies to compare.</div></div>
+        <div id="strat-cmp-body${s}" style="padding:4px 12px 8px;"><div style="padding:8px 0;text-align:center;font-size:9px;color:#75859e;">Run simulations on 2 or more strategies to compare.</div></div>
       </div>
       <div class="disc"><p>Simulated results are hypothetical. Not financial advice.</p></div>
     `;
@@ -4884,7 +4972,7 @@ function save(){
     const tg={};getTogIds().forEach(id=>{const e=$(id);if(e)tg[id]=e.checked;});
     const sl={};[0,1,2,3,4,5].forEach(t=>{const s=t===0?'':'_'+t;SEL_BASE.forEach(id=>{const e=$(id+s);if(e)sl[id+s]=e.value;});});
     const rl={};REAL_IDS.forEach(id=>{const e=$(id);if(e)rl[id]=e.value;});
-    const data=JSON.stringify({st,tg,sl,rl,sessionLog,journalLog});
+    const data=JSON.stringify({st,tg,sl,rl,sessionLog,journalLog,hasSimulated});
     if(window.storage)window.storage.set(SK,data);else localStorage.setItem(SK,data);
   }catch(e){}
 }
@@ -4904,6 +4992,7 @@ async function load(){
     if(d.rl)REAL_IDS.forEach(id=>{const e=$(id);if(e&&d.rl[id]!==undefined)e.value=d.rl[id];});
     if(d.sessionLog&&Array.isArray(d.sessionLog))sessionLog=d.sessionLog;
     if(d.journalLog&&Array.isArray(d.journalLog))journalLog=d.journalLog;
+    if(d.hasSimulated)hasSimulated=true;
     return true;
   }catch(e){return false;}
 }
@@ -4998,42 +5087,85 @@ init();
 // centered, untargeted stop (intro/outro). Title/body use double
 // quotes throughout so natural apostrophes in the copy never need
 // escaping.
+// Round 108: every stop that targets a real element now also carries a
+// `screen` - see renderStop()'s comment for why (a back-navigation bug:
+// the old approach of putting switchScreen() only in the FIRST stop of
+// each screen's `before` only worked for forward traversal). `dock`
+// forces the card to a specific edge instead of the automatic top/62%-
+// threshold heuristic in positionFor() - added where the user found the
+// card sitting on top of the very content it was explaining.
+// circSelect(tab,catKey) (defined in the main script, above) is a TOGGLE
+// meant for a real tap on a category tab: tapping the already-open
+// category again closes it (deselecting=currentSel===catKey). The tour's
+// `before` callbacks below don't want a toggle - they want "make sure
+// this category is open," full stop. That distinction only bit once
+// discovered directly: circSelect(0,'ovr') is called going forward INTO
+// Overrides (opens it, dataset.sel becomes 'ovr') and stays the active
+// category through the next stop ("Run it" - the only stop that follows
+// a circSelect stop without opening some OTHER category first). Back
+// from "Run it" re-runs circSelect(0,'ovr') while dataset.sel is STILL
+// 'ovr' - deselecting reads true, so it CLOSES Overrides instead of
+// keeping it open: unionRect() on the now-hidden panel returns null,
+// and positionFor() falls back to the no-target/centered box - "just
+// the box," confirmed via direct DOM inspection (panel rect pinned at
+// 0/0/0/0, no .circ-panel.active at all) to be a real, persistent state,
+// not a transition mid-flight. This wrapper sidesteps the toggle
+// entirely: if the category's already selected, clear the selection
+// first so circSelect's own deselecting check can never fire true, then
+// call it for real. Used by every category-opening stop below, not just
+// Overrides, since any future reordering could put another category
+// stop in that same "nothing else touches the cluster before you come
+// back" position.
+function tourCircSelect(tab,catKey){
+  var s=tab===0?'':'_'+tab;
+  var cluster=document.getElementById('seg-bar'+s);
+  if(cluster&&cluster.dataset.sel===catKey)cluster.dataset.sel='';
+  circSelect(tab,catKey);
+}
 var TOUR_STOPS=[
   {sel:null,title:"Welcome to the Anti-Hope Machine",body:"A quick tour of every screen — nothing here changes any of your settings. Skip anytime, and you can reopen this tour later from Guide, up top."},
-  {before:function(){switchScreen('sim');},sel:'.global-capital',title:"Starting Capital",body:"One shared capital value every strategy compounds from — A through F all start on equal footing, so comparing them stays apples-to-apples no matter what ticker or share price each is testing."},
-  {sel:'#scr-sim .sbar',title:"Six strategies, one account",body:"Switch between Strategies A–F here. Each keeps its own ticker, targets, and risk settings, but they all draw from the same Starting Capital above, so you can genuinely compare six different ideas side by side."},
-  {sel:'#seg-bar',title:"Five setting groups",body:"Every field for the active strategy lives in one of five categories: Core, Risk, Ticker, Psych, and Overrides. Tap a segment to open it — the next few stops walk through each one."},
-  {before:function(){circSelect(0,'core');},sel:'.circ-panel[data-cat="core"]',title:"Core — your edge",body:"Win Rate % and Breakeven % define how often you win versus scratch a trade. Loss Rate fills in automatically from what's left. Distribution (off by default) shows the resulting win/breakeven/loss split and an estimated EV per trade."},
-  {before:function(){circSelect(0,'risk');},sel:'.circ-panel[data-cat="risk"]',title:"Risk — targets and frequency",body:"Profit Target and Stop Loss are set in ticks — one tick is $0.01/share on US equities, and Reward:Risk is just Profit Target ÷ Stop Loss. Trades / Day sets how many trades you take on a trading day; Days You Trade lets swing-style traders spread that same frequency across fewer active days a month. Daily Loss Cap puts a hard ceiling on how bad one day can get."},
-  {before:function(){circSelect(0,'ticker');},sel:'.circ-panel[data-cat="ticker"]',title:"Ticker — price and real costs",body:"Price Range and Starting Shares (derived from your shared Capital) set the account size for this ticker. Commission, exchange/clearing fees, spread, and slippage are all modeled here too — this is what keeps results honest instead of showing a fantasy of gross P&L."},
-  {before:function(){circSelect(0,'psych');},sel:'.circ-panel[data-cat="psych"]',title:"Psych — the human variance",body:"Bad Days and Good Days simulate the emotional swings real trading has — stretches that run worse or better than your baseline edge. Discipline % and Skill Growth % model how consistently you follow your own rules, and whether your edge improves with experience."},
-  {before:function(){circSelect(0,'ovr');},sel:'.circ-panel[data-cat="ovr"]',title:"Overrides — advanced, opt-in",body:"All off by default. R:R Override replaces your Stop Loss with a fixed ratio off Profit Target. Daily % Override skips tick math and applies a percentage straight to equity. Volume Ceiling caps share growth so compounding can't run away indefinitely."},
-  {sel:'#sp0 .sim-row',title:"Run it",body:"Simulate runs this strategy forward using everything you just configured. CSV exports the full day-by-day result. Reset only clears this strategy's last results — it never touches your settings."},
-  {sel:'#sp0 .chart-panel, #sp0 .diag, #sp0 .vs-card',title:"Your results",body:"Once you simulate, the equity curve, a plain-English Diagnostics verdict, and a Strategy Comparison against any other strategies you've run all appear right here. Not every ticker suits every strategy equally — this comparison is how you find which combination your own numbers actually support."},
-  {before:function(){switchScreen('tbl');},sel:'#scr-tbl > .dv-half:first-child',title:"Table — the race",body:"Every simulated strategy's equity curve races on one chart. The gauges below show each strategy's current share count and capital at a glance."},
-  {sel:'#scr-tbl .sbar',title:"Pick a strategy to inspect",body:"Switch which strategy's day-by-day numbers you're looking at below — this doesn't affect the race chart above, which always shows all six."},
-  {sel:'.tbl-controls',title:"How often to show a row",body:"The table can show every single day, or thin itself out to every 5th, 10th, 20th day, or a custom interval, so a multi-year simulation stays scannable instead of thousands of rows deep."},
-  {sel:'.tbl-scroll',title:"Day-by-day breakdown",body:"Every column from share count to win rate to cumulative P&L, scrollable both directions. This is the same data the CSV export gives you, just live on screen."},
-  {before:function(){switchScreen('log');},sel:'#jcirc-mount',title:"Log — your journal",body:"Six categories — Soul, Mind, Body, Grade, Market, Outcome — for tracking the human side of trading day to day: sleep, stress, discipline, how the day actually went. Tap a category to open it."},
-  {sel:'#log-save-btn',title:"Save Entry",body:"Saves everything in the journal cluster above as today's entry. Save it again later the same day and it overwrites rather than duplicating — one entry per calendar date."},
-  {sel:'#scr-log .inp-grp, #scr-log .tb-card',title:"Your actual trading results",body:"Separate from the journal — this is where you enter what really happened: wins, losses, breakevens, tick averages, net P&L, and a breakdown of how much of each trade's move you actually captured."},
-  {sel:'#scr-log .sess-btns, #scr-log .g3, #scr-log .grade-card',title:"Log Day",body:"Adds today's numbers to your running log — unlike Save Entry, this appends every time rather than overwriting. Once you've logged a few days, Win Rate, Expectancy, and a Grade vs. your own baseline all compute automatically."},
-  {sel:'#log-export-btn, #scr-log .jhist',title:"Export and history",body:"One CSV combines your trading log and journal entries by date, one row per day. Your full logged history sits below it, scrollable."},
-  {before:function(){switchScreen('stats');},sel:'.vs-card',title:"Stats — reality check",body:"Once you've logged real trading days, this compares what actually happened against your simulation's targets for the same strategy — the whole point of building the simulation in the first place."},
-  {sel:'#scirc-mount',title:"Enter real broker data",body:"Feed in figures straight from your broker statement to keep the Real vs Sim comparison accurate and current."},
-  {sel:'#weekly-report, #gauge-wrap',title:"Weekly grading and gauges",body:"A week-by-week report card, plus gauges tracking key variables since your earliest logged data — both computed automatically from what you've logged."},
-  {sel:'#scr-stats .chart-panel',title:"Real equity, three ways",body:"Your actual cumulative P&L, plus weekly and monthly rollups, built entirely from your logged trading results, not the simulation."},
+  {screen:'sim',sel:'.global-capital',title:"Starting Capital",body:"One shared capital value every strategy compounds from — A through F all start on equal footing, so comparing them stays apples-to-apples no matter what ticker or share price each is testing."},
+  {screen:'sim',sel:'#scr-sim .sbar',title:"Six strategies, one account",body:"Switch between Strategies A–F here. Each keeps its own ticker, targets, and risk settings, but they all draw from the same Starting Capital above, so you can genuinely compare six different ideas side by side."},
+  {screen:'sim',sel:'#seg-bar',title:"Five setting groups",body:"Every field for the active strategy lives in one of five categories: Core, Risk, Ticker, Psych, and Overrides. Tap a segment to open it — the next few stops walk through each one."},
+  {screen:'sim',before:function(){tourCircSelect(0,'core');},sel:'.circ-panel[data-cat="core"]',title:"Core — your edge",body:"Win Rate % and Breakeven % define how often you win versus scratch a trade. Loss Rate fills in automatically from what's left. Distribution (off by default) shows the resulting win/breakeven/loss split and an estimated EV per trade."},
+  {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'risk');},sel:'.circ-panel[data-cat="risk"]',title:"Risk — targets and frequency",body:"Profit Target and Stop Loss are set in ticks — one tick is $0.01/share on US equities, and Reward:Risk is just Profit Target ÷ Stop Loss. Trades / Day sets how many trades you take on a trading day; Days You Trade lets swing-style traders spread that same frequency across fewer active days a month. Daily Loss Cap puts a hard ceiling on how bad one day can get."},
+  {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'ticker');},sel:'.circ-panel[data-cat="ticker"]',title:"Ticker — price and real costs",body:"Price Range and Starting Shares (derived from your shared Capital) set the account size for this ticker. Commission, exchange/clearing fees, spread, and slippage are all modeled here too — this is what keeps results honest instead of showing a fantasy of gross P&L."},
+  {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'psych');},sel:'.circ-panel[data-cat="psych"]',title:"Psych — the human variance",body:"Bad Days and Good Days simulate the emotional swings real trading has — stretches that run worse or better than your baseline edge. Discipline % and Skill Growth % model how consistently you follow your own rules, and whether your edge improves with experience."},
+  {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'ovr');},sel:'.circ-panel[data-cat="ovr"]',title:"Overrides — advanced, opt-in",body:"All off by default. R:R Override replaces your Stop Loss with a fixed ratio off Profit Target. Daily % Override skips tick math and applies a percentage straight to equity. Volume Ceiling caps share growth so compounding can't run away indefinitely."},
+  {screen:'sim',sel:'#sp0 .sim-row',title:"Run it",body:"Simulate runs this strategy forward using everything you just configured. CSV exports the full day-by-day result. Reset only clears this strategy's last results — it never touches your settings."},
+  {screen:'sim',sel:'#sp0 .chart-panel, #sp0 .diag, #sp0 .vs-card',title:"Your results",body:"Once you simulate, the equity curve, a plain-English Diagnostics verdict, and a Strategy Comparison against any other strategies you've run all appear right here. Not every ticker suits every strategy equally — this comparison is how you find which combination your own numbers actually support."},
+  {screen:'tbl',dock:'bottom',sel:'#scr-tbl > .dv-half:first-child',title:"Table — the race",body:"Every simulated strategy's equity curve races on one chart. The gauges below show each strategy's current share count and capital at a glance."},
+  {screen:'tbl',sel:'#scr-tbl .sbar',title:"Pick a strategy to inspect",body:"Switch which strategy's day-by-day numbers you're looking at below — this doesn't affect the race chart above, which always shows all six."},
+  {screen:'tbl',sel:'.tbl-controls',title:"How often to show a row",body:"The table can show every single day, or thin itself out to every 5th, 10th, 20th day, or a custom interval, so a multi-year simulation stays scannable instead of thousands of rows deep."},
+  {screen:'tbl',sel:'.tbl-scroll',title:"Day-by-day breakdown",body:"Every column from share count to win rate to cumulative P&L, scrollable both directions. This is the same data the CSV export gives you, just live on screen."},
+  {screen:'log',sel:'#jcirc-mount',title:"Log — your journal",body:"Six categories — Soul, Mind, Body, Grade, Market, Outcome — for tracking the human side of trading day to day: sleep, stress, discipline, how the day actually went. Tap a category to open it. What you log here — diet, rule breaks, sleep, and the rest — is exactly what feeds the Variable Gauges you'll see under Stats, so it's worth being honest with."},
+  {screen:'log',sel:'#log-save-btn',title:"Save Entry",body:"Saves everything in the journal cluster above as today's entry. Save it again later the same day and it overwrites rather than duplicating — one entry per calendar date."},
+  {screen:'log',sel:'#scr-log .inp-grp, #scr-log .tb-card',title:"Your actual trading results",body:"Separate from the journal — this is where you enter what really happened: wins, losses, breakevens, tick averages, net P&L, and a breakdown of how much of each trade's move you actually captured."},
+  {screen:'log',sel:'#scr-log .sess-btns, #scr-log .g3, #scr-log .grade-card',title:"Log Day",body:"Adds today's numbers to your running log — unlike Save Entry, this appends every time rather than overwriting. Once you've logged a few days, Win Rate, Expectancy, and a Grade vs. your own baseline all compute automatically."},
+  {screen:'log',sel:'#log-export-btn, #scr-log .jhist',title:"Export and history",body:"One CSV combines your trading log and journal entries by date, one row per day. Your full logged history sits below it, scrollable."},
+  {screen:'stats',sel:'.vs-card',title:"Stats — reality check",body:"Once you've logged real trading days, this compares what actually happened against your simulation's targets for the same strategy — the whole point of building the simulation in the first place."},
+  {screen:'stats',sel:'#scirc-mount',title:"Enter real broker data",body:"Feed in figures straight from your broker statement to keep the Real vs Sim comparison accurate and current."},
+  // Round 108: this used to be one stop covering #weekly-report AND
+  // #gauge-wrap together - on a real phone screen the two combined are
+  // taller than the viewport, so centering the union always clipped one
+  // end (the gauges, which is the more interesting half). Split into two
+  // so each gets its own clean, fully-visible highlight - "more buttons
+  // to press" was explicitly fine per the user's own words, as long as
+  // each thing shown is actually fully shown.
+  {screen:'stats',sel:'#weekly-report',title:"Weekly grading",body:"A week-by-week report card, computed automatically from what you've logged — Win Rate, P&L, sleep, stress, and more, graded against your own baseline."},
+  {screen:'stats',sel:'#gauge-wrap',title:"Variable gauges",body:"This is where the diet, rule-breaks, sleep, and other Log inputs turn into results: each gauge shows whether that variable actually correlates with your P&L, once it's cleared a real statistical bar — not just a hunch."},
+  {screen:'stats',sel:'#scr-stats .chart-panel',title:"Real equity, three ways",body:"Your actual cumulative P&L, plus weekly and monthly rollups, built entirely from your logged trading results, not the simulation."},
   {sel:null,title:"That's everything",body:"Reopen this tour anytime from Guide, up top — it never touches your settings, so there's no harm coming back whenever something's unclear."},
-  // Round 101 - a send-off, at the user's request ("maybe a send off
-  // message at the end, like good luck or something?"). Placed after
-  // the practical "reopen this from Guide" note above so the actual
-  // last thing anyone sees is the encouraging one, not a functional
-  // reminder. Also carries the compounding/reinvestment point from the
-  // same message ("the less you take, the more you get... until it's
-  // life-changing") - that idea doesn't map to any one UI element the
-  // way the ticker/strategy-fit note above does, so it lives here as
-  // closing perspective instead of another mid-tour stop.
-  {sel:null,title:"Good Luck Out There",body:"Once you find a strategy your real numbers actually support, the growth comes from consistency and sizing up — not from chasing something new every time results dip. The part most people don't expect going in: the less you pull out along the way, the more it compounds. Given enough time, that difference alone can end up being the whole game."}
+  // Round 108: round 101's "Good Luck Out There" send-off (compounding/
+  // no-withdrawal message) moved to the END OF THE INTRO instead - see
+  // CLOSING_ENCOURAGEMENT and renderReadiness() below - per direct
+  // feedback that it belonged there, not here ("I meant for that
+  // statement to be at the end of the intro, not the end of the
+  // guide"). The user still wanted an encouraging close to THIS
+  // sequence too, just a different one - this ties to what the tour
+  // itself just walked through (Real vs Sim, Log Day) rather than
+  // repeating the intro's capital-growth point.
+  {sel:null,title:"You're All Set",body:"Every number in here is only as useful as what you feed it — log the rough days as carefully as the good ones, and the gap between Sim and Real becomes the most honest mirror you'll find. That habit is worth more than any one strategy."}
 ];
 
 var state={idx:0,active:false};
@@ -5126,7 +5258,17 @@ function positionFor(stop){
   // the target's size or position - pick whichever edge the target
   // ISN'T near the bottom 38% of the viewport toward.
   var targetBottom=top+height;
-  if(targetBottom>window.innerHeight*0.62){
+  // Round 108: some targets (the taller circ-panel categories, the
+  // Table race chart+gauges panel) sat close enough to the top that the
+  // 62%-threshold heuristic below still top-docked the card right on
+  // top of the content it was explaining. stop.dock lets a specific
+  // stop force an edge instead of relying on the heuristic - set on the
+  // stops the user actually found obstructed, not applied blanket.
+  if(stop.dock==='bottom'){
+    card.style.bottom='calc(14px + env(safe-area-inset-bottom,0px))';card.style.top='';
+  }else if(stop.dock==='top'){
+    card.style.top='calc(46px + env(safe-area-inset-top,0px))';card.style.bottom='';
+  }else if(targetBottom>window.innerHeight*0.62){
     card.style.top='calc(46px + env(safe-area-inset-top,0px))';card.style.bottom='';
   }else{
     card.style.bottom='calc(14px + env(safe-area-inset-bottom,0px))';card.style.top='';
@@ -5149,15 +5291,40 @@ function renderStop(i){
     if(backBtn)backBtn.addEventListener('click',back);
     if(nextBtn)nextBtn.addEventListener('click',next);
   }
+  // Round 108: always ensure the stop's own screen is active, not just
+  // on the first stop of each screen's forward-order range. The old
+  // approach (switchScreen() living only inside that one stop's
+  // `before`) only worked going forward, since you always pass through
+  // it on the way in. Going Back from a later screen straight into the
+  // middle of an earlier screen's stop range skipped it entirely -
+  // every selector on the still-wrong screen resolved to a hidden
+  // (0-size) element, so unionRect() returned null and positionFor()
+  // fell back to its "no-target" state: a centered, cutout-less dimmed
+  // box with no highlight - exactly "just the box" with the highlight
+  // never loading, until Back happened to reach the one stop (16, Log)
+  // that still had its own explicit switchScreen(). switchScreen()
+  // itself is safe to call redundantly (it just re-toggles a couple of
+  // classes and re-runs that screen's own idempotent render calls), so
+  // there's no cost to doing this unconditionally on every stop.
+  if(stop.screen)switchScreen(stop.screen);
+  // Round 108: a dock:'bottom' stop's target scrolls to 'start' rather
+  // than 'center' - some of these panels (Ticker especially, with 8
+  // stacked fields) are taller than the room left above a bottom-docked
+  // card, so 'center' was wasting the space above the panel that
+  // 'start' reclaims, pushing more of the panel's tail end above the
+  // card instead of under it. Every other stop keeps 'center' - it's
+  // still the better fit when the card can sit on whichever edge has
+  // room, since there's no fixed edge fighting it for space.
+  var scrollBlock=stop.dock==='bottom'?'start':'center';
   if(stop.before){
     try{stop.before();}catch(e){}
     var target=stop.sel?document.querySelector(stop.sel):null;
-    if(target&&target.scrollIntoView)target.scrollIntoView({block:'center',behavior:'auto'});
+    if(target&&target.scrollIntoView)target.scrollIntoView({block:scrollBlock,behavior:'auto'});
     setTimeout(doPosition,420);
   }else if(stop.sel){
     var target2=document.querySelector(stop.sel);
     if(target2&&target2.scrollIntoView){
-      target2.scrollIntoView({block:'center',behavior:'auto'});
+      target2.scrollIntoView({block:scrollBlock,behavior:'auto'});
       setTimeout(doPosition,120);
     }else doPosition();
   }else{
@@ -5365,6 +5532,17 @@ function startDemoMode(){
     demo.origSessionLog=sessionLog;
     demo.origJournalLog=journalLog;
     demo.origSimResults=simResults.slice();
+    // Round 108: the demo below calls the REAL simulate() for all 6
+    // strategies (see below), which now also sets hasSimulated=true as
+    // a side effect. window.save being neutered stops that write from
+    // reaching disk during the demo itself, but hasSimulated is a plain
+    // in-memory var, not a DOM/localStorage read - if left alone here,
+    // a LATER real save() (triggered by something unrelated, e.g. a
+    // settings tweak) would still persist the demo's leftover true
+    // value, wrongly suppressing the intro for someone who never
+    // actually pressed Simulate themselves. Snapshot/restore it exactly
+    // like every other piece of real state below.
+    demo.origHasSimulated=hasSimulated;
     demo.origActiveStrat=activeStrat;
     demo.origActiveTblStrat=activeTblStrat;
     var logInfoEl0=document.getElementById('log-info');
@@ -5409,6 +5587,7 @@ function endDemoMode(){
   try{
     sessionLog=demo.origSessionLog;
     journalLog=demo.origJournalLog;
+    hasSimulated=demo.origHasSimulated;
     for(var i=0;i<6;i++)simResults[i]=demo.origSimResults[i];
     [0,1,2,3,4,5].forEach(function(t){try{switchStrat(t);repaintStrategy(t);}catch(e){}});
     try{switchStrat(demo.origActiveStrat);}catch(e){}
@@ -5512,15 +5691,20 @@ function finish(){
 // flag reborn under a new name - nothing here is ever written just
 // because the sequence played or was skipped. It's purely a read of
 // whether the user has ever logged something real (a session day via
-// Log Day, or a journal entry) - sim runs / settings changes / mere
-// app usage don't count, since those aren't "data" in the sense the
-// user meant (simResults isn't even persisted - see round 95's notes).
+// Log Day, or a journal entry) - settings changes / mere app usage
+// don't count, since those aren't "data" in the sense the user meant.
+// Round 108 added one more qualifying signal: "once the simulate button
+// is hit... [it] shouldn't show on the next page load" - hasSimulated
+// (see its own declaration/comment near sessionLog above) is a small,
+// separately-persisted sticky flag for exactly this, since simResults
+// itself still isn't persisted (see round 95's notes) and never needs
+// to be - only whether Simulate was ever pressed matters here.
 function hasRealData(){
   try{
     var raw=localStorage.getItem('ahm-v39');
     if(!raw)return false;
     var d=JSON.parse(raw);
-    return !!(d&&((d.sessionLog&&d.sessionLog.length)||(d.journalLog&&d.journalLog.length)));
+    return !!(d&&((d.sessionLog&&d.sessionLog.length)||(d.journalLog&&d.journalLog.length)||d.hasSimulated));
   }catch(e){return false;}
 }
 // The manual Guide button (openGuide()) was never gated by this in the
@@ -5622,6 +5806,19 @@ var GUT_CHECK={
   ]
 };
 
+// Round 101 originally placed this as the App Tour's own final stop
+// ("maybe a send off message at the end, like good luck or something?"),
+// carrying the compounding/reinvestment point from that same message
+// ("the less you take, the more you get... until it's life-changing").
+// Round 108 moved it here instead, per direct correction: "I meant for
+// that statement to be at the end of the intro, not the end of the
+// guide." Used by renderReadiness() below as the last paragraph on
+// EVERY tier - it's forward-looking encouragement, not tied to any one
+// readiness level, so it applies whether you're Ready, Getting There,
+// or Start Here. The App Tour's own final stop now carries a different,
+// tour-specific closing line instead (see TOUR_STOPS' last entry).
+var CLOSING_ENCOURAGEMENT='Once you find a strategy your real numbers actually support, the growth comes from consistency and sizing up — not from chasing something new every time results dip. The part most people don\'t expect going in: the less you pull out along the way, the more it compounds. Given enough time, that difference alone can end up being the whole game.';
+
 // Round 100's three "thinking exercise" beats - user asked for ideas beyond
 // the questionnaire itself ("short thinking exercises to prune better
 // thinking about day trading and capital growth"), then picked all three
@@ -5638,10 +5835,23 @@ var GUT_CHECK={
 // whose entire premise is "cold, correct numbers" would undercut the one
 // thing it can't afford to get wrong. COST_INSIGHT (round 101) reuses that
 // exact same scenario rather than a fresh one, since the user asked for it
-// as "a follow up" to "the winrate example" specifically - $20 round-trip
-// commission * 100 trades = $2,000, exactly wiping out the $2,000 gross
-// edge, chosen because it lands cleanly at zero rather than an odd
-// fraction. STAT_INSIGHT's figure is sourced, not invented: the ~97%
+// as "a follow up" to "the winrate example" specifically. Round 108
+// REPLACED its original $20-flat-commission figure - user feedback,
+// correctly: "What world has a commission of $20 round trip on risking
+// $100?" - a made-up number that also silently contradicted the app's OWN
+// commissionForShares() (see above: $0.0035/share, $0.35 minimum per
+// order/leg). That per-share rate is Interactive Brokers Pro's real,
+// current published tiered rate (confirmed via WebFetch of IBKR's own
+// pricing page this round) - not invented either time, just not carried
+// into this beat's copy the first time around. New version: 1,000 shares
+// (a realistic size for a $0.10 stop sized to the same $100 risk) at that
+// real rate is $3.50/leg, $7 round trip, *100 trades = $700 - verified
+// with a throwaway Node script - which is 35% of the $2,000 gross edge,
+// not all of it. Deliberately NOT tuned to zero out cleanly this time:
+// forcing the math to hit a dramatic round number is exactly the kind of
+// choice that produced the original made-up $20 figure, so this version
+// starts from the real rate and reports whatever it actually comes out
+// to. STAT_INSIGHT's figure is sourced, not invented: the ~97%
 // figure is the widely-cited headline result of Chague/De-Losso/
 // Giovannetti's "Day Trading for a Living?" (Brazilian futures day
 // traders who persisted 300+ days) - corroborated across many independent
@@ -5670,13 +5880,13 @@ var EV_INSIGHT={
   fact:'Run it: 40% × $200 minus 60% × $100 comes out to +$20 of expected value per trade. Over 100 trades, that’s +$2,000 — profitable, on a strategy that loses more often than it wins. Win rate alone never tells the whole story; reward-to-risk is doing just as much work. This is the exact math Sim mode runs for you, on your own numbers instead of a hypothetical.'
 };
 var COST_INSIGHT={
-  q:'Same setup, one more variable. That $100-risk strategy nets +$20 expected value per trade before costs. Add a $20 round-trip commission — what happens to the edge?',
+  q:'Same setup, one more variable. That $100-risk strategy nets +$20 expected value per trade before costs. Size into 1,000 shares to hit that risk with a $0.10 stop, and a real broker’s published rate — $0.0035/share, $0.35 minimum per order — puts the round-trip commission around $7. What happens to the edge over 100 trades?',
   opts:[
     {t:'Barely dented',line:'That’s the read most people have — commission feels small next to the P&L.'},
-    {t:'Cut it in half',line:'Reasonable guess, but this one’s sneakier than that.'},
-    {t:'Wiped out completely',line:'That’s exactly it.'}
+    {t:'Cut by roughly a third, still profitable',line:'That’s exactly it.'},
+    {t:'Wiped out completely',line:'A fair guess — costs get talked about like they’re that brutal — but this one doesn’t quite go that far.'}
   ],
-  fact:'A $20 round-trip commission on 100 trades is $2,000 — precisely the entire edge this scenario had. The strategy didn’t get worse; the account paying for it just got more expensive to run. Broker quality is not a footnote: spreads, fees, and fill quality decide whether a real edge survives contact with a live account, before a single trade is even placed.'
+  fact:'$7 round trip × 100 trades is $700 — 35% of the $2,000 gross edge, gone to commission alone, before spread or slippage even enter the picture. The strategy is still profitable. It’s just not running the numbers you were promised on paper, and that gap is exactly what a real broker statement shows you that a backtest won’t. Broker quality is not a footnote: commission rate, spread, and fill quality decide how much of a real edge survives contact with a live account.'
 };
 var STAT_INSIGHT={
   q:'One more, before the diagnosis. Guess: among people who day trade persistently — not a week, a sustained stretch — what share end up losing money?',
@@ -6103,6 +6313,12 @@ function renderReadiness(onDone){
     paras.push('That’s not a reason to stop. It’s exactly what Simulate mode is for — build the history first, and let the app show you the truth instead of you having to guess at it.');
   }
   if(gutLine)paras.push(gutLine);
+  // Round 108: the closing encouragement (see its own declaration/
+  // comment above, near GUT_CHECK) always comes last, after the tier
+  // content and the gut-check line - it's the true final thing shown
+  // before Continue, same placement logic round 101 originally used for
+  // the tour's own send-off.
+  paras.push(CLOSING_ENCOURAGEMENT);
   var sentences=[];
   paras.forEach(function(p){sentences=sentences.concat(splitSentences(p));});
 
