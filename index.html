@@ -278,19 +278,30 @@ tr.sel-day{transition:background .5s ease;}
 /* Table tab only: flat flex column, no outer scroll — each .dv-half manages
    its own scroll independently. Deliberately avoids nested auto-overflow
    chains, since that pattern is what broke scrolling in a prior version.
-   Round 108: this used to zero out the shared .screen padding-bottom
-   entirely, on the reasoning that .tbl-scroll's OWN padding-bottom (see
-   that rule) already reserves nav clearance for it. That reasoning only
-   covered the SCROLLED-to-the-end state, though - it did nothing for the
-   table's RESTING (unscrolled) position, which this non-scrolling screen
-   places wherever the flex layout naturally lands it. With round 107's
-   7/9-row max-height cap, that resting position now sits low enough that
-   its last couple of rows land directly under the floating .bnav pill
-   (verified via getBoundingClientRect() overlap, not just eyeballing) -
-   every OTHER screen avoids this via the same 84px reservation restored
-   here; the chart panel above (flex:1 1 0) absorbs the small height
-   difference, same as it already absorbs any other free space. */
-#scr-tbl{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px));}
+   Round 108 added an 84px nav-clearance reservation here (same as every
+   other screen) because the table's resting position, uncorrected, let
+   its last couple of rows land directly under the floating .bnav pill.
+   Round 113 REMOVED that reservation again per direct, repeated
+   correction: "It was beneath the nav menu before and it touched the
+   bottom of the screen before. You are literally moving it up higher
+   than last time, I don't want that. I want its bottom to be at the
+   bottom of the screen." Taken at face value rather than re-litigated:
+   the table (and the chart above it, which absorbs whatever space this
+   frees up via its own flex:1 1 0) now runs all the way to the screen's
+   physical bottom edge, with .bnav floating on top of it again, same as
+   pre-round-108. Worth knowing: .bnav is a centered 210px-wide island on
+   a 420px-wide screen (measured), not a full-width bar, and it's fully
+   opaque (#10141c, no backdrop-filter) - so on a full 9-row table, the
+   CENTER columns of roughly the last row or two sit behind it at rest
+   (left/right edges of those same rows, and every other row, stay fully
+   visible; the table also still scrolls horizontally same as always).
+   That's the exact tradeoff round 108 was written to avoid - reintroduced
+   here deliberately because the user asked for this look back, not
+   because the round-108 concern turned out to be wrong. safe-area-inset-
+   bottom is kept (unrelated to the nav pill - a real hardware inset on
+   notched devices, no reason to drop it just because the nav reservation
+   is gone). */
+#scr-tbl{padding-bottom:env(safe-area-inset-bottom,0px);}
 #scr-tbl.active{display:flex;flex-direction:column;overflow:hidden;}
 /* Bottom nav, round 77: was a flush edge-to-edge bar with icon+label
    columns and a thin top-border active indicator. Reimagined as a
@@ -356,8 +367,16 @@ tr.sel-day{transition:background .5s ease;}
    tab. Not on the button. It can get annoying to have to press the
    button on the side"): the name field now lives as its own card at the
    top of each strategy's Core category panel instead (see buildPanes()'s
-   `nameCard`/`corename` below), and these switcher tiles are back to
-   their pre-round-111 heights (52/38) and letter+stat-only content.
+   `nameCard`/`corename` below). Round 113 restored a THIRD line here -
+   but as a plain read-only <span> (.sb-name-lbl), not another editable
+   field: "you edit them in the core section, and they appear as a label
+   in the button." Editing still only ever happens in Core; these spans
+   are pure display, populated/toggled by stratNameCommit()/
+   hydrateStratNames() below whenever stratNames[] changes, same as
+   sbs/tbs (.sb-stat) already are. Kept the pre-round-111 tile heights
+   (52/38) rather than growing them again - at these font sizes (below)
+   a 3rd line fits inside the existing height with room to spare, unlike
+   round 111's full-size editable input which needed the extra room.
    `.sbtn` is STILL a <div role="button"> rather than reverted to
    <button> - no interactive content lives inside it anymore so either
    tag would work, but reverting the tag bought nothing and only risked
@@ -378,6 +397,21 @@ tr.sel-day{transition:background .5s ease;}
 #scr-sim .sb-ring{display:inline-block;width:6px;height:6px;border-radius:50%;border:1.4px solid #2a3244;background:transparent;}
 #scr-sim .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
 #scr-sim .sb-stat{font-family:'Roboto Mono',monospace;font-size:7.3px;font-weight:500;letter-spacing:.02em;color:#75859e;font-variant-numeric:tabular-nums;}
+/* Round 113: read-only name label, "60% smaller than they were before" -
+   read as 60% smaller than round 111's on-button .sb-name INPUT font
+   size (8.5px here, 7px on Table below), landing at 3.4px/2.8px - a
+   different baseline than round 112's Core-tab field (that one was 60%
+   smaller than .ni's generic 16px default, a separate field with no
+   prior on-screen size to compare against at the time). Plain text, not
+   .ni-styled, since this is no longer an input anywhere but Core -
+   max-width/overflow/nowrap are defensive only: even a full 12-char name
+   (the Core field's own maxlength) is well under this width at this
+   size, this just guards against something unexpectedly overflowing the
+   tile rather than expecting truncation in normal use. display:none
+   toggled in JS (stratNameCommit/hydrateStratNames) rather than left
+   permanently in-flow-but-empty, so an unnamed strategy's tile still
+   centers its letter+stat exactly as it did before this line existed. */
+#scr-sim .sb-name-lbl{font-family:'Inter',sans-serif;font-size:3.4px;font-weight:600;letter-spacing:.02em;color:#75859e;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #scr-sim .sbtn.on{
   border-color:rgba(var(--rgb),.9);
   background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(var(--rgb));
@@ -386,6 +420,7 @@ tr.sel-day{transition:background .5s ease;}
 #scr-sim .sbtn.on .sb-top{color:#0a0d13;font-weight:800;}
 #scr-sim .sbtn.on .sb-ring{background:#0a0d13;border-color:#0a0d13;}
 #scr-sim .sbtn.on .sb-stat{color:rgba(10,13,19,.75);font-weight:700;}
+#scr-sim .sbtn.on .sb-name-lbl{color:rgba(10,13,19,.75);font-weight:700;}
 #scr-tbl .sbar{display:flex;flex-shrink:0;gap:4px;padding:6px 16px;border-bottom:none;background:transparent;}
 #scr-tbl .sbtn{
   --rgb:82,181,224;
@@ -402,6 +437,12 @@ tr.sel-day{transition:background .5s ease;}
 #scr-tbl .sb-ring{display:inline-block;width:5px;height:5px;border-radius:50%;border:1.2px solid #2a3244;background:transparent;}
 #scr-tbl .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
 #scr-tbl .sb-stat{font-family:'Roboto Mono',monospace;font-size:6.3px;font-weight:500;letter-spacing:.02em;color:#75859e;font-variant-numeric:tabular-nums;}
+/* Round 113: same read-only name label as #scr-sim .sb-name-lbl above,
+   sized off THIS screen's own round-111 baseline instead (7px there,
+   60% smaller = 2.8px) rather than reusing Sim's 3.4px - matches how
+   .sb-stat itself already runs two different sizes (7.3px Sim/6.3px
+   Table) for the same reason: Table's tiles are smaller to begin with. */
+#scr-tbl .sb-name-lbl{font-family:'Inter',sans-serif;font-size:2.8px;font-weight:600;letter-spacing:.02em;color:#75859e;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #scr-tbl .sbtn.on{
   border-color:rgba(var(--rgb),.9);
   background:radial-gradient(ellipse 130% 150% at 50% 0%,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 55%),rgb(var(--rgb));
@@ -410,6 +451,7 @@ tr.sel-day{transition:background .5s ease;}
 #scr-tbl .sbtn.on .sb-top{color:#0a0d13;font-weight:800;}
 #scr-tbl .sbtn.on .sb-ring{background:#0a0d13;border-color:#0a0d13;}
 #scr-tbl .sbtn.on .sb-stat{color:rgba(10,13,19,.75);font-weight:700;}
+#scr-tbl .sbtn.on .sb-name-lbl{color:rgba(10,13,19,.75);font-weight:700;}
 /* Strategy Name field, round 112: lives inside each strategy's Core
    category card now (buildPanes()'s `nameCard`) rather than inside the
    switcher tile above - reuses the generic .ni input look app-wide, just
@@ -491,6 +533,24 @@ tr.sel-day{transition:background .5s ease;}
    Stats' own opened panels (same .circ-panel-inner class, no #scr-sim
    prefix) are untouched — this override is scoped to Sim only. */
 #scr-sim .circ-panel-inner{
+  background:none !important;
+  background-image:none !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+/* Round 113: the exact same complaint, this time about Stats' "Enter
+   Broker Trading Data" panel - "has a window within the window... we
+   don't need the larger window." Same root cause round 90 found for
+   Sim: .circ-panel-inner (the OUTER opened-panel box, holding the
+   whole broker-data section) and .stats-inp (the INNER box specifically
+   wrapping the Total Trades..Current Capital $ field list) are BOTH
+   named in the shared glass rule up top, so both render the same
+   bordered/backgrounded card - one nested inside the other. Journal's
+   own circ-panel-inner (jcirc-mount) wasn't mentioned this round, so it
+   stays untouched, matching round 90's own scoping precedent above -
+   fix only the panel that was actually flagged, not every remaining
+   circ-panel-inner site on the assumption they're all equally unwanted. */
+#scr-stats .circ-panel-inner{
   background:none !important;
   background-image:none !important;
   border:none !important;
@@ -1548,12 +1608,12 @@ canvas.spark{width:100%;height:34px;display:block;}
       <div class="fc-note" style="padding:0 12px 8px;">Shared starting capital across all six strategies — makes A–F directly comparable on the same account size. Each strategy still sets its own ticker, price, and share count.</div>
     </div>
     <div class="sbar">
-      <div class="sbtn on" id="stb0" role="button" onclick="switchStrat(0)"><span class="sb-top">A<i class="sb-ring" id="sbr0"></i></span><span class="sb-stat" id="sbs0">—</span></div>
-      <div class="sbtn sc-b" id="stb1" role="button" onclick="switchStrat(1)"><span class="sb-top">B<i class="sb-ring" id="sbr1"></i></span><span class="sb-stat" id="sbs1">—</span></div>
-      <div class="sbtn sc-c" id="stb2" role="button" onclick="switchStrat(2)"><span class="sb-top">C<i class="sb-ring" id="sbr2"></i></span><span class="sb-stat" id="sbs2">—</span></div>
-      <div class="sbtn sc-d" id="stb3" role="button" onclick="switchStrat(3)"><span class="sb-top">D<i class="sb-ring" id="sbr3"></i></span><span class="sb-stat" id="sbs3">—</span></div>
-      <div class="sbtn sc-e" id="stb4" role="button" onclick="switchStrat(4)"><span class="sb-top">E<i class="sb-ring" id="sbr4"></i></span><span class="sb-stat" id="sbs4">—</span></div>
-      <div class="sbtn sc-f" id="stb5" role="button" onclick="switchStrat(5)"><span class="sb-top">F<i class="sb-ring" id="sbr5"></i></span><span class="sb-stat" id="sbs5">—</span></div>
+      <div class="sbtn on" id="stb0" role="button" onclick="switchStrat(0)"><span class="sb-top">A<i class="sb-ring" id="sbr0"></i></span><span class="sb-name-lbl" id="sname0"></span><span class="sb-stat" id="sbs0">—</span></div>
+      <div class="sbtn sc-b" id="stb1" role="button" onclick="switchStrat(1)"><span class="sb-top">B<i class="sb-ring" id="sbr1"></i></span><span class="sb-name-lbl" id="sname1"></span><span class="sb-stat" id="sbs1">—</span></div>
+      <div class="sbtn sc-c" id="stb2" role="button" onclick="switchStrat(2)"><span class="sb-top">C<i class="sb-ring" id="sbr2"></i></span><span class="sb-name-lbl" id="sname2"></span><span class="sb-stat" id="sbs2">—</span></div>
+      <div class="sbtn sc-d" id="stb3" role="button" onclick="switchStrat(3)"><span class="sb-top">D<i class="sb-ring" id="sbr3"></i></span><span class="sb-name-lbl" id="sname3"></span><span class="sb-stat" id="sbs3">—</span></div>
+      <div class="sbtn sc-e" id="stb4" role="button" onclick="switchStrat(4)"><span class="sb-top">E<i class="sb-ring" id="sbr4"></i></span><span class="sb-name-lbl" id="sname4"></span><span class="sb-stat" id="sbs4">—</span></div>
+      <div class="sbtn sc-f" id="stb5" role="button" onclick="switchStrat(5)"><span class="sb-top">F<i class="sb-ring" id="sbr5"></i></span><span class="sb-name-lbl" id="sname5"></span><span class="sb-stat" id="sbs5">—</span></div>
     </div>
     <div id="sp0"></div>
     <div id="sp1" style="display:none;"></div>
@@ -1599,12 +1659,12 @@ canvas.spark{width:100%;height:34px;display:block;}
         <canvas id="dv-gauge-cv"></canvas>
       </div>
       <div class="sbar">
-        <div class="sbtn on" id="tsb0" role="button" onclick="switchTblStrat(0)"><span class="sb-top">A<i class="sb-ring" id="tbr0"></i></span><span class="sb-stat" id="tbs0">—</span></div>
-        <div class="sbtn sc-b" id="tsb1" role="button" onclick="switchTblStrat(1)"><span class="sb-top">B<i class="sb-ring" id="tbr1"></i></span><span class="sb-stat" id="tbs1">—</span></div>
-        <div class="sbtn sc-c" id="tsb2" role="button" onclick="switchTblStrat(2)"><span class="sb-top">C<i class="sb-ring" id="tbr2"></i></span><span class="sb-stat" id="tbs2">—</span></div>
-        <div class="sbtn sc-d" id="tsb3" role="button" onclick="switchTblStrat(3)"><span class="sb-top">D<i class="sb-ring" id="tbr3"></i></span><span class="sb-stat" id="tbs3">—</span></div>
-        <div class="sbtn sc-e" id="tsb4" role="button" onclick="switchTblStrat(4)"><span class="sb-top">E<i class="sb-ring" id="tbr4"></i></span><span class="sb-stat" id="tbs4">—</span></div>
-        <div class="sbtn sc-f" id="tsb5" role="button" onclick="switchTblStrat(5)"><span class="sb-top">F<i class="sb-ring" id="tbr5"></i></span><span class="sb-stat" id="tbs5">—</span></div>
+        <div class="sbtn on" id="tsb0" role="button" onclick="switchTblStrat(0)"><span class="sb-top">A<i class="sb-ring" id="tbr0"></i></span><span class="sb-name-lbl" id="tname0"></span><span class="sb-stat" id="tbs0">—</span></div>
+        <div class="sbtn sc-b" id="tsb1" role="button" onclick="switchTblStrat(1)"><span class="sb-top">B<i class="sb-ring" id="tbr1"></i></span><span class="sb-name-lbl" id="tname1"></span><span class="sb-stat" id="tbs1">—</span></div>
+        <div class="sbtn sc-c" id="tsb2" role="button" onclick="switchTblStrat(2)"><span class="sb-top">C<i class="sb-ring" id="tbr2"></i></span><span class="sb-name-lbl" id="tname2"></span><span class="sb-stat" id="tbs2">—</span></div>
+        <div class="sbtn sc-d" id="tsb3" role="button" onclick="switchTblStrat(3)"><span class="sb-top">D<i class="sb-ring" id="tbr3"></i></span><span class="sb-name-lbl" id="tname3"></span><span class="sb-stat" id="tbs3">—</span></div>
+        <div class="sbtn sc-e" id="tsb4" role="button" onclick="switchTblStrat(4)"><span class="sb-top">E<i class="sb-ring" id="tbr4"></i></span><span class="sb-name-lbl" id="tname4"></span><span class="sb-stat" id="tbs4">—</span></div>
+        <div class="sbtn sc-f" id="tsb5" role="button" onclick="switchTblStrat(5)"><span class="sb-top">F<i class="sb-ring" id="tbr5"></i></span><span class="sb-name-lbl" id="tname5"></span><span class="sb-stat" id="tbs5">—</span></div>
       </div>
     </div>
     <div class="dv-half">
@@ -1870,13 +1930,19 @@ const simResults=[null,null,null,null,null,null];
 // into a single field per strategy inside its Core category card
 // (id="corename"+suffix, see buildPanes()'s `nameCard`) - "I want the
 // name edit field to populate inside the core tab. Not on the button.
-// It can get annoying to have to press the button on the side." One
-// canonical value per strategy slot (stratNames) with exactly ONE DOM
-// mirror now (not two, since there's only one field left) - still kept
-// as its own top-level save-blob key (see save()/load()) rather than
-// folded into the generic getStpIds()/SDEFS pipeline, mostly so this
-// stays a drop-in match for the shape that pipeline already isn't built
-// for (it predates this field, no need to force it in retroactively).
+// It can get annoying to have to press the button on the side." Round
+// 113 put the name back on the switcher tiles too, but as a read-only
+// label, not a second editable field: "you edit them in the core
+// section, and they appear as a label in the button in the sim tab and
+// the table tab." One canonical value per strategy slot (stratNames)
+// with ONE editable DOM mirror (Core's corename{s}) and TWO read-only
+// display mirrors (sname{i}/tname{i} on the switcher tiles), all three
+// kept in sync by updateStratNameLabel()/stratNameCommit()/
+// hydrateStratNames() below - still its own top-level save-blob key
+// (see save()/load()) rather than folded into the generic getStpIds()/
+// SDEFS pipeline, mostly so this stays a drop-in match for the shape
+// that pipeline already isn't built for (it predates this field, no
+// need to force it in retroactively).
 let stratNames=['','','','','',''];
 
 function switchStrat(n){
@@ -1910,28 +1976,51 @@ function updateStratTab(tab){
     stat.textContent=statTxt;
   });
 }
+// Round 113: pushes stratNames[tab] out to the two READ-ONLY switcher
+// labels (Sim's sname{tab}, Table's tname{tab} - see the CSS comment
+// above #scr-sim .sb-name-lbl). display is toggled, not just textContent
+// set, so an empty name leaves the tile exactly as it looks with no name
+// set at all (letter+stat only, centered) rather than an empty line
+// still occupying its flex slot. Called from both stratNameCommit()
+// (live edit) and hydrateStratNames() (page load) so the two mirrors
+// (Core's editable field, the switchers' read-only labels) can never
+// drift out of sync.
+function updateStratNameLabel(tab){
+  const val=stratNames[tab]||'';
+  ['sname'+tab,'tname'+tab].forEach(id=>{
+    const el=$(id);if(!el)return;
+    el.textContent=val;
+    el.style.display=val?'block':'none';
+  });
+}
 // Commits the Core-tab name field's current value as the canonical
-// value for that strategy slot and persists. Round 112 simplified this
-// down from a two-DOM-mirror commit (Sim switcher + Table switcher) to
-// one, now that the field only exists in a single place (the strategy's
-// Core category card) - no more stratNameInput() live-mirror function
-// either, since there's nothing left to mirror TO.
+// value for that strategy slot, mirrors it out to the switcher labels,
+// and persists. Round 112 simplified this down from a two-DOM-mirror
+// commit (Sim switcher + Table switcher, both editable) to one editable
+// field (Core) - round 113 added the switcher labels BACK as a third,
+// read-only mirror ("you edit them in the core section, and they appear
+// as a label in the button"), via updateStratNameLabel() above rather
+// than reviving stratNameInput() (that function mirrored between two
+// live INPUTS on every keystroke; these are just text now, a plain
+// assignment on commit is all they need).
 function stratNameCommit(tab){
   const s=tab===0?'':'_'+tab;
   const el=$('corename'+s);
   const val=(el?el.value:'').slice(0,12);
   stratNames[tab]=val;
   if(el)el.value=val;
+  updateStratNameLabel(tab);
   save();
 }
 // Pushes the loaded/initial stratNames[] into each strategy's Core-tab
-// name field - called once from init() after load() resolves, same
-// moment every other loaded field gets hydrated into its input.
+// name field AND the switcher labels - called once from init() after
+// load() resolves, same moment every other loaded field gets hydrated.
 function hydrateStratNames(){
   [0,1,2,3,4,5].forEach(i=>{
     const s=i===0?'':'_'+i;
     const el=$('corename'+s);
     if(el)el.value=stratNames[i]||'';
+    updateStratNameLabel(i);
   });
 }
 /* Table tab's interval control: default view is a segmented quick-pick
