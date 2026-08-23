@@ -1335,7 +1335,17 @@ canvas.spark{width:100%;height:34px;display:block;}
    (abandons the whole remaining sequence, tour included) and the fact
    that nothing here is ever written to localStorage. */
 #pre-veil{position:fixed;inset:0;z-index:9999;background:#000;}
-.intro-overlay{position:fixed;inset:0;z-index:1990;background:#000;overflow:hidden;transition:opacity .4s ease;}
+/* Round 110: "I want the app/guide to fade in from black after the
+   intro is done" - this transition rule already existed but was never
+   actually triggered (see startIntroSequence()/abandonOnboarding() below
+   - both used to hide this element via a hard display:none with opacity
+   left at 1 the whole time, an instant cut with nothing to animate).
+   Duration matches .tour-spotlight/.tour-card's own .75s fade (round
+   103) rather than a new value - same motion language on the way out of
+   the intro as the way into the guide, so the two reads as one
+   continuous reveal instead of two differently-paced fades stitched
+   together. */
+.intro-overlay{position:fixed;inset:0;z-index:1990;background:#000;overflow:hidden;transition:opacity .75s ease;}
 .intro-cv{position:absolute;inset:0;width:100%;height:100%;display:block;}
 .intro-fg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:60px 30px 36px;text-align:center;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 /* .scr-inner carries the actual per-screen content (everything except
@@ -5937,8 +5947,16 @@ function ensureIntroDom(){
 // if the user instead skips out of the tour proper, later).
 function abandonOnboarding(){
   stopFlakeField();
-  if(introOverlay)introOverlay.style.display='none';
   if(introSkipBtn)introSkipBtn.style.display='none';
+  // Round 110: same fade-from-black treatment as the Continue path below
+  // (renderReadiness's onDone callback) - Skip lands straight on the app
+  // with no guide to follow, but it's the exact same underlying reveal
+  // moment (black intro -> lit app), so it gets the same motion instead
+  // of a jarring instant snap while Continue gets a fade.
+  if(introOverlay){
+    introOverlay.style.opacity='0';
+    setTimeout(function(){introOverlay.style.display='none';},800);
+  }
 }
 
 // Continuous drifting-flake backdrop - the one piece of "motion" kept
@@ -6370,9 +6388,30 @@ function startIntroSequence(){
                 runGutCheck(function(){
                   renderReadiness(function(){
                     stopFlakeField();
-                    introOverlay.style.display='none';
                     introSkipBtn.style.display='none';
+                    // Round 110: "I want the app/guide to fade in from
+                    // black after the intro is done." This used to be an
+                    // instant display:none - opacity was never touched
+                    // (stuck at the '1' set back in startIntroSequence's
+                    // opening lines), so the .intro-overlay CSS opacity
+                    // transition above was declared but never actually
+                    // triggered; the black overlay just vanished and the
+                    // full-color app (already fully painted underneath
+                    // the whole time) snapped straight to full brightness
+                    // in the very next frame. Now opacity drops to 0
+                    // first, over that same .75s used elsewhere for this
+                    // handoff, and display:none is deferred until the
+                    // transition has had time to finish rather than
+                    // cutting it off mid-fade. startTour() still fires
+                    // immediately (not after the timeout) so its own
+                    // blocker/spotlight/card fade (150ms delay, .75s
+                    // fade - see startTour() below) overlaps this one
+                    // instead of visibly following it: one continuous
+                    // dissolve from black into "app + guide," not two
+                    // fades stacked end to end.
+                    introOverlay.style.opacity='0';
                     startTour();
+                    setTimeout(function(){introOverlay.style.display='none';},800);
                   });
                 });
               });
