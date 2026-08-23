@@ -350,11 +350,23 @@ tr.sel-day{transition:background .5s ease;}
    bar + the interval stepper + the data grid all sharing one screen)
    and doesn't apply to Sim's own pane. */
 #scr-sim .sbar{gap:5px;padding:8px 16px;border-bottom:none;background:transparent;}
+/* Round 111: .sbtn switched from <button> to <div role="button"> here and
+   in #scr-tbl below, so a real <input> (.sb-name, the new per-strategy
+   name field - "compare tickers with the same strategy or different
+   strategies with the same ticker") can live inside it without nesting
+   interactive content inside a <button>, which real touch browsers
+   handle inconsistently (focus/keyboard can misbehave). initPressBloom's
+   press-state selector list targets `.sbtn` by CLASS, not tag, so the
+   press-bloom feedback is unaffected by the tag change. .sb-name has its
+   own onclick:stopPropagation so tapping in to type never ALSO fires the
+   outer div's switchStrat/switchTblStrat. Height grew (52->64, 38->50) to
+   fit the extra line - see setStratName()/stratNameInput() for the JS
+   half of this. */
 #scr-sim .sbtn{
   --rgb:82,181,224;
-  height:52px;border-radius:7px;border:1px solid #1c2333;background:rgba(255,255,255,.02);
+  height:64px;border-radius:7px;border:1px solid #1c2333;background:rgba(255,255,255,.02);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  font-size:11px;font-weight:600;letter-spacing:.05em;color:#7d8699;
+  font-size:11px;font-weight:600;letter-spacing:.05em;color:#7d8699;cursor:pointer;
 }
 #scr-sim .sbtn.sc-b{--rgb:227,148,84;}
 #scr-sim .sbtn.sc-c{--rgb:173,152,236;}
@@ -364,6 +376,9 @@ tr.sel-day{transition:background .5s ease;}
 #scr-sim .sb-top{display:flex;align-items:center;gap:6px;}
 #scr-sim .sb-ring{display:inline-block;width:6px;height:6px;border-radius:50%;border:1.4px solid #2a3244;background:transparent;}
 #scr-sim .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
+#scr-sim .sb-name{width:88%;max-width:72px;background:transparent;border:none;border-bottom:1px solid transparent;color:#7d8699;font-family:'Inter',sans-serif;font-size:8.5px;font-weight:500;letter-spacing:.01em;text-align:center;padding:0 0 1px;outline:none;text-overflow:ellipsis;}
+#scr-sim .sb-name::placeholder{color:#454e60;}
+#scr-sim .sb-name:focus{border-bottom-color:rgba(255,255,255,.35);}
 #scr-sim .sb-stat{font-family:'Roboto Mono',monospace;font-size:7.3px;font-weight:500;letter-spacing:.02em;color:#75859e;font-variant-numeric:tabular-nums;}
 #scr-sim .sbtn.on{
   border-color:rgba(var(--rgb),.9);
@@ -372,13 +387,16 @@ tr.sel-day{transition:background .5s ease;}
 }
 #scr-sim .sbtn.on .sb-top{color:#0a0d13;font-weight:800;}
 #scr-sim .sbtn.on .sb-ring{background:#0a0d13;border-color:#0a0d13;}
+#scr-sim .sbtn.on .sb-name{color:rgba(10,13,19,.85);}
+#scr-sim .sbtn.on .sb-name::placeholder{color:rgba(10,13,19,.4);}
+#scr-sim .sbtn.on .sb-name:focus{border-bottom-color:rgba(10,13,19,.4);}
 #scr-sim .sbtn.on .sb-stat{color:rgba(10,13,19,.75);font-weight:700;}
 #scr-tbl .sbar{display:flex;flex-shrink:0;gap:4px;padding:6px 16px;border-bottom:none;background:transparent;}
 #scr-tbl .sbtn{
   --rgb:82,181,224;
-  height:38px;border-radius:7px;border:none;background:transparent;
+  height:50px;border-radius:7px;border:none;background:transparent;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
-  font-size:9.5px;font-weight:600;letter-spacing:.04em;color:#7d8699;
+  font-size:9.5px;font-weight:600;letter-spacing:.04em;color:#7d8699;cursor:pointer;
 }
 #scr-tbl .sbtn.sc-b{--rgb:227,148,84;}
 #scr-tbl .sbtn.sc-c{--rgb:173,152,236;}
@@ -388,6 +406,9 @@ tr.sel-day{transition:background .5s ease;}
 #scr-tbl .sb-top{display:flex;align-items:center;gap:4px;}
 #scr-tbl .sb-ring{display:inline-block;width:5px;height:5px;border-radius:50%;border:1.2px solid #2a3244;background:transparent;}
 #scr-tbl .sbtn.hasrun .sb-ring{background:rgba(var(--rgb),.85);border-color:rgba(var(--rgb),.85);}
+#scr-tbl .sb-name{width:92%;max-width:56px;background:transparent;border:none;border-bottom:1px solid transparent;color:#7d8699;font-family:'Inter',sans-serif;font-size:7px;font-weight:500;letter-spacing:.01em;text-align:center;padding:0;outline:none;text-overflow:ellipsis;}
+#scr-tbl .sb-name::placeholder{color:#454e60;}
+#scr-tbl .sb-name:focus{border-bottom-color:rgba(255,255,255,.35);}
 #scr-tbl .sb-stat{font-family:'Roboto Mono',monospace;font-size:6.3px;font-weight:500;letter-spacing:.02em;color:#75859e;font-variant-numeric:tabular-nums;}
 #scr-tbl .sbtn.on{
   border-color:rgba(var(--rgb),.9);
@@ -396,6 +417,9 @@ tr.sel-day{transition:background .5s ease;}
 }
 #scr-tbl .sbtn.on .sb-top{color:#0a0d13;font-weight:800;}
 #scr-tbl .sbtn.on .sb-ring{background:#0a0d13;border-color:#0a0d13;}
+#scr-tbl .sbtn.on .sb-name{color:rgba(10,13,19,.85);}
+#scr-tbl .sbtn.on .sb-name::placeholder{color:rgba(10,13,19,.4);}
+#scr-tbl .sbtn.on .sb-name:focus{border-bottom-color:rgba(10,13,19,.4);}
 #scr-tbl .sbtn.on .sb-stat{color:rgba(10,13,19,.75);font-weight:700;}
 .ovr-badge{font-size:7px;background:rgba(251,191,36,.1);color:#fbbf24;padding:1px 6px;border-radius:2px;letter-spacing:.1em;text-transform:uppercase;display:none;border:1px solid rgba(251,191,36,.2);}
 .ovr-badge.on{display:block;}
@@ -1007,11 +1031,15 @@ canvas.eqcv{width:100%;height:100%;display:block;cursor:crosshair;touch-action:n
 .dv-half{flex:1 1 0;min-height:0;display:flex;flex-direction:column;border-bottom:1px solid #232b3d;overflow:hidden;}
 /* Round 107: the table half no longer stretches to a 50/50 split with
    the chart half above it - now that .tbl-scroll below is capped to 7
-   rows (see that rule), letting this half keep flex:1 1 0 would leave
-   dead empty space under the capped table. flex:0 0 auto settles it to
-   exactly its content height (tbl-controls + the capped table); the
-   chart half's own flex:1 1 0 is untouched, so it just absorbs
-   whatever height that frees up instead of splitting evenly. */
+   (later 9) rows, letting this half keep flex:1 1 0 would leave dead
+   empty space under the capped table. flex:0 0 auto settles it to
+   exactly its content height; the chart half's own flex:1 1 0 is
+   untouched, so it just absorbs whatever height that frees up instead
+   of splitting evenly. Round 111: this half's content grew (gauge-row +
+   switcher moved in from the chart half, see their own comment above
+   .dv-gauge-row) - same mechanism, just a taller content height to
+   settle to now, and the chart half above gets that much MORE room in
+   return since it's the only flex:1 1 0 item left splitting nothing. */
 .dv-half:last-child{border-bottom:none;flex:0 0 auto;}
 .dv-empty{padding:32px;text-align:center;font-size:10px;color:#75859e;}
 /* Original wide table, restored — now contained in the bottom .dv-half
@@ -1359,16 +1387,18 @@ canvas.spark{width:100%;height:34px;display:block;}
    Continue off the bottom of a real phone viewport with no way to
    reach it before this fix. */
 .scr-inner{width:100%;max-width:300px;margin:auto 0;display:flex;flex-direction:column;align-items:center;}
-/* .scr-inner.grow overrides the vertical auto-margin above for the one
-   screen that grows its own content over time (the paced reveal,
-   renderReadiness) - with margin:auto 0, every newly-appended sentence
-   changes the block's height, and flexbox re-centers the WHOLE block
-   after every single append, so already-read lines visibly slide up
-   the screen each time a new one arrives ("loads wonky", caught from
-   the user's own description, not a screenshot - the jump is only
-   visible in motion). Anchoring to the top instead means only the
-   BOTTOM edge grows as sentences append; nothing already on screen
-   ever moves. */
+/* .scr-inner.grow overrides the vertical auto-margin above for a
+   screen that grows its own content over time - originally written
+   for renderReadiness's old sentence-by-sentence reveal, where every
+   newly-appended sentence changed the block's height and flexbox
+   re-centered the WHOLE block after every append, so already-read
+   lines visibly slid up the screen each time a new one arrived
+   ("loads wonky", caught from the user's own description, not a
+   screenshot - the jump is only visible in motion). Round 111 split
+   that screen into several short beats (see buildReadinessSteps() in
+   the JS), none of which grow after being shown, so nothing currently
+   passes 'grow' to setFg() - left in place for whatever future screen
+   needs the same top-anchored treatment. */
 .scr-inner.grow{margin-top:0;margin-bottom:0;}
 .intro-skip{position:fixed;z-index:2002;top:calc(14px + env(safe-area-inset-top,0px));right:16px;font-size:10px;color:#6b7484;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;padding:8px;touch-action:manipulation;}
 @keyframes scrFadeUp{from{opacity:0;transform:translateY(9px);}to{opacity:1;transform:translateY(0);}}
@@ -1379,13 +1409,17 @@ canvas.spark{width:100%;height:34px;display:block;}
 .scr-title{font-family:'Inter',sans-serif;font-size:19px;font-weight:700;color:#f4f6fa;line-height:1.4;max-width:300px;margin-bottom:14px;animation:scrFadeUp .55s cubic-bezier(.25,.46,.45,.94) both;animation-delay:.14s;}
 .scr-body{font-family:'Inter',sans-serif;font-size:12.5px;color:#a7b0bf;line-height:1.7;max-width:300px;animation:scrFadeUp .55s cubic-bezier(.25,.46,.45,.94) both;animation-delay:.28s;}
 .scr-body+.scr-body{margin-top:11px;}
-/* renderReadiness() often stacks several .scr-body paragraphs at once
-   (one per flagged gap) - centered multi-paragraph prose reads as a
-   dense, hard-to-scan block, so that screen's body copy is wrapped in
-   .scr-bodies and left-aligned instead; the short centered eyebrow/
-   title above it stay centered on purpose (a headline reads fine
-   centered, body prose doesn't) - same pattern results/report screens
-   in other apps use. */
+/* Round 96/97: renderReadiness() used to stack several .scr-body
+   paragraphs on one screen (one per flagged gap) - centered multi-
+   paragraph prose reads as a dense, hard-to-scan block, so that
+   screen's body copy was wrapped in .scr-bodies and left-aligned
+   instead. Round 111 split that one screen into several single-idea
+   beats (see buildReadinessSteps() in the JS), each back to the
+   normal single centered .scr-body every other beat in this sequence
+   uses, so nothing in the intro sequence renders .scr-bodies anymore.
+   Left in place, unused, rather than deleted - cheap to keep, and a
+   future screen that genuinely needs to stack left-aligned prose can
+   reuse it as-is. */
 .scr-bodies{width:100%;max-width:300px;text-align:left;}
 .scr-opts{width:100%;max-width:300px;margin-top:20px;text-align:left;animation:scrFadeUp .55s cubic-bezier(.25,.46,.45,.94) both;animation-delay:.14s;}
 .scr-opt{display:block;width:100%;background:none;border:none;border-bottom:1px solid rgba(255,255,255,.1);color:#c3cad6;font-family:'Inter',sans-serif;font-size:13px;line-height:1.4;text-align:left;padding:13px 2px;cursor:pointer;touch-action:manipulation;position:relative;}
@@ -1476,12 +1510,12 @@ canvas.spark{width:100%;height:34px;display:block;}
       <div class="fc-note" style="padding:0 12px 8px;">Shared starting capital across all six strategies — makes A–F directly comparable on the same account size. Each strategy still sets its own ticker, price, and share count.</div>
     </div>
     <div class="sbar">
-      <button class="sbtn on" id="stb0" onclick="switchStrat(0)"><span class="sb-top">A<i class="sb-ring" id="sbr0"></i></span><span class="sb-stat" id="sbs0">—</span></button>
-      <button class="sbtn sc-b" id="stb1" onclick="switchStrat(1)"><span class="sb-top">B<i class="sb-ring" id="sbr1"></i></span><span class="sb-stat" id="sbs1">—</span></button>
-      <button class="sbtn sc-c" id="stb2" onclick="switchStrat(2)"><span class="sb-top">C<i class="sb-ring" id="sbr2"></i></span><span class="sb-stat" id="sbs2">—</span></button>
-      <button class="sbtn sc-d" id="stb3" onclick="switchStrat(3)"><span class="sb-top">D<i class="sb-ring" id="sbr3"></i></span><span class="sb-stat" id="sbs3">—</span></button>
-      <button class="sbtn sc-e" id="stb4" onclick="switchStrat(4)"><span class="sb-top">E<i class="sb-ring" id="sbr4"></i></span><span class="sb-stat" id="sbs4">—</span></button>
-      <button class="sbtn sc-f" id="stb5" onclick="switchStrat(5)"><span class="sb-top">F<i class="sb-ring" id="sbr5"></i></span><span class="sb-stat" id="sbs5">—</span></button>
+      <div class="sbtn on" id="stb0" role="button" onclick="switchStrat(0)"><span class="sb-top">A<i class="sb-ring" id="sbr0"></i></span><input class="sb-name" id="sname0" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(0,this)" onblur="stratNameCommit(0)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="sbs0">—</span></div>
+      <div class="sbtn sc-b" id="stb1" role="button" onclick="switchStrat(1)"><span class="sb-top">B<i class="sb-ring" id="sbr1"></i></span><input class="sb-name" id="sname1" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(1,this)" onblur="stratNameCommit(1)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="sbs1">—</span></div>
+      <div class="sbtn sc-c" id="stb2" role="button" onclick="switchStrat(2)"><span class="sb-top">C<i class="sb-ring" id="sbr2"></i></span><input class="sb-name" id="sname2" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(2,this)" onblur="stratNameCommit(2)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="sbs2">—</span></div>
+      <div class="sbtn sc-d" id="stb3" role="button" onclick="switchStrat(3)"><span class="sb-top">D<i class="sb-ring" id="sbr3"></i></span><input class="sb-name" id="sname3" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(3,this)" onblur="stratNameCommit(3)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="sbs3">—</span></div>
+      <div class="sbtn sc-e" id="stb4" role="button" onclick="switchStrat(4)"><span class="sb-top">E<i class="sb-ring" id="sbr4"></i></span><input class="sb-name" id="sname4" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(4,this)" onblur="stratNameCommit(4)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="sbs4">—</span></div>
+      <div class="sbtn sc-f" id="stb5" role="button" onclick="switchStrat(5)"><span class="sb-top">F<i class="sb-ring" id="sbr5"></i></span><input class="sb-name" id="sname5" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(5,this)" onblur="stratNameCommit(5)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="sbs5">—</span></div>
     </div>
     <div id="sp0"></div>
     <div id="sp1" style="display:none;"></div>
@@ -1508,36 +1542,40 @@ canvas.spark{width:100%;height:34px;display:block;}
           <span class="dv-dt-cal" id="dv-dt-cal"></span>
         </div>
       </div>
+    </div>
+    <!-- Round 111: gauge-row + switcher moved OUT of the chart's .dv-half
+         and into the table's, reversing round 106's placement per direct
+         feedback — "the table... kept in place, infringing on the real
+         estate of the chart... bring the table down to fill the void...
+         the share gauges and buttons should move with the table, leaving
+         the chart to reap the benefit of the extra space." Round 106's
+         own reasoning (avoid a bare "dark strip" sandwiched between two
+         independently-boxed panels) still holds here — gauges+switcher
+         now live as the first children of the TABLE's .dv-half instead,
+         so they're still inside one shared bordered container with the
+         table beneath them, never their own floating strip between two
+         panels. Net effect: the chart's .dv-half now contains ONLY
+         .chart-wrap, so its flex:1 1 0 share goes entirely to the
+         canvas instead of being split three ways with gauges/switcher;
+         the table's .dv-half absorbs the gauges+switcher's combined
+         ~114px into its own flex:0 0 auto content height, sizing itself
+         (and its position) to fit them the same way it already sizes
+         itself to the row-capped table. TOUR_STOPS' "Table — the race"
+         stop's selector was widened to explicitly union the chart with
+         the (now relocated) gauge row, since its copy still describes
+         both together as one spotlighted moment. -->
+    <div class="dv-half">
       <div class="dv-gauge-row">
         <canvas id="dv-gauge-cv"></canvas>
       </div>
-      <!-- Round 106: moved back INSIDE the upper .dv-half, reversing
-           round 92's extraction (see git history / memory for that
-           reasoning) per direct request — "put the strategy buttons
-           inside the graph window... instead of having a dark strip,
-           it will be more congruent structurally." Round 92's problem
-           was the tab row being SANDWICHED between two independently-
-           boxed panels (each contributing its own top/bottom inset
-           highlight right at the row's edges, reading as a phantom
-           third window); this is a different placement, not a revival
-           of that one - the switcher now lives INSIDE a single panel
-           as its last child, sharing that ONE box/highlight/backdrop
-           rather than being framed by two neighboring ones. Order on
-           screen is unchanged (chart, then gauges, then switcher) —
-           only the visual container changed, so the race chart +
-           gauges + switcher now read as one window, and that window's
-           own bottom border is what used to be the bare "dark strip"
-           gap above the table. -->
       <div class="sbar">
-        <button class="sbtn on" id="tsb0" onclick="switchTblStrat(0)"><span class="sb-top">A<i class="sb-ring" id="tbr0"></i></span><span class="sb-stat" id="tbs0">—</span></button>
-        <button class="sbtn sc-b" id="tsb1" onclick="switchTblStrat(1)"><span class="sb-top">B<i class="sb-ring" id="tbr1"></i></span><span class="sb-stat" id="tbs1">—</span></button>
-        <button class="sbtn sc-c" id="tsb2" onclick="switchTblStrat(2)"><span class="sb-top">C<i class="sb-ring" id="tbr2"></i></span><span class="sb-stat" id="tbs2">—</span></button>
-        <button class="sbtn sc-d" id="tsb3" onclick="switchTblStrat(3)"><span class="sb-top">D<i class="sb-ring" id="tbr3"></i></span><span class="sb-stat" id="tbs3">—</span></button>
-        <button class="sbtn sc-e" id="tsb4" onclick="switchTblStrat(4)"><span class="sb-top">E<i class="sb-ring" id="tbr4"></i></span><span class="sb-stat" id="tbs4">—</span></button>
-        <button class="sbtn sc-f" id="tsb5" onclick="switchTblStrat(5)"><span class="sb-top">F<i class="sb-ring" id="tbr5"></i></span><span class="sb-stat" id="tbs5">—</span></button>
+        <div class="sbtn on" id="tsb0" role="button" onclick="switchTblStrat(0)"><span class="sb-top">A<i class="sb-ring" id="tbr0"></i></span><input class="sb-name" id="tname0" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(0,this)" onblur="stratNameCommit(0)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="tbs0">—</span></div>
+        <div class="sbtn sc-b" id="tsb1" role="button" onclick="switchTblStrat(1)"><span class="sb-top">B<i class="sb-ring" id="tbr1"></i></span><input class="sb-name" id="tname1" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(1,this)" onblur="stratNameCommit(1)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="tbs1">—</span></div>
+        <div class="sbtn sc-c" id="tsb2" role="button" onclick="switchTblStrat(2)"><span class="sb-top">C<i class="sb-ring" id="tbr2"></i></span><input class="sb-name" id="tname2" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(2,this)" onblur="stratNameCommit(2)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="tbs2">—</span></div>
+        <div class="sbtn sc-d" id="tsb3" role="button" onclick="switchTblStrat(3)"><span class="sb-top">D<i class="sb-ring" id="tbr3"></i></span><input class="sb-name" id="tname3" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(3,this)" onblur="stratNameCommit(3)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="tbs3">—</span></div>
+        <div class="sbtn sc-e" id="tsb4" role="button" onclick="switchTblStrat(4)"><span class="sb-top">E<i class="sb-ring" id="tbr4"></i></span><input class="sb-name" id="tname4" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(4,this)" onblur="stratNameCommit(4)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="tbs4">—</span></div>
+        <div class="sbtn sc-f" id="tsb5" role="button" onclick="switchTblStrat(5)"><span class="sb-top">F<i class="sb-ring" id="tbr5"></i></span><input class="sb-name" id="tname5" type="text" maxlength="12" autocomplete="off" value="" placeholder="" oninput="stratNameInput(5,this)" onblur="stratNameCommit(5)" onclick="event.stopPropagation()" onkeydown="if(event.key===&#39;Enter&#39;){event.preventDefault();this.blur();}"><span class="sb-stat" id="tbs5">—</span></div>
       </div>
-    </div>
-    <div class="dv-half">
       <div class="tbl-controls">
         <span class="tc-lbl">Every</span>
         <div class="tc-quick" id="tc-quick">
@@ -1792,6 +1830,20 @@ function switchScreen(n){
 
 let activeStrat=0,activeTblStrat=0;
 const simResults=[null,null,null,null,null,null];
+// Round 111: "add a strategy name field inside each button. That way,
+// people can compare tickers with the same strategy or different
+// strategies with the same ticker." Plain user-typed labels, e.g. "AAPL
+// Scalp" / "TSLA Scalp" - purely cosmetic, never read by any sim/scoring
+// logic. One canonical value per strategy slot (stratNames), mirrored
+// into BOTH switcher copies (#scr-sim's sname0-5, #scr-tbl's tname0-5) -
+// same "one underlying value, two DOM mirrors" shape updateStratTab()
+// already uses for the ring/stat, not a new pattern. Persisted as its
+// own top-level save-blob key (see save()/load()) rather than folded
+// into the generic getStpIds()/SDEFS pipeline, since that pipeline is
+// built around exactly one DOM id per stored value and this field needs
+// two.
+let stratNames=['','','','','',''];
+
 function switchStrat(n){
   activeStrat=n;
   [0,1,2,3,4,5].forEach(i=>{
@@ -1821,6 +1873,40 @@ function updateStratTab(tab){
     if(!ring||!stat||!btn)return;
     btn.classList.toggle('hasrun',hasRun);
     stat.textContent=statTxt;
+  });
+}
+// Live-mirrors a keystroke in one .sb-name input into its counterpart in
+// the OTHER switcher copy, without saving on every keystroke (that
+// happens on blur, see stratNameCommit) and without disturbing whichever
+// input the user is actually typing in - only the other one gets its
+// .value reassigned, so the caret/selection in the active input is never
+// touched by its own mirrored write.
+function stratNameInput(tab,el){
+  const otherId=(el.id.charAt(0)==='s'?'tname':'sname')+tab;
+  const other=$(otherId);
+  if(other)other.value=el.value;
+}
+// Commits whichever input just lost focus as the canonical value for
+// that strategy slot, re-mirrors it into the other copy (covers a
+// non-typing change, e.g. autofill), and persists.
+function stratNameCommit(tab){
+  const src=$('sname'+tab)||$('tname'+tab);
+  const val=(src?src.value:'').slice(0,12);
+  stratNames[tab]=val;
+  const sEl=$('sname'+tab),tEl=$('tname'+tab);
+  if(sEl)sEl.value=val;
+  if(tEl)tEl.value=val;
+  save();
+}
+// Pushes the loaded/initial stratNames[] into both DOM mirrors for every
+// strategy - called once from init() after load() resolves, same moment
+// every other loaded field gets hydrated into its input.
+function hydrateStratNames(){
+  [0,1,2,3,4,5].forEach(i=>{
+    const v=stratNames[i]||'';
+    const sEl=$('sname'+i),tEl=$('tname'+i);
+    if(sEl)sEl.value=v;
+    if(tEl)tEl.value=v;
   });
 }
 /* Table tab's interval control: default view is a segmented quick-pick
@@ -4982,7 +5068,7 @@ function save(){
     const tg={};getTogIds().forEach(id=>{const e=$(id);if(e)tg[id]=e.checked;});
     const sl={};[0,1,2,3,4,5].forEach(t=>{const s=t===0?'':'_'+t;SEL_BASE.forEach(id=>{const e=$(id+s);if(e)sl[id+s]=e.value;});});
     const rl={};REAL_IDS.forEach(id=>{const e=$(id);if(e)rl[id]=e.value;});
-    const data=JSON.stringify({st,tg,sl,rl,sessionLog,journalLog,hasSimulated});
+    const data=JSON.stringify({st,tg,sl,rl,sessionLog,journalLog,hasSimulated,stratNames});
     if(window.storage)window.storage.set(SK,data);else localStorage.setItem(SK,data);
   }catch(e){}
 }
@@ -5003,6 +5089,7 @@ async function load(){
     if(d.sessionLog&&Array.isArray(d.sessionLog))sessionLog=d.sessionLog;
     if(d.journalLog&&Array.isArray(d.journalLog))journalLog=d.journalLog;
     if(d.hasSimulated)hasSimulated=true;
+    if(d.stratNames&&Array.isArray(d.stratNames))stratNames=[0,1,2,3,4,5].map(i=>d.stratNames[i]||'');
     return true;
   }catch(e){return false;}
 }
@@ -5028,6 +5115,7 @@ async function init(){
   buildJournalCircles();
   buildStatsCircle();
   const loaded=await load();
+  hydrateStratNames();
   capSyncQuickUI();
   [0,1,2,3,4,5].forEach(n=>{updateDist(n);updateFrictionBreakdown(n);updateVolWindowSummary(n);updateDerivedShares(n);});
   const allCv=$('real-cv-all'),allTt=$('real-ct-all');if(allCv&&allTt)wireChart(allCv,allTt);
@@ -5135,7 +5223,7 @@ function tourCircSelect(tab,catKey){
 var TOUR_STOPS=[
   {sel:null,title:"Welcome to the Anti-Hope Machine",body:"A quick tour of every screen — nothing here changes any of your settings. Skip anytime, and you can reopen this tour later from Guide, up top."},
   {screen:'sim',sel:'.global-capital',title:"Starting Capital",body:"One shared capital value every strategy compounds from — A through F all start on equal footing, so comparing them stays apples-to-apples no matter what ticker or share price each is testing."},
-  {screen:'sim',sel:'#scr-sim .sbar',title:"Six strategies, one account",body:"Switch between Strategies A–F here. Each keeps its own ticker, targets, and risk settings, but they all draw from the same Starting Capital above, so you can genuinely compare six different ideas side by side."},
+  {screen:'sim',sel:'#scr-sim .sbar',title:"Six strategies, one account",body:"Switch between Strategies A–F here. Each keeps its own ticker, targets, and risk settings, but they all draw from the same Starting Capital above, so you can genuinely compare six different ideas side by side. Tap the small text field under any letter to name it — useful once you're comparing the same ticker across strategies, or the same strategy across tickers."},
   {screen:'sim',sel:'#seg-bar',title:"Five setting groups",body:"Every field for the active strategy lives in one of five categories: Core, Risk, Ticker, Psych, and Overrides. Tap a segment to open it — the next few stops walk through each one."},
   {screen:'sim',before:function(){tourCircSelect(0,'core');},sel:'.circ-panel[data-cat="core"]',title:"Core — your edge",body:"Win Rate % and Breakeven % define how often you win versus scratch a trade. Loss Rate fills in automatically from what's left. Distribution (off by default) shows the resulting win/breakeven/loss split and an estimated EV per trade."},
   {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'risk');},sel:'.circ-panel[data-cat="risk"]',title:"Risk — targets and frequency",body:"Profit Target and Stop Loss are set in ticks — one tick is $0.01/share on US equities, and Reward:Risk is just Profit Target ÷ Stop Loss. Trades / Day sets how many trades you take on a trading day; Days You Trade lets swing-style traders spread that same frequency across fewer active days a month. Daily Loss Cap puts a hard ceiling on how bad one day can get."},
@@ -5144,7 +5232,7 @@ var TOUR_STOPS=[
   {screen:'sim',dock:'bottom',before:function(){tourCircSelect(0,'ovr');},sel:'.circ-panel[data-cat="ovr"]',title:"Overrides — advanced, opt-in",body:"All off by default. R:R Override replaces your Stop Loss with a fixed ratio off Profit Target. Daily % Override skips tick math and applies a percentage straight to equity. Volume Ceiling caps share growth so compounding can't run away indefinitely."},
   {screen:'sim',sel:'#sp0 .sim-row',title:"Run it",body:"Simulate runs this strategy forward using everything you just configured. CSV exports the full day-by-day result. Reset only clears this strategy's last results — it never touches your settings."},
   {screen:'sim',sel:'#sp0 .chart-panel, #sp0 .diag, #sp0 .vs-card',title:"Your results",body:"Once you simulate, the equity curve, a plain-English Diagnostics verdict, and a Strategy Comparison against any other strategies you've run all appear right here. Not every ticker suits every strategy equally — this comparison is how you find which combination your own numbers actually support."},
-  {screen:'tbl',dock:'bottom',sel:'#scr-tbl > .dv-half:first-child',title:"Table — the race",body:"Every simulated strategy's equity curve races on one chart. The gauges below show each strategy's current share count and capital at a glance."},
+  {screen:'tbl',dock:'bottom',sel:'#scr-tbl > .dv-half:first-child, #scr-tbl .dv-gauge-row',title:"Table — the race",body:"Every simulated strategy's equity curve races on one chart. The gauges below show each strategy's current share count and capital at a glance."},
   {screen:'tbl',sel:'#scr-tbl .sbar',title:"Pick a strategy to inspect",body:"Switch which strategy's day-by-day numbers you're looking at below — this doesn't affect the race chart above, which always shows all six."},
   {screen:'tbl',sel:'.tbl-controls',title:"How often to show a row",body:"The table can show every single day, or thin itself out to every 5th, 10th, 20th day, or a custom interval, so a multi-year simulation stays scannable instead of thousands of rows deep."},
   {screen:'tbl',sel:'.tbl-scroll',title:"Day-by-day breakdown",body:"Every column from share count to win rate to cumulative P&L, scrollable both directions. This is the same data the CSV export gives you, just live on screen."},
@@ -5889,14 +5977,28 @@ var EV_INSIGHT={
   ],
   fact:'Run it: 40% × $200 minus 60% × $100 comes out to +$20 of expected value per trade. Over 100 trades, that’s +$2,000 — profitable, on a strategy that loses more often than it wins. Win rate alone never tells the whole story; reward-to-risk is doing just as much work. This is the exact math Sim mode runs for you, on your own numbers instead of a hypothetical.'
 };
+// Round 111: "Instead of making a mathematical lesson on the
+// commission, just plainly state it... the math and extra jargon is
+// making it harder to read and keep track. Too many commas, too much
+// digesting mentally, and there's a timer, it's a bad mix." The
+// question used to walk through the derivation live (1,000 shares, a
+// $0.10 stop, the $0.0035/share rate, the $0.35 minimum) before ever
+// getting to the actual number - correct, but exactly the kind of
+// on-screen arithmetic the user was describing. The real IBKR-sourced
+// rate/derivation stays below as an audit trail for how $7 round trip
+// was arrived at (nothing here was loosened or re-guessed), it's just
+// no longer shown as working-out in the timed, multiple-choice copy
+// itself - the question now states the $7 figure directly and asks
+// what it does to the edge, same as every other insight in this
+// sequence poses a question rather than teaching a formula.
 var COST_INSIGHT={
-  q:'Same setup, one more variable. That $100-risk strategy nets +$20 expected value per trade before costs. Size into 1,000 shares to hit that risk with a $0.10 stop, and a real broker’s published rate — $0.0035/share, $0.35 minimum per order — puts the round-trip commission around $7. What happens to the edge over 100 trades?',
+  q:'Same $100-risk strategy, one more variable: it nets +$20 per trade before costs, and a real broker’s commission on a trade like this runs about $7 round trip. Over 100 trades, what happens to the edge?',
   opts:[
-    {t:'Barely dented',line:'That’s the read most people have — commission feels small next to the P&L.'},
+    {t:'Barely dented',line:'That’s the common read — commission feels small next to the P&L.'},
     {t:'Cut by roughly a third, still profitable',line:'That’s exactly it.'},
-    {t:'Wiped out completely',line:'A fair guess — costs get talked about like they’re that brutal — but this one doesn’t quite go that far.'}
+    {t:'Wiped out completely',line:'A fair guess — costs get talked about like they’re that brutal — but this one doesn’t go that far.'}
   ],
-  fact:'$7 round trip × 100 trades is $700 — 35% of the $2,000 gross edge, gone to commission alone, before spread or slippage even enter the picture. The strategy is still profitable. It’s just not running the numbers you were promised on paper, and that gap is exactly what a real broker statement shows you that a backtest won’t. Broker quality is not a footnote: commission rate, spread, and fill quality decide how much of a real edge survives contact with a live account.'
+  fact:'$700 in commission comes out of the $2,000 gross edge — about a third of it, gone before spread or slippage even enter the picture. The strategy is still profitable. It’s just not the number you saw on paper, and that gap is exactly what a real broker statement shows you that a backtest won’t.'
 };
 var STAT_INSIGHT={
   q:'One more, before the diagnosis. Guess: among people who day trade persistently — not a week, a sustained stretch — what share end up losing money?',
@@ -5918,8 +6020,53 @@ var AI_INSIGHT={
 };
 
 var introOverlay,introCanvas,introFg,introSkipBtn;
-var quizIdx=0,quizAnswers=[],gutLine='';
+var quizAnswers=[],gutLine='';
 var flakeRafId=null,flakeParticles=null,flakeCtx=null,flakeW=0,flakeH=0;
+
+// Round 111: "I'd like for it to be operated like social media, where
+// you can hit the left or right side to trigger the previous and next
+// screen respectively." Two small pieces of shared state make every
+// screen in this sequence back/forward-navigable for free instead of
+// bespoke-wiring each one:
+//  - currentNextHandler holds whatever function would advance the
+//    CURRENT screen right now, or null if the screen is a pending
+//    choice (a quiz question, gut-check, insight question) that can't
+//    be skipped without answering it. autoAdvance() (below) sets this
+//    automatically on every screen that paces itself with a timer, so
+//    a right-side tap just calls whatever's already there - it never
+//    needs to know what kind of screen is on-screen.
+//  - screenHistory is a stack of "replay" closures, one per screen
+//    actually shown, each of which fully re-renders that exact screen
+//    from values it captured in its own closure at the moment it was
+//    first shown (never from a shared/live counter - see the comment
+//    on renderQuizStep below for the bug that guards against
+//    specifically). A left-side tap pops the current screen and
+//    replays whatever's now on top.
+var currentNextHandler=null;
+var screenHistory=[];
+function pushScreen(renderFn){screenHistory.push(renderFn);}
+function canGoBack(){return screenHistory.length>1;}
+function goBackScreen(){
+  if(!canGoBack())return;
+  screenHistory.pop();
+  var prevFn=screenHistory[screenHistory.length-1];
+  prevFn();
+}
+// Delegated tap-zone handler, bound once to the whole overlay (see
+// ensureIntroDom): left 30% of the viewport = previous screen, right
+// 30% = next (if the current screen has a free next handler - see
+// currentNextHandler above), the middle 40% is a dead zone so an
+// ordinary tap near the centered text doesn't feel trigger-happy.
+// Real controls (buttons, the Skip pill) are excluded so this never
+// double-fires alongside their own click handlers.
+function onIntroTapNav(e){
+  var t=e.target;
+  if(t&&t.closest&&t.closest('button,input,a,.intro-skip'))return;
+  var w=window.innerWidth||document.documentElement.clientWidth;
+  var x=e.clientX;
+  if(x<w*0.3)goBackScreen();
+  else if(x>w*0.7&&currentNextHandler)currentNextHandler();
+}
 
 function ensureIntroDom(){
   if(introOverlay)return;
@@ -5929,6 +6076,11 @@ function ensureIntroDom(){
   introOverlay.appendChild(introCanvas);
   introOverlay.appendChild(introFg);
   document.body.appendChild(introOverlay);
+  // Round 111 social-media-style tap nav (see onIntroTapNav above) -
+  // bound once, here, to the overlay itself so it catches taps on
+  // every screen this sequence ever shows, including ones rendered
+  // long after this element was created.
+  introOverlay.addEventListener('click',onIntroTapNav);
   introSkipBtn=document.createElement('div');introSkipBtn.className='intro-skip';introSkipBtn.id='intro-skip-btn';introSkipBtn.textContent='Skip';
   introSkipBtn.addEventListener('click',abandonOnboarding);
   document.body.appendChild(introSkipBtn);
@@ -6081,9 +6233,11 @@ function startAppFlakeField(){
 // inside .scr-inner, which centers short content and degrades to a
 // scrollable top-aligned block for anything taller than the viewport
 // (see the .scr-inner CSS comment above for why that split matters).
-// extraCls is optional - renderReadiness passes 'grow' (see the CSS
-// comment on .scr-inner.grow) since it's the one screen whose content
-// keeps growing after it's first shown.
+// extraCls is optional - unused as of round 111 (renderReadiness used
+// to pass 'grow' here for its one screen that grew its own content
+// after being shown; that screen is gone, see buildReadinessSteps()
+// below, but the hook and its .scr-inner.grow CSS are left in place
+// for whatever future screen needs the same top-anchored treatment).
 function setFg(topHtml,innerHtml,extraCls){
   introFg.innerHTML=(topHtml||'')+'<div class="scr-inner'+(extraCls?' '+extraCls:'')+'">'+innerHtml+'</div>';
 }
@@ -6111,29 +6265,6 @@ function readMs(text){
   return Math.round(Math.max(2200,500+words*300)*PACE_SCALE);
 }
 
-// A second, deliberately smaller pacing function for ONE specific spot:
-// the gap between sentences as they stage into renderReadiness's reveal.
-// readMs() above is right for a screen shown in isolation (a beat, a
-// reaction) - the full 300ms/word plus a 2200ms floor gives each of
-// those its own fair read. But once "distill it to one sentence per
-// paragraph" turned the reveal's handful of multi-sentence paragraphs
-// into a dozen-plus short standalone sentences, reusing readMs() per
-// sentence meant that same 2200ms floor got paid AGAIN for every one of
-// them - and they stack, since every earlier sentence is still sitting
-// on screen when the next one lands, so the reader isn't starting cold
-// each time the way they are for a fresh beat. Measured against the
-// actual low-readiness copy (worst case, ~14 sentences): readMs() per
-// sentence summed to roughly 65+ seconds for this one screen alone,
-// which reads as sluggish rather than weighty. revealStepMs() paces the
-// STAGGER instead of the READ - a shorter floor (1100ms), a lower
-// per-word rate (130ms), and a cap (3000ms) so one unusually long
-// sentence can't stretch the rhythm out on its own - bringing that same
-// worst case down to roughly 33 seconds.
-function revealStepMs(text){
-  var words=(text||'').trim().split(/\s+/).filter(Boolean).length;
-  return Math.round(Math.max(1100,Math.min(3000,650+words*130))*PACE_SCALE);
-}
-
 // Advances on tap OR after `ms` of nobody tapping, whichever comes
 // first - the pacing mechanism behind every beat/reaction in this
 // sequence: long enough to actually read a couple of sentences, short
@@ -6143,11 +6274,61 @@ function revealStepMs(text){
 function autoAdvance(btnId,ms,onDone){
   var done=false;
   var t=setTimeout(go,ms);
-  function go(){if(done)return;done=true;clearTimeout(t);onDone();}
+  function go(){if(done)return;done=true;clearTimeout(t);currentNextHandler=null;onDone();}
+  // Round 111: every timer-paced screen registers its own advance as
+  // the live currentNextHandler, which is what lets a right-side tap
+  // (onIntroTapNav above) skip ANY of them for free, with no per-
+  // screen wiring - this is the one line that makes that true.
+  currentNextHandler=go;
   var btn=btnId?document.getElementById(btnId):null;
   if(btn)btn.addEventListener('click',go);
 }
 
+// Generalized "movie title card" runner - originally written just for
+// INTRO_BEATS (round 97), promoted to a general helper in round 111 so
+// renderReadiness() below could be split into several short beats of
+// its own instead of one long scrolling reveal ("the last screen is
+// just too long... think: movie intro pacing"), reusing the exact same
+// mechanic rather than inventing a second one. A beat can carry any
+// mix of eyebrow/title/body (all three optional now - the original
+// only ever made eyebrow optional, since every INTRO_BEATS entry had a
+// title; readiness's follow-up beats are body-only, so title has to be
+// able to disappear too). Every beat but the last is pure pacing, no
+// visible control - the deliberate design already in place for
+// INTRO_BEATS (see below): can't be rushed past on tap-to-advance
+// alone, only skipped outright via Skip or right-tapped past one at a
+// time (round 111 tap-nav, see currentNextHandler above), which is
+// what keeps it feeling like a held beat instead of a dismissable
+// tooltip. lastBtnId lets a caller keep its own semantic id on the
+// final button (readiness keeps "readiness-go", matching what several
+// existing regression scripts already select on) instead of every
+// series colliding on the same "beat-next" id.
+function runBeatSeries(beats,onDone,lastBtnId){
+  lastBtnId=lastBtnId||'beat-next';
+  var i=0;
+  function step(){
+    if(i>=beats.length){onDone();return;}
+    var myI=i;
+    function render(){
+      var b=beats[myI];
+      var isLast=myI===beats.length-1;
+      setFg('',
+        (b.eyebrow?'<div class="scr-eyebrow">'+b.eyebrow+'</div>':'')+
+        (b.title?'<div class="scr-title">'+b.title+'</div>':'')+
+        (b.body?'<div class="scr-body">'+b.body+'</div>':'')+
+        (isLast?'<div class="scr-nav center"><button type="button" class="scr-next" id="'+lastBtnId+'">'+b.btn+'</button></div>':''));
+      // autoAdvance always recomputes the NEXT index off myI, never off
+      // the shared/live `i` - so replaying this exact beat after going
+      // back and forward again still lands on the right next beat even
+      // if `i` has since moved on ahead of it (see the longer version
+      // of this note on renderQuizStep, which needed the same fix).
+      autoAdvance(isLast?lastBtnId:null,isLast?60000:readMs((b.title||'')+' '+(b.body||'')),function(){i=myI+1;step();});
+    }
+    pushScreen(render);
+    render();
+  }
+  step();
+}
 // Three sequential atmosphere beats - what round 97 tried to say in
 // one card, now given real room (see the header comment). The first
 // two are pure pacing, no visible control - deliberately: this is the
@@ -6155,21 +6336,7 @@ function autoAdvance(btnId,ms,onDone){
 // outright via Skip, which is what gives it weight instead of reading
 // as a dismissable tooltip. The third beat carries the "I'm Ready"
 // button that hands off into the questions.
-function runBeats(onDone){
-  var i=0;
-  function step(){
-    if(i>=INTRO_BEATS.length){onDone();return;}
-    var b=INTRO_BEATS[i];
-    var isLast=i===INTRO_BEATS.length-1;
-    setFg('',
-      (b.eyebrow?'<div class="scr-eyebrow">'+b.eyebrow+'</div>':'')+
-      '<div class="scr-title">'+b.title+'</div>'+
-      (b.body?'<div class="scr-body">'+b.body+'</div>':'')+
-      (isLast?'<div class="scr-nav center"><button type="button" class="scr-next" id="beat-next">'+b.btn+'</button></div>':''));
-    autoAdvance(isLast?'beat-next':null,isLast?60000:readMs((b.title||'')+' '+(b.body||'')),function(){i++;step();});
-  }
-  step();
-}
+function runBeats(onDone){runBeatSeries(INTRO_BEATS,onDone,'beat-next');}
 
 // One diagnostic question - tap an option, then that option's OWN
 // reaction plays (renderReaction) before the next question appears.
@@ -6178,48 +6345,78 @@ function runBeats(onDone){
 // Nothing here is applied to any app field/setting; each answer's 0-2
 // score is retained in memory only (see the header comment) so
 // renderReadiness() can react to it once all four are in.
-function renderQuizStep(onDone){
-  var item=QUIZ_QUESTIONS[quizIdx];
-  var prev=quizAnswers[quizIdx];
-  var dots='';
-  for(var i=0;i<QUIZ_QUESTIONS.length;i++)dots+='<i class="'+(i<=quizIdx?'on':'')+'"></i>';
-  setFg(
-    '<div class="scr-progress">'+dots+'</div>',
-    '<div class="scr-title">'+item.q+'</div>'+
-    '<div class="scr-opts">'+item.opts.map(function(o,oi){return '<button type="button" class="scr-opt'+(prev&&prev.oi===oi?' sel':'')+'" data-i="'+oi+'">'+o.t+'</button>';}).join('')+'</div>'+
-    '<div class="scr-nav"><button type="button" class="scr-back" id="quiz-back"'+(quizIdx===0?' disabled':'')+'>Back</button><span></span></div>');
-  var backBtn=document.getElementById('quiz-back');
-  if(backBtn)backBtn.addEventListener('click',function(){
-    if(quizIdx>0){quizIdx--;quizAnswers.pop();renderQuizStep(onDone);}
-  });
-  introFg.querySelectorAll('.scr-opt').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      introFg.querySelectorAll('.scr-opt').forEach(function(b){b.classList.remove('sel');});
-      btn.classList.add('sel');
-      var oi=+btn.getAttribute('data-i');
-      var opt=item.opts[oi];
-      quizAnswers[quizIdx]={qi:quizIdx,oi:oi,s:opt.s};
-      setTimeout(function(){renderReaction(opt.reaction,dots,onDone);},260);
+// Round 111: rewritten to take its question index (myI) as a plain
+// argument instead of reading the old shared/live quizIdx variable,
+// and to route "Back" through the same unified goBackScreen() the new
+// tap-nav uses (see the state block above) rather than its own
+// bespoke quizIdx-- + pop. The shared variable was the actual source
+// of a real bug once tap-to-go-back was added: picture answering
+// questions 1-4, tapping back twice to question 2, then tapping
+// forward again - with a SHARED live index, that forward step would
+// resume from wherever the index had last been left (question 4-ish),
+// silently skipping questions 3. Capturing myI once per render and
+// always computing "next" as myI+1 (never quizIdx++) makes replay-
+// then-advance correct no matter how much back-and-forth happened
+// first. quizAnswers stays a shared array (indexed by question, not by
+// screen) on purpose - re-answering a question after going back should
+// overwrite that question's old score, and it does, since it's written
+// at quizAnswers[myI] either way.
+function renderQuizStep(myI,onDone){
+  var item=QUIZ_QUESTIONS[myI];
+  function render(){
+    var prev=quizAnswers[myI];
+    var dots='';
+    for(var i=0;i<QUIZ_QUESTIONS.length;i++)dots+='<i class="'+(i<=myI?'on':'')+'"></i>';
+    setFg(
+      '<div class="scr-progress">'+dots+'</div>',
+      '<div class="scr-title">'+item.q+'</div>'+
+      '<div class="scr-opts">'+item.opts.map(function(o,oi){return '<button type="button" class="scr-opt'+(prev&&prev.oi===oi?' sel':'')+'" data-i="'+oi+'">'+o.t+'</button>';}).join('')+'</div>'+
+      '<div class="scr-nav"><button type="button" class="scr-back" id="quiz-back"'+(canGoBack()?'':' disabled')+'>Back</button><span></span></div>');
+    // A pending, unanswered choice - no free right-tap skip (see
+    // onIntroTapNav above); Back still works via the button or a
+    // left-side tap either way.
+    currentNextHandler=null;
+    var backBtn=document.getElementById('quiz-back');
+    if(backBtn)backBtn.addEventListener('click',goBackScreen);
+    introFg.querySelectorAll('.scr-opt').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        introFg.querySelectorAll('.scr-opt').forEach(function(b){b.classList.remove('sel');});
+        btn.classList.add('sel');
+        var oi=+btn.getAttribute('data-i');
+        var opt=item.opts[oi];
+        quizAnswers[myI]={qi:myI,oi:oi,s:opt.s};
+        var dotsNow=dots;
+        setTimeout(function(){renderReaction(myI,opt.reaction,dotsNow,onDone);},260);
+      });
     });
-  });
+  }
+  pushScreen(render);
+  render();
 }
 // The in-the-moment payoff for the answer just given - see the header
 // comment for why this exists at all (round 97's version waited until
-// the very end to react to anything). No Back here on purpose: it's a
-// response to a choice already made, not a form field.
-function renderReaction(text,dots,onDone){
-  setFg(
-    '<div class="scr-progress">'+dots+'</div>',
-    '<div class="scr-body">'+text+'</div>'+
-    '<div class="scr-nav center"><button type="button" class="scr-next" id="reaction-next">Continue</button></div>');
-  autoAdvance('reaction-next',readMs(text),function(){
-    if(quizIdx<QUIZ_QUESTIONS.length-1){quizIdx++;renderQuizStep(onDone);}
-    else{onDone();}
-  });
+// the very end to react to anything). No visible Back button here on
+// purpose (matches the original design - it's a response to a choice
+// already made, not a form field), but round 111's left-tap still
+// works on this screen like every other one in the sequence.
+function renderReaction(myI,text,dots,onDone){
+  function render(){
+    setFg(
+      '<div class="scr-progress">'+dots+'</div>',
+      '<div class="scr-body">'+text+'</div>'+
+      '<div class="scr-nav center"><button type="button" class="scr-next" id="reaction-next">Continue</button></div>');
+    autoAdvance('reaction-next',readMs(text),function(){
+      var nextI=myI+1;
+      if(nextI<QUIZ_QUESTIONS.length)renderQuizStep(nextI,onDone);
+      else onDone();
+    });
+  }
+  pushScreen(render);
+  render();
 }
 function runQuestionnaire(onDone){
-  quizIdx=0;quizAnswers=[];
-  renderQuizStep(onDone);
+  quizAnswers=[];
+  renderQuizStep(0,onDone);
 }
 
 // Non-scored, deliberately - this isn't measuring readiness, it's
@@ -6227,18 +6424,23 @@ function runQuestionnaire(onDone){
 // that what it's about to show you only matters if you actually want
 // to see it. The chosen line becomes the reveal's closing paragraph.
 function runGutCheck(onDone){
-  setFg('',
-    '<div class="scr-title">'+GUT_CHECK.q+'</div>'+
-    '<div class="scr-opts">'+GUT_CHECK.opts.map(function(o,oi){return '<button type="button" class="scr-opt" data-i="'+oi+'">'+o.t+'</button>';}).join('')+'</div>');
-  introFg.querySelectorAll('.scr-opt').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      introFg.querySelectorAll('.scr-opt').forEach(function(b){b.classList.remove('sel');});
-      btn.classList.add('sel');
-      var oi=+btn.getAttribute('data-i');
-      gutLine=GUT_CHECK.opts[oi].line;
-      setTimeout(onDone,300);
+  function render(){
+    setFg('',
+      '<div class="scr-title">'+GUT_CHECK.q+'</div>'+
+      '<div class="scr-opts">'+GUT_CHECK.opts.map(function(o,oi){return '<button type="button" class="scr-opt" data-i="'+oi+'">'+o.t+'</button>';}).join('')+'</div>');
+    currentNextHandler=null;
+    introFg.querySelectorAll('.scr-opt').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        introFg.querySelectorAll('.scr-opt').forEach(function(b){b.classList.remove('sel');});
+        btn.classList.add('sel');
+        var oi=+btn.getAttribute('data-i');
+        gutLine=GUT_CHECK.opts[oi].line;
+        setTimeout(onDone,300);
+      });
     });
-  });
+  }
+  pushScreen(render);
+  render();
 }
 
 // The shared mechanic behind LOSS_INSIGHT/EV_INSIGHT/STAT_INSIGHT (see
@@ -6253,15 +6455,21 @@ function runGutCheck(onDone){
 // answer, not reacting to a subjective one the way the questionnaire's
 // reactions do.
 function renderInsightReveal(text,onDone){
-  setFg('',
-    '<div class="scr-body">'+text+'</div>'+
-    '<div class="scr-nav center"><button type="button" class="scr-next" id="insight-next">Continue</button></div>');
-  autoAdvance('insight-next',readMs(text),onDone);
+  function render(){
+    setFg('',
+      '<div class="scr-body">'+text+'</div>'+
+      '<div class="scr-nav center"><button type="button" class="scr-next" id="insight-next">Continue</button></div>');
+    autoAdvance('insight-next',readMs(text),onDone);
+  }
+  pushScreen(render);
+  render();
 }
 function runInsight(insight,onDone){
+  function render(){
   setFg('',
     '<div class="scr-title">'+insight.q+'</div>'+
     '<div class="scr-opts">'+insight.opts.map(function(o,oi){return '<button type="button" class="scr-opt" data-i="'+oi+'">'+o.t+'</button>';}).join('')+'</div>');
+  currentNextHandler=null;
   introFg.querySelectorAll('.scr-opt').forEach(function(btn){
     btn.addEventListener('click',function(){
       introFg.querySelectorAll('.scr-opt').forEach(function(b){b.classList.remove('sel');});
@@ -6271,95 +6479,67 @@ function runInsight(insight,onDone){
       setTimeout(function(){renderInsightReveal(revealText,onDone);},300);
     });
   });
+  }
+  pushScreen(render);
+  render();
 }
 
-// Naive but sufficient sentence splitter for renderReadiness's one-
-// sentence-per-paragraph rule below: every string this app ever feeds
-// it is plain prose with no abbreviations/decimals/ellipses, so a
-// split on ". "/"! "/"? " is safe here - this is NOT a general-purpose
-// sentence splitter, don't reuse it on arbitrary text without checking
-// that assumption still holds.
-function splitSentences(text){
-  var m=(text||'').match(/[^.!?]+[.!?]+(?:\s+|$)/g);
-  if(!m)return text?[text.trim()]:[];
-  return m.map(function(s){return s.trim();}).filter(Boolean);
-}
-
-// The payoff, paced like a considered verdict rather than a wall of
-// text: eyebrow+title alone first (a held beat of quiet), then ONE
-// SENTENCE at a time fades in - not one paragraph at a time - each
-// held on screen for revealStepMs() of its own length (see that
-// function's comment for why it's not just readMs() reused), then the gut-check
-// line, then Continue. Two things changed here after the user flagged
-// both a readability problem and a visual one in the same message:
-// (1) "distill it to one sentence per paragraph for the big text
-// block" - each gap/closing/gut-check string, which used to render as
-// one multi-sentence paragraph, is now run through splitSentences()
-// and each sentence gets its own line; shorter chunks read faster AND
-// land closer to what was actually asked for than just slowing the
-// old multi-sentence paragraphs down would have. (2) "the last big
-// text block loads wonky" - traced to .scr-inner's vertical auto-
-// centering: every new paragraph changed the block's height, so
-// flexbox re-centered the WHOLE block and every already-read line
-// visibly slid up the screen. Fixed by passing the 'grow' modifier to
-// setFg() here specifically (see the .scr-inner.grow CSS comment) so
-// this screen anchors to the top and only grows downward - nothing
-// already on screen moves once it's there. .scr-inner still degrades
-// to a scrollable block once content overflows the viewport (that
-// part of round 97's fix is untouched), so even the longest "Start
-// Here" verdict - now potentially a dozen-plus short sentences - never
-// traps its own Continue button off-screen. Scoring/tiers themselves
-// are unchanged from round 97.
-function renderReadiness(onDone){
+// Round 111 rewrite. This used to be ONE screen: eyebrow+title held
+// alone, then every gap/closing/gut-check sentence staggering in one
+// at a time (~1100-3000ms each), which for the "Start Here" tier could
+// run a dozen-plus sentences and roughly 33 seconds before Continue
+// ever appeared - exactly what the user flagged: "The last screen in
+// the intro is just too long, and takes too long to load, and has too
+// much... it's not an AI chat response; it's an intro. Think: movie
+// intro pacing and messaging density." buildReadinessSteps() below
+// turns that one overloaded screen into a short SERIES of beats (2-4,
+// depending on tier and whether there's a gut-check line to echo) run
+// through the exact same runBeatSeries() every other part of this
+// sequence already uses - one idea per screen, shown at once (no more
+// per-sentence stagger, so nothing "loads" slowly), paced by the same
+// readMs() as a beat or reaction. Scoring/tiers themselves are
+// unchanged from round 97: >=6 is "You're Ready", >=3 is "Getting
+// There", below that is "Start Here, Not There".
+function buildReadinessSteps(){
   var total=quizAnswers.reduce(function(a,x){return a+(x?x.s:0);},0);
   var gaps=quizAnswers.filter(function(x){return x&&x.s<=1;}).map(function(x){return QUIZ_QUESTIONS[x.qi].gap;});
-  var eyebrow,title,paras;
+  var eyebrow,title,lead,elaboration;
   if(total>=6){
     eyebrow='You’re Ready';
     title='You’ve already done the part most people skip.';
-    paras=['This tool won’t predict the market for you. What it will do is tell you the truth about your own process — usually the part traders spend the most energy avoiding.'];
-    if(gaps.length)paras.push(gaps[0]);
+    lead='This tool won’t predict the market for you. What it will do is tell you the truth about your own process — usually the part traders spend the most energy avoiding.';
+    elaboration=gaps.length?gaps[0]:null;
   }else if(total>=3){
     eyebrow='Getting There';
     title='Real gaps, worth carrying into what comes next.';
-    paras=gaps.slice(0,3);
-    paras.push('None of that locks you out. It just means the next stretch in here should be treated as practice, not proof.');
+    lead=gaps.slice(0,2).join(' ');
+    elaboration='None of that locks you out. It just means the next stretch in here should be treated as practice, not proof.';
   }else{
     eyebrow='Start Here, Not There';
     title='Day trading is unforgiving of accounts that skip the groundwork.';
-    paras=gaps.slice(0,4);
-    paras.push('That’s not a reason to stop. It’s exactly what Simulate mode is for — build the history first, and let the app show you the truth instead of you having to guess at it.');
+    lead=gaps.slice(0,2).join(' ');
+    elaboration='That’s not a reason to stop. It’s exactly what Simulate mode is for — build the history first, and let the app show you the truth instead of you having to guess at it.';
   }
-  if(gutLine)paras.push(gutLine);
-  // Round 108: the closing encouragement (see its own declaration/
-  // comment above, near GUT_CHECK) always comes last, after the tier
-  // content and the gut-check line - it's the true final thing shown
-  // before Continue, same placement logic round 101 originally used for
-  // the tour's own send-off.
-  paras.push(CLOSING_ENCOURAGEMENT);
-  var sentences=[];
-  paras.forEach(function(p){sentences=sentences.concat(splitSentences(p));});
-
-  setFg('','<div class="scr-eyebrow">'+eyebrow+'</div><div class="scr-title">'+title+'</div><div class="scr-bodies" id="rd-bodies"></div>','grow');
-  var bodiesEl=document.getElementById('rd-bodies');
-  var i=0;
-  function next(){
-    if(i<sentences.length){
-      var p=document.createElement('div');
-      p.className='scr-body';p.textContent=sentences[i];
-      bodiesEl.appendChild(p);
-      i++;
-      setTimeout(next,revealStepMs(sentences[i-1]));
-    }else{
-      var nav=document.createElement('div');
-      nav.className='scr-nav center';
-      nav.innerHTML='<button type="button" class="scr-next" id="readiness-go">Continue</button>';
-      introFg.querySelector('.scr-inner').appendChild(nav);
-      var goBtn=document.getElementById('readiness-go');
-      if(goBtn)goBtn.addEventListener('click',onDone);
-    }
-  }
-  setTimeout(next,1900);
+  var steps=[{eyebrow:eyebrow,title:title,body:lead}];
+  // At most one more beat of tier-specific substance - never one beat
+  // per gap, which is exactly the density the user was pushing back
+  // on. "Getting There"/"Start Here" already spent their lead beat's
+  // body on up to two gaps above; this second beat is the wrap-up line
+  // for those two tiers, or the single most relevant caveat (if any)
+  // for "You're Ready".
+  if(elaboration)steps.push({body:elaboration});
+  // Round 108's gut-check echo and closing encouragement each get
+  // their own held beat now instead of being two more paragraphs
+  // stacked onto the same screen - the gut-check especially benefits,
+  // since it's a callback to something the person just chose for
+  // themselves a moment earlier and deserves a beat of its own rather
+  // than reading like one more bullet point.
+  if(gutLine)steps.push({body:gutLine});
+  steps.push({body:CLOSING_ENCOURAGEMENT,btn:'Let’s Go'});
+  return steps;
+}
+function renderReadiness(onDone){
+  runBeatSeries(buildReadinessSteps(),onDone,'readiness-go');
 }
 
 function startIntroSequence(){
