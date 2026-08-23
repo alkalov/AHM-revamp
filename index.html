@@ -6289,6 +6289,40 @@ function abandonOnboarding(){
 // whatever text is on screen at the time: starts once when the
 // sequence begins, keeps animating straight through every transition,
 // stops only when the sequence ends (Continue into the tour, or Skip).
+//
+// Round 116: shared by both particle systems below (this one and the
+// app-level one further down) - three asks from one message. (1) "the
+// flakes... are kinda oval now" - investigated hard (a synthetic same-
+// technique circle drawn straight to the live canvas measured a clean
+// 162x162 device-pixel bounding box at dpr 2, and a real animated frame's
+// particle blobs came back ~1:1 too - the canvas.width/height backing
+// store and the dpr transform were never actually skewed here, in this
+// environment). Couldn't reproduce a true oval, but the one mechanism
+// that WOULD produce one - the canvas's pixel backing store (set once,
+// from clientWidth/clientHeight, in sizeFlakeCanvas/sizeAppFlakeCanvas)
+// silently drifting out of sync with its CSS box's actual size, e.g. a
+// phone's address bar animating in/out and changing the viewport
+// without a 'resize' event landing cleanly - is real and device-specific,
+// can't be forced from here. So: hardened against it regardless of
+// cause, cheaply, by re-checking every single frame (see the top of
+// drawFlakes()/drawAppFlakes()) rather than trusting the resize
+// listener alone; any mismatch self-heals within one frame instead of
+// however long a stale state might otherwise persist. (2) "sparkles or
+// reflections... nothing overstated" - dot-type particles (below) now
+// carry a small offset highlight dot (a glossy specular glint, same
+// language as this app's existing "glossy/liquid" material elsewhere -
+// dark base + colour + sheen, no glow) permanently, plus ~14% of ALL
+// particles (dot or glyph) carry a `sparkle` flag that flashes a brief
+// four-point glint ONLY through the last sliver of their own twinkle
+// peak (sin>0.94 of a -1..1 cycle) - rare and short by construction, not
+// a constant effect. (3) "themed objects... $, +-, x, percent...
+// floating" - ~22% of particles are now `kind:'glyph'` instead of a
+// plain dot, drawing one of FLAKE_GLYPHS via fillText in the app's own
+// Roboto Mono (matches the ticker/numeric convention used everywhere
+// else) instead of arc()+fill() - same colour family, same twinkle/
+// drift/wrap mechanics, just a different shape a minority of the time,
+// so the field still reads as one ambient system, not a wall of text.
+var FLAKE_GLYPHS=['$','+','−','×','%'];
 function sizeFlakeCanvas(){
   var dpr=window.devicePixelRatio||1;
   flakeW=introCanvas.clientWidth;flakeH=introCanvas.clientHeight;
@@ -6300,26 +6334,61 @@ function initFlakes(){
   var n=Math.round(Math.min(64,Math.max(26,(flakeW*flakeH)/11000)));
   flakeParticles=[];
   for(var i=0;i<n;i++){
-    flakeParticles.push({
+    var isGlyph=Math.random()<0.22;
+    var p={
       x:Math.random()*flakeW,y:Math.random()*flakeH,
-      r:0.8+Math.random()*1.9,
       vy:-(0.05+Math.random()*0.13),vx:(Math.random()-0.5)*0.05,
       baseA:0.14+Math.random()*0.46,
-      tw:Math.random()*Math.PI*2,twS:0.012+Math.random()*0.022
-    });
+      tw:Math.random()*Math.PI*2,twS:0.012+Math.random()*0.022,
+      sparkle:Math.random()<0.14,
+      kind:isGlyph?'glyph':'dot'
+    };
+    if(isGlyph){
+      p.char=FLAKE_GLYPHS[Math.floor(Math.random()*FLAKE_GLYPHS.length)];
+      p.size=7+Math.random()*7;
+      p.m=p.size*0.8+6;
+    }else{
+      p.r=0.8+Math.random()*1.9;
+      p.m=p.r+4;
+    }
+    flakeParticles.push(p);
   }
 }
 function drawFlakes(){
+  // Round 116: self-healing resize - see the header comment above.
+  if(introCanvas.clientWidth!==flakeW||introCanvas.clientHeight!==flakeH)sizeFlakeCanvas();
   flakeCtx.clearRect(0,0,flakeW,flakeH);
   flakeParticles.forEach(function(f){
     f.x+=f.vx;f.y+=f.vy;f.tw+=f.twS;
-    if(f.y<-4){f.y=flakeH+4;f.x=Math.random()*flakeW;}
-    if(f.x<-4)f.x=flakeW+4;else if(f.x>flakeW+4)f.x=-4;
-    var a=f.baseA*(0.55+0.45*Math.sin(f.tw));
-    flakeCtx.beginPath();
+    if(f.y<-f.m){f.y=flakeH+f.m;f.x=Math.random()*flakeW;}
+    if(f.x<-f.m)f.x=flakeW+f.m;else if(f.x>flakeW+f.m)f.x=-f.m;
+    var s=Math.sin(f.tw);
+    var a=f.baseA*(0.55+0.45*s);
+    flakeCtx.save();
     flakeCtx.fillStyle='rgba(125,211,252,'+a.toFixed(3)+')';
     flakeCtx.shadowColor='rgba(56,189,248,'+(a*0.9).toFixed(3)+')';flakeCtx.shadowBlur=5;
-    flakeCtx.arc(f.x,f.y,f.r,0,Math.PI*2);flakeCtx.fill();
+    if(f.kind==='glyph'){
+      flakeCtx.font='600 '+f.size.toFixed(1)+'px "Roboto Mono",monospace';
+      flakeCtx.textAlign='center';flakeCtx.textBaseline='middle';
+      flakeCtx.fillText(f.char,f.x,f.y);
+    }else{
+      flakeCtx.beginPath();flakeCtx.arc(f.x,f.y,f.r,0,Math.PI*2);flakeCtx.fill();
+      flakeCtx.shadowBlur=0;
+      flakeCtx.fillStyle='rgba(255,255,255,'+(a*0.55).toFixed(3)+')';
+      flakeCtx.beginPath();flakeCtx.arc(f.x-f.r*0.32,f.y-f.r*0.32,Math.max(0.35,f.r*0.34),0,Math.PI*2);flakeCtx.fill();
+    }
+    if(f.sparkle&&s>0.94){
+      var sp=(s-0.94)/0.06;
+      var arm=(f.kind==='glyph'?f.size*0.5:f.r*3)*(0.4+0.6*sp);
+      flakeCtx.shadowBlur=0;
+      flakeCtx.strokeStyle='rgba(255,255,255,'+(a*0.85*sp).toFixed(3)+')';
+      flakeCtx.lineWidth=0.6;
+      flakeCtx.beginPath();
+      flakeCtx.moveTo(f.x-arm,f.y);flakeCtx.lineTo(f.x+arm,f.y);
+      flakeCtx.moveTo(f.x,f.y-arm);flakeCtx.lineTo(f.x,f.y+arm);
+      flakeCtx.stroke();
+    }
+    flakeCtx.restore();
   });
   flakeRafId=requestAnimationFrame(drawFlakes);
 }
@@ -6363,29 +6432,69 @@ function initAppFlakes(){
   // any single panel at a given moment - too sparse to ever actually notice,
   // even though the effect worked when it did line up. More particles means
   // panels show one regularly instead of by rare chance.
+  // Round 116: same glyph/sparkle mechanic as the intro's initFlakes() -
+  // see that function's header comment - just sized down (smaller glyph
+  // font range) to match this system's already-established "fewer,
+  // smaller, dimmer" tuning versus the intro's own.
   var n=Math.round(Math.min(60,Math.max(24,(appFlakeW*appFlakeH)/9000)));
   appFlakeParticles=[];
   for(var i=0;i<n;i++){
-    appFlakeParticles.push({
+    var isGlyph=Math.random()<0.22;
+    var p={
       x:Math.random()*appFlakeW,y:Math.random()*appFlakeH,
-      r:0.7+Math.random()*1.6,
       vy:-(0.04+Math.random()*0.09),vx:(Math.random()-0.5)*0.04,
       baseA:0.08+Math.random()*0.22,
-      tw:Math.random()*Math.PI*2,twS:0.010+Math.random()*0.018
-    });
+      tw:Math.random()*Math.PI*2,twS:0.010+Math.random()*0.018,
+      sparkle:Math.random()<0.14,
+      kind:isGlyph?'glyph':'dot'
+    };
+    if(isGlyph){
+      p.char=FLAKE_GLYPHS[Math.floor(Math.random()*FLAKE_GLYPHS.length)];
+      p.size=6+Math.random()*6;
+      p.m=p.size*0.8+6;
+    }else{
+      p.r=0.7+Math.random()*1.6;
+      p.m=p.r+4;
+    }
+    appFlakeParticles.push(p);
   }
 }
 function drawAppFlakes(){
+  // Round 116: self-healing resize - see the header comment above
+  // sizeFlakeCanvas()/FLAKE_GLYPHS.
+  if(appFlakeCanvas.clientWidth!==appFlakeW||appFlakeCanvas.clientHeight!==appFlakeH)sizeAppFlakeCanvas();
   appFlakeCtx.clearRect(0,0,appFlakeW,appFlakeH);
   appFlakeParticles.forEach(function(f){
     f.x+=f.vx;f.y+=f.vy;f.tw+=f.twS;
-    if(f.y<-4){f.y=appFlakeH+4;f.x=Math.random()*appFlakeW;}
-    if(f.x<-4)f.x=appFlakeW+4;else if(f.x>appFlakeW+4)f.x=-4;
-    var a=f.baseA*(0.55+0.45*Math.sin(f.tw));
-    appFlakeCtx.beginPath();
+    if(f.y<-f.m){f.y=appFlakeH+f.m;f.x=Math.random()*appFlakeW;}
+    if(f.x<-f.m)f.x=appFlakeW+f.m;else if(f.x>appFlakeW+f.m)f.x=-f.m;
+    var s=Math.sin(f.tw);
+    var a=f.baseA*(0.55+0.45*s);
+    appFlakeCtx.save();
     appFlakeCtx.fillStyle='rgba(125,211,252,'+a.toFixed(3)+')';
     appFlakeCtx.shadowColor='rgba(56,189,248,'+(a*0.9).toFixed(3)+')';appFlakeCtx.shadowBlur=4;
-    appFlakeCtx.arc(f.x,f.y,f.r,0,Math.PI*2);appFlakeCtx.fill();
+    if(f.kind==='glyph'){
+      appFlakeCtx.font='600 '+f.size.toFixed(1)+'px "Roboto Mono",monospace';
+      appFlakeCtx.textAlign='center';appFlakeCtx.textBaseline='middle';
+      appFlakeCtx.fillText(f.char,f.x,f.y);
+    }else{
+      appFlakeCtx.beginPath();appFlakeCtx.arc(f.x,f.y,f.r,0,Math.PI*2);appFlakeCtx.fill();
+      appFlakeCtx.shadowBlur=0;
+      appFlakeCtx.fillStyle='rgba(255,255,255,'+(a*0.55).toFixed(3)+')';
+      appFlakeCtx.beginPath();appFlakeCtx.arc(f.x-f.r*0.32,f.y-f.r*0.32,Math.max(0.35,f.r*0.34),0,Math.PI*2);appFlakeCtx.fill();
+    }
+    if(f.sparkle&&s>0.94){
+      var sp=(s-0.94)/0.06;
+      var arm=(f.kind==='glyph'?f.size*0.5:f.r*3)*(0.4+0.6*sp);
+      appFlakeCtx.shadowBlur=0;
+      appFlakeCtx.strokeStyle='rgba(255,255,255,'+(a*0.85*sp).toFixed(3)+')';
+      appFlakeCtx.lineWidth=0.6;
+      appFlakeCtx.beginPath();
+      appFlakeCtx.moveTo(f.x-arm,f.y);appFlakeCtx.lineTo(f.x+arm,f.y);
+      appFlakeCtx.moveTo(f.x,f.y-arm);appFlakeCtx.lineTo(f.x,f.y+arm);
+      appFlakeCtx.stroke();
+    }
+    appFlakeCtx.restore();
   });
   appFlakeRafId=requestAnimationFrame(drawAppFlakes);
 }
