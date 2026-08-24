@@ -1524,8 +1524,15 @@ canvas.spark{width:100%;height:34px;display:block;}
    between them, not two separate p.insight-math-style blocks) so they
    read as one tight two-line reference group, per "study context right
    above the bibliography" - two independently-spaced paragraphs would
-   read as two unrelated asides instead of one citation. */
+   read as two unrelated asides instead of one citation. Follow-up in
+   the same round: "Make the biblio also smaller" - the actual citation
+   (authors/title/year) reads as true fine print, a step down from the
+   study-context sentence above it, same relative relationship as a
+   footnote's own reference line vs. its explanatory text. Still
+   #75859e (WCAG contrast is a floor on colour/size combo, not a fixed
+   px value - 4.5:1 holds at any size since it's the same colour). */
 .scr-body p.insight-cite{margin-top:9px;font-family:'Inter',sans-serif;font-size:10px;line-height:1.5;color:#75859e;}
+.scr-body p.insight-cite .insight-biblio{font-size:8.5px;}
 /* Round 96/97: renderReadiness() used to stack several .scr-body
    paragraphs on one screen (one per flagged gap) - centered multi-
    paragraph prose reads as a dense, hard-to-scan block, so that
@@ -6044,6 +6051,14 @@ var INTRO_BEATS=[
   {eyebrow:'Before You Begin',title:'What you get depends on what you give.',body:'First, a few honest questions. We are not here to judge you. We just want to see where you start.',btn:'I’m Ready'}
 ];
 
+// Round 120: each question gained a `tip` field alongside its existing
+// `gap` - "what results, why aren't they showing... what simple changes
+// can improve it." `gap` (existing, round 100+) explains WHY a weak
+// answer matters; `tip` (new) is the single concrete action that
+// addresses it, both grade 2-3 (see round 118's FK-score method).
+// buildReadinessSteps() below pulls both into the results sequence -
+// gap text into the existing tier lead/elaboration beats (unchanged),
+// tip text into a new dedicated "what can help" beat.
 var QUIZ_QUESTIONS=[
   {q:'Have you traded before? Live money or a demo?',
    opts:[
@@ -6051,28 +6066,32 @@ var QUIZ_QUESTIONS=[
      {t:'Demo or paper trading only',s:1,reaction:'Paper trading is good practice. But it does not test you like real money does. Real money feels different.'},
      {t:'Yes, with real money',s:2,reaction:'Then you already know. A plan on paper feels easy. A plan with real money is much harder.'}
    ],
-   gap:'Practice still helps. But nothing trains you like real money does. Until you feel that, treat every number here as practice.'},
+   gap:'Practice still helps. But nothing trains you like real money does. Until you feel that, treat every number here as practice.',
+   tip:'Practice on a demo first. Then start small with real money.'},
   {q:'Have you tested a plan? At least 50 trades?',
    opts:[
      {t:'No',s:0,reaction:'So this is not a real plan yet. It is just a guess.'},
      {t:'Some, but fewer than 50',s:1,reaction:'That is a start. But it is not enough yet. Fake patterns often break by 50 trades.'},
      {t:'Yes, 50 or more',s:2,reaction:'Good. By 50 trades, luck starts to fade away.'}
    ],
-   gap:'Under 50 trades, a lucky streak can look like skill. That is just how small numbers work.'},
+   gap:'Under 50 trades, a lucky streak can look like skill. That is just how small numbers work.',
+   tip:'Test any plan first. Use 50 or more trades before you trust it.'},
   {q:'Do you have real trade records? Like broker data or a journal?',
    opts:[
      {t:'Not yet',s:0,reaction:'That is fine for today. But this stays a demo until you bring real numbers.'},
      {t:'Some, scattered',s:1,reaction:'Scattered still counts. Putting it all in one place is a big first step.'},
      {t:'Yes, ready to go',s:2,reaction:'Then this tool can start doing real work for you.'}
    ],
-   gap:'This tool is only as good as what you give it. Without real trades, this stays a demo.'},
+   gap:'This tool is only as good as what you give it. Without real trades, this stays a demo.',
+   tip:'Keep real records of every trade. Do this whether you win or lose.'},
   {q:'Why do you want to day trade right now?',
    opts:[
      {t:'Steady income to replace or add to my job',s:0,reaction:'Here is the truth. Most people who want this lose money at first. Some never stop losing. This app cannot skip that part. It can only show you the truth fast.'},
      {t:'To learn the basics and build discipline',s:1,reaction:'A great place to start. Discipline is the one thing you fully control.'},
      {t:'To test a plan I already trade',s:2,reaction:'Then you are not here to be told trading works. You are here to find out if you do. That is the right question.'}
    ],
-   gap:'Here is the truth. Most people who day trade for income lose money. Often for a long time. This app will not hide that. It shows you the truth in plain numbers. That is the only real way through.'}
+   gap:'Here is the truth. Most people who day trade for income lose money. Often for a long time. This app will not hide that. It shows you the truth in plain numbers. That is the only real way through.',
+   tip:'Set a realistic goal. Steady income can take years, if it comes at all.'}
 ];
 
 var GUT_CHECK={
@@ -6160,7 +6179,7 @@ var LOSS_INSIGHT={
 // just to get the message"). Figures unchanged from round 100/101 -
 // still the same verified 40%*200-60%*100=+20/trade, *100=+2000.
 var EV_INSIGHT={
-  q:'Quick math test. You risk $100 each trade. You win 4 out of 10 trades. A win pays back double. A loss costs your full risk. After 100 trades, are you ahead?',
+  q:'Quick math test. You risk $100 each trade. You win 40% of the time. A win pays back double. A loss costs your full risk. After 100 trades, are you ahead?',
   opts:[
     {t:'You come out ahead',line:'Good instinct.'},
     {t:'About even',line:'Close, but not quite.'},
@@ -6222,7 +6241,7 @@ var STAT_INSIGHT={
   // a DIFFERENT, similarly-named Chagué/Giovannetti paper on day-trading
   // STOCKS (no De-Losso, published in the Brazilian Review of Finance)
   // - not the source of this figure, deliberately not conflated here.
-  fact:'Most people who day trade for years still lose money. One study found that 97% of them lost money.<p class="insight-cite">Study: tracked 1,551 day traders in Brazil’s futures market who kept trading for more than 300 days.<br>Source: Chagué, De-Losso & Giovannetti, “Day Trading for a Living?” (SSRN working paper, 2020).</p>'
+  fact:'Most people who day trade for years still lose money. One study found that 97% of them lost money.<p class="insight-cite">Study: tracked 1,551 day traders in Brazil’s futures market who kept trading for more than 300 days.<br><span class="insight-biblio">Source: Chagué, De-Losso & Giovannetti, “Day Trading for a Living?” (SSRN working paper, 2020).</span></p>'
 };
 var AI_INSIGHT={
   q:'Do you track your real trades? Like broker data, a spreadsheet, or a journal?',
@@ -6824,9 +6843,32 @@ function runInsight(insight,onDone){
 // readMs() as a beat or reaction. Scoring/tiers themselves are
 // unchanged from round 97: >=6 is "You're Ready", >=3 is "Getting
 // There", below that is "Start Here, Not There".
+// Round 120: "You also mentioned results at the end of the intro
+// section. What results? And why aren't they showing?" - fair catch:
+// before this round nothing numeric ever actually appeared here, just
+// the three tiers' plain-language text below. User wanted a real "%
+// likelihood of succeeding" scored off the quiz answers - deliberately
+// did NOT build that: this app's one rule since round 109 ("What world
+// has a commission of 20$... trying to educate not make up info") is
+// real numbers only, and a single quiz with 4 questions has no genuine
+// statistical power to predict any one person's odds - a made-up
+// percentage would be exactly the comforting, fake-precision number
+// the "Anti-Hope Machine" premise exists to refuse. Built their own
+// "or better yet" alternative instead: real, sourced population stats
+// (STAT_RESULT below - a SECOND primary-source-checked citation this
+// project, same rigor as STAT_INSIGHT's Brazil study) plus the
+// person's OWN answers (already-collected gaps/tips, nothing new to
+// track) placing them in that picture and naming concrete next steps -
+// verified, personalized, and honest, without inventing a probability
+// that doesn't exist.
+var STAT_RESULT={
+  body:'Day trading is hard for most people. In one study, only 5% of day traders made money. More than 75% quit within two years.<p class="insight-cite">Study: tracked every day trader on the Taiwan Stock Exchange for 15 years.<br><span class="insight-biblio">Source: Barber, Lee, Liu, Odean &amp; Zhang, “Do Day Traders Rationally Learn About Their Ability?” (SSRN working paper, 2017).</span></p>'
+};
 function buildReadinessSteps(){
   var total=quizAnswers.reduce(function(a,x){return a+(x?x.s:0);},0);
-  var gaps=quizAnswers.filter(function(x){return x&&x.s<=1;}).map(function(x){return QUIZ_QUESTIONS[x.qi].gap;});
+  var weak=quizAnswers.filter(function(x){return x&&x.s<=1;});
+  var gaps=weak.map(function(x){return QUIZ_QUESTIONS[x.qi].gap;});
+  var tips=weak.map(function(x){return QUIZ_QUESTIONS[x.qi].tip;});
   var eyebrow,title,lead,elaboration;
   // Round 112: tier copy simplified for plain language, same standard as
   // the rest of the intro sequence - the gaps/lead strings themselves
@@ -6851,6 +6893,10 @@ function buildReadinessSteps(){
     elaboration='That is not a reason to stop. It is exactly what Simulate mode is for. Build your history first. Let the app show you the truth instead of a guess.';
   }
   var steps=[{eyebrow:eyebrow,title:title,body:lead}];
+  // Round 120: the real-numbers beat is the same for every tier - the
+  // underlying odds don't change because someone answered well, which
+  // is the whole point of showing it here instead of only good news.
+  steps.push({eyebrow:'The Real Numbers',body:STAT_RESULT.body});
   // At most one more beat of tier-specific substance - never one beat
   // per gap, which is exactly the density the user was pushing back
   // on. "Getting There"/"Start Here" already spent their lead beat's
@@ -6858,6 +6904,10 @@ function buildReadinessSteps(){
   // for those two tiers, or the single most relevant caveat (if any)
   // for "You're Ready".
   if(elaboration)steps.push({body:elaboration});
+  // Round 120: the action-item counterpart to the gap(s) above - same
+  // "at most one beat, never one per gap" density rule, same
+  // up-to-2-items cap as gaps.slice(0,2) already uses.
+  if(tips.length)steps.push({eyebrow:'What Can Help',body:'Simple changes that can help: '+tips.slice(0,2).join(' ')});
   // Round 108's gut-check echo and closing encouragement each get
   // their own held beat now instead of being two more paragraphs
   // stacked onto the same screen - the gut-check especially benefits,
