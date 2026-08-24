@@ -6787,13 +6787,12 @@ function runQuestionnaire(onDone){
 // naming the actual premise of the app out loud before the reveal:
 // that what it's about to show you only matters if you actually want
 // to see it. The chosen line becomes the reveal's closing paragraph.
-// Round 121: eyebrow "Before Your Results" added - cheap (no extra
-// screen), tells the user plainly that the readiness reveal is next,
-// same wayfinding idea as the eyebrows added to the insights above it.
+// Round 121 added an eyebrow here ("Before Your Results") as a wayfinding
+// label; round 122 removed it on direct request - no eyebrow on this
+// screen any more.
 function runGutCheck(onDone){
   function render(){
     setFg('',
-      '<div class="scr-eyebrow">Before Your Results</div>'+
       '<div class="scr-title">'+GUT_CHECK.q+'</div>'+
       '<div class="scr-opts">'+GUT_CHECK.opts.map(function(o,oi){return '<button type="button" class="scr-opt" data-i="'+oi+'">'+o.t+'</button>';}).join('')+'</div>');
     currentNextHandler=null;
