@@ -1514,6 +1514,18 @@ canvas.spark{width:100%;height:34px;display:block;}
    plain sentence above it) from "the proof" (this line) at a glance,
    same intent as the "Math:" paragraphs added to INFO{} this round. */
 .scr-body p.insight-math{margin-top:9px;font-family:'Roboto Mono',monospace;font-size:11px;color:#75859e;font-variant-numeric:tabular-nums;}
+/* Round 119: STAT_INSIGHT cites a real external study (see that var's
+   JS comment) - same "pull it onto its own line, set apart from the
+   plain-language point above it" idea as insight-math just above, but
+   for a source citation instead of arithmetic: smaller, regular Inter
+   (not mono - this is prose/names, not numerals), the app's existing
+   WCAG-AA secondary-text colour (#75859e, see round 109's contrast
+   fix). Study-context and bibliography lines sit in ONE p (a <br>
+   between them, not two separate p.insight-math-style blocks) so they
+   read as one tight two-line reference group, per "study context right
+   above the bibliography" - two independently-spaced paragraphs would
+   read as two unrelated asides instead of one citation. */
+.scr-body p.insight-cite{margin-top:9px;font-family:'Inter',sans-serif;font-size:10px;line-height:1.5;color:#75859e;}
 /* Round 96/97: renderReadiness() used to stack several .scr-body
    paragraphs on one screen (one per flagged gap) - centered multi-
    paragraph prose reads as a dense, hard-to-scan block, so that
@@ -6019,48 +6031,55 @@ function hasRealData(){
 // Round 112: rewritten for plain, short, everyday language ("use grade
 // two reading level as your standard for the intro verbiage"). Same
 // standard as TOUR_STOPS and INFO{} above.
+// Round 118: rewritten again, this time to a verified grade 2-3 - user
+// saw this copy live and said "I worry the wording may be confusing."
+// Every string below was scored with a Flesch-Kincaid Grade Level
+// formula run in a throwaway Python script (0.39*words/sentences +
+// 11.8*syllables/words - 15.59), not just judged by eye, and reworked
+// (mostly: shorter sentences, one idea per sentence) until each piece
+// landed at grade ~0-4, average ~1.4 - see memory for the full note.
 var INTRO_BEATS=[
-  {title:'Right now, someone is placing a trade. They have not earned the right to make it yet.'},
-  {eyebrow:'The Anti-Hope Machine',title:'This isn’t built to make trading feel easier.',body:'It shows you the truth, in plain numbers: does what you’re doing actually work? Most tools tell you what you want to hear. This one doesn’t.'},
-  {eyebrow:'Before You Begin',title:'What you get out of this depends on what you put in.',body:'First, a few honest questions. Not to judge you — just to see where you’re starting from.',btn:'I’m Ready'}
+  {title:'Right now, someone is making a trade. They have not done the work first.'},
+  {eyebrow:'The Anti-Hope Machine',title:'This app will not make trading feel easy.',body:'It shows you the truth in plain numbers. Does your plan really work? Most tools tell you what you want to hear. This one does not.'},
+  {eyebrow:'Before You Begin',title:'What you get depends on what you give.',body:'First, a few honest questions. We are not here to judge you. We just want to see where you start.',btn:'I’m Ready'}
 ];
 
 var QUIZ_QUESTIONS=[
-  {q:'Have you traded before — live or demo?',
+  {q:'Have you traded before? Live money or a demo?',
    opts:[
-     {t:'No, never',s:0,reaction:'Then everything here is brand new. You can’t fail a first look — think of it as a mirror with nothing on it yet.'},
-     {t:'Demo or paper trading only',s:1,reaction:'Paper trading shows you can follow a plan when nothing real is on the line. It doesn’t show you can hold that plan once your own money is watching.'},
-     {t:'Yes, with real money',s:2,reaction:'Then you already know the gap. A plan on paper feels easy. A plan with real money on the line does not.'}
+     {t:'No, never',s:0,reaction:'This is all brand new to you. That is okay. Think of it as a fresh start.'},
+     {t:'Demo or paper trading only',s:1,reaction:'Paper trading is good practice. But it does not test you like real money does. Real money feels different.'},
+     {t:'Yes, with real money',s:2,reaction:'Then you already know. A plan on paper feels easy. A plan with real money is much harder.'}
    ],
-   gap:'Practice still counts for something. But nothing trains you for the pull to break your own plan like real money does. Until you’ve felt that pull, treat every number in here as practice, not a final answer.'},
-  {q:'Have you backtested a strategy over at least 50 trades?',
+   gap:'Practice still helps. But nothing trains you like real money does. Until you feel that, treat every number here as practice.'},
+  {q:'Have you tested a plan? At least 50 trades?',
    opts:[
-     {t:'No',s:0,reaction:'So there isn’t a real strategy yet — just a hunch wearing a strategy’s name.'},
-     {t:'Some, but fewer than 50',s:1,reaction:'Close enough to see a shape. Not close enough to trust it yet — most fake edges fall apart right around 50 trades.'},
-     {t:'Yes, 50 or more',s:2,reaction:'Good. Around 50 trades, luck starts running out of places to hide.'}
+     {t:'No',s:0,reaction:'So this is not a real plan yet. It is just a guess.'},
+     {t:'Some, but fewer than 50',s:1,reaction:'That is a start. But it is not enough yet. Fake patterns often break by 50 trades.'},
+     {t:'Yes, 50 or more',s:2,reaction:'Good. By 50 trades, luck starts to fade away.'}
    ],
-   gap:'Under about 50 trades, a hot streak and a real edge look the same. That’s not this app being strict — it’s just how small samples work.'},
-  {q:'Do you have real trade data ready to log — broker exports, a journal, anything?',
+   gap:'Under 50 trades, a lucky streak can look like skill. That is just how small numbers work.'},
+  {q:'Do you have real trade records? Like broker data or a journal?',
    opts:[
-     {t:'Not yet',s:0,reaction:'That’s fine for today. But everything after this stays a demo, not a diagnosis, until you bring real numbers.'},
-     {t:'Some, scattered',s:1,reaction:'Scattered still counts. Gathering it into one place is half the discipline this app teaches.'},
-     {t:'Yes, ready to go',s:2,reaction:'Then this tool can start doing its real job on you, not just in front of you.'}
+     {t:'Not yet',s:0,reaction:'That is fine for today. But this stays a demo until you bring real numbers.'},
+     {t:'Some, scattered',s:1,reaction:'Scattered still counts. Putting it all in one place is a big first step.'},
+     {t:'Yes, ready to go',s:2,reaction:'Then this tool can start doing real work for you.'}
    ],
-   gap:'This tool is only as sharp as what you feed it. Without real trades behind the numbers, what you see here is a demo — not a conclusion about you.'},
-  {q:'What are you hoping day trading gives you right now?',
+   gap:'This tool is only as good as what you give it. Without real trades, this stays a demo.'},
+  {q:'Why do you want to day trade right now?',
    opts:[
-     {t:'Steady income to replace or supplement my job',s:0,reaction:'Here’s the plain truth: most people chasing that goal lose money for a long time first. Some never stop losing. This app can’t skip that part — it can only show you the truth faster.'},
-     {t:'To learn the mechanics and build discipline',s:1,reaction:'A solid place to start. Discipline is the one part fully in your control.'},
-     {t:'To stress-test an edge I already trade',s:2,reaction:'Then you’re not here to be told trading works. You’re here to find out if you do. That’s the right question.'}
+     {t:'Steady income to replace or add to my job',s:0,reaction:'Here is the truth. Most people who want this lose money at first. Some never stop losing. This app cannot skip that part. It can only show you the truth fast.'},
+     {t:'To learn the basics and build discipline',s:1,reaction:'A great place to start. Discipline is the one thing you fully control.'},
+     {t:'To test a plan I already trade',s:2,reaction:'Then you are not here to be told trading works. You are here to find out if you do. That is the right question.'}
    ],
-   gap:'Here’s the plain truth: most people who start day trading for steady income end up losing money — often for a long stretch, before they stop, if they stop. This app won’t skip that part. What it does is show you, in plain numbers, whether your process really works. That’s the only real way through.'}
+   gap:'Here is the truth. Most people who day trade for income lose money. Often for a long time. This app will not hide that. It shows you the truth in plain numbers. That is the only real way through.'}
 ];
 
 var GUT_CHECK={
-  q:'If this app told you the truth about your trading — real numbers, no excuses — would you want to see it?',
+  q:'If this app told you the truth about your trading, would you want to see it? No excuses. Just real numbers.',
   opts:[
-    {t:'Yes — that’s exactly why I’m here',line:'Good. That’s the only honest way to start.'},
-    {t:'Honestly, I’m not sure',line:'Fair answer. Most people aren’t, until the numbers make them sure.'}
+    {t:'Yes — that’s why I’m here',line:'Good. That is the only honest way to start.'},
+    {t:'Honestly, I’m not sure',line:'Fair answer. Most people feel that way, until the numbers make them sure.'}
   ]
 };
 
@@ -6075,7 +6094,9 @@ var GUT_CHECK={
 // readiness level, so it applies whether you're Ready, Getting There,
 // or Start Here. The App Tour's own final stop now carries a different,
 // tour-specific closing line instead (see TOUR_STOPS' last entry).
-var CLOSING_ENCOURAGEMENT='Once your real numbers back up a strategy, growth comes from staying consistent and sizing up — not from chasing something new every time results dip. Here’s the part most people don\'t expect: the less money you pull out along the way, the more it compounds. Given enough time, that one choice can be the whole game.';
+// Round 118: rewritten for a verified grade 2-3 (Flesch-Kincaid score
+// ~3.1, down from the round-112 version's longer, comma-heavy sentences).
+var CLOSING_ENCOURAGEMENT='Once your numbers prove a plan works, keep doing it. Do not chase something new every time you have a bad week. Here is a secret: the less money you take out, the more it grows. Over time, that one choice can change everything.';
 
 // Round 100's three "thinking exercise" beats - user asked for ideas beyond
 // the questionnaire itself ("short thinking exercises to prune better
@@ -6119,14 +6140,17 @@ var CLOSING_ENCOURAGEMENT='Once your real numbers back up a strategy, growth com
 // exact earnings threshold, etc.) that wasn't independently confirmed.
 // Worth a follow-up primary-source check before ever citing this stat
 // somewhere more formal than this app.
+// Round 118: q/opts/fact rewritten for a verified grade 2-3 - see the
+// round-118 note above INTRO_BEATS for the Flesch-Kincaid method used
+// across all five insights below.
 var LOSS_INSIGHT={
-  q:'Quick one. Which hurts more — losing $200 you already had, or missing a trade that would have made you $200?',
+  q:'Quick one. Which hurts more: losing $200 you had, or missing a trade that could have made you $200?',
   opts:[
-    {t:'Losing the $200',line:'Studies back up that feeling.'},
-    {t:'About the same, honestly',line:'Worth noticing — most people don’t actually feel it that way.'},
-    {t:'Missing the gain hits harder',line:'That’s the less common answer.'}
+    {t:'Losing the $200',line:'Studies show most people feel this way.'},
+    {t:'About the same, honestly',line:'Worth noting. Most people do not feel it that way.'},
+    {t:'Missing the gain hits harder',line:'That is the less common answer.'}
   ],
-  fact:'Most people feel a loss about twice as strongly as they feel an equal gain. This is called loss aversion. It’s why traders hold losing trades, hoping they turn around. It’s also why traders sell winning trades too soon, just to feel relief. Your account doesn’t care how a trade feels. Your discipline has to make up for what your instincts get wrong.'
+  fact:'Most people feel a loss twice as strongly as a win. This is called loss aversion. It is why traders hold on to losing trades, hoping they turn around. It is also why traders sell winners too soon, just to feel relief. Your account does not care how a trade feels. Your discipline must make up for that.'
 };
 // Round 112: q stays a live math setup (it IS the question being asked),
 // but fact is now split - a plain message first, the actual arithmetic
@@ -6136,13 +6160,13 @@ var LOSS_INSIGHT={
 // just to get the message"). Figures unchanged from round 100/101 -
 // still the same verified 40%*200-60%*100=+20/trade, *100=+2000.
 var EV_INSIGHT={
-  q:'Quick math test. You risk $100 on each trade. You win 40% of the time. A win pays double your risk. A loss costs your full risk. Over 100 trades, do you come out ahead?',
+  q:'Quick math test. You risk $100 each trade. You win 4 out of 10 trades. A win pays back double. A loss costs your full risk. After 100 trades, are you ahead?',
   opts:[
-    {t:'Clearly profitable',line:'Good instinct.'},
-    {t:'Roughly breakeven',line:'Close, but not quite.'},
-    {t:'Losing money',line:'The 40% win rate makes it feel that way. Fair guess.'}
+    {t:'You come out ahead',line:'Good instinct.'},
+    {t:'About even',line:'Close, but not quite.'},
+    {t:'Losing money',line:'The low win rate makes it feel that way. Fair guess.'}
   ],
-  fact:'You come out ahead — even though you lose more often than you win. Win rate alone never tells the whole story; reward-to-risk matters just as much. This is the same math Sim mode runs for you, using your own numbers instead of a made-up example.<p class="insight-math">Math: (40% × $200) − (60% × $100) = +$20 per trade. Over 100 trades: +$2,000.</p>'
+  fact:'You come out ahead, even though you lose more than you win. Win rate alone does not tell the whole story. How much you win matters too. This is the same math Sim mode uses, but with your own numbers.<p class="insight-math">Math: (40% × $200) − (60% × $100) = +$20 per trade. Over 100 trades: +$2,000.</p>'
 };
 // Round 111: "Instead of making a mathematical lesson on the
 // commission, just plainly state it... the math and extra jargon is
@@ -6164,31 +6188,50 @@ var EV_INSIGHT={
 // .insight-math line after. Figures unchanged from round 108's IBKR-
 // sourced rate (see that round's comment trail above COST_INSIGHT).
 var COST_INSIGHT={
-  q:'Same strategy, same $100 risk. It nets +$20 per trade before costs. A real broker charges about $7 in commission per round trip. Over 100 trades, what happens to your edge?',
+  q:'Same plan, same $100 risk. It makes +$20 per trade before fees. A broker charges about $7 in fees per trade. After 100 trades, what happens to your gains?',
   opts:[
-    {t:'Barely dented',line:'That’s the common guess — commission feels small next to the profit.'},
-    {t:'Cut by roughly a third, still profitable',line:'That’s exactly it.'},
-    {t:'Wiped out completely',line:'Fair guess — people talk about costs like they’re that brutal — but this one isn’t.'}
+    {t:'Barely changed',line:'A common guess. Fees feel small next to your profit.'},
+    {t:'Cut by about a third, still a profit',line:'That is right.'},
+    {t:'Wiped out completely',line:'Fair guess. Fees can feel that harsh. But not this time.'}
   ],
-  fact:'Commission eats about a third of your edge — gone before spread or slippage even show up. The strategy is still profitable. It’s just not the number you saw on paper, and that gap is exactly what a real broker statement shows you that a backtest won’t.<p class="insight-math">Math: $700 commission ÷ $2,000 gross edge ≈ one third.</p>'
+  fact:'Fees eat about a third of your gains, gone before other costs even show up. The plan is still a profit. It is just smaller than it looked on paper. That gap is exactly what a real broker statement shows you.<p class="insight-math">Math: $700 in fees ÷ $2,000 in gains ≈ one third.</p>'
 };
 var STAT_INSIGHT={
-  q:'One more question before your results. Guess: among people who day trade for a long stretch — not just a week — what share end up losing money?',
+  q:'One more question before your results. Think about people who day trade for a long time. How many end up losing money?',
   opts:[
-    {t:'Less than half',line:'Hopeful guess — not what the data shows.'},
-    {t:'Roughly half to three-quarters',line:'Closer, but still short.'},
-    {t:'The large majority',line:'That’s the right instinct.'}
+    {t:'Less than half',line:'A hopeful guess. Not what the data shows.'},
+    {t:'About half to three-quarters',line:'Closer, but still too low.'},
+    {t:'Most of them',line:'That is the right instinct.'}
   ],
-  fact:'A well-known study tracked day traders in Brazil. Among those who kept trading for more than 300 days, about 97% still lost money. Sticking with it didn’t save them. It rarely does — what matters is your process, not how long you stick around.'
+  // Round 119: user asked to actually cite this on screen ("cite
+  // bibliography somewhere on screen to see"), with the study context
+  // right above the bibliography, and the main message trimmed to 1-2
+  // sentences - the old 5-sentence version buried the headline number
+  // in the middle of a paragraph AND never named where it came from
+  // (memory had flagged this exact stat as secondary-sourced only,
+  // worth a primary-source check before ever citing it more formally
+  // than "a well-known study" - this round did that check). Re-verified
+  // via WebSearch+WebFetch this round: Fernando Chagué, Rodrigo
+  // De-Losso and Bruno Giovannetti, "Day Trading for a Living?" (SSRN
+  // working paper / FGV EESP Textos para Discussão No. 525, 2020) -
+  // tracked 1,551 people who day-traded Brazilian mini-Ibovespa FUTURES
+  // for more than 300 trading days; 97% of them lost money net of fees.
+  // Confirmed this is still an SSRN working paper, not a peer-reviewed
+  // publication, via the lead author's own site - cited as such (no
+  // journal claimed) rather than overstating it. Also confirmed there's
+  // a DIFFERENT, similarly-named Chagué/Giovannetti paper on day-trading
+  // STOCKS (no De-Losso, published in the Brazilian Review of Finance)
+  // - not the source of this figure, deliberately not conflated here.
+  fact:'Most people who day trade for years still lose money. One study found that 97% of them lost money.<p class="insight-cite">Study: tracked 1,551 day traders in Brazil’s futures market who kept trading for more than 300 days.<br>Source: Chagué, De-Losso & Giovannetti, “Day Trading for a Living?” (SSRN working paper, 2020).</p>'
 };
 var AI_INSIGHT={
-  q:'Do you track your real trades in an organized way — broker exports, a spreadsheet, a journal?',
+  q:'Do you track your real trades? Like broker data, a spreadsheet, or a journal?',
   opts:[
-    {t:'Yes, consistently',line:'Good — that’s the hard part most people skip.'},
-    {t:'Sort of, scattered',line:'Scattered still counts for something.'},
-    {t:'Not really',line:'That’s the most common answer, and the easiest one to fix.'}
+    {t:'Yes, every time',line:'Good. That is the hard part most people skip.'},
+    {t:'Sort of, scattered',line:'That still counts. Every bit helps.'},
+    {t:'Not really',line:'The most common answer. It is also the easiest to fix.'}
   ],
-  fact:'Whichever it is, you don’t need to be a spreadsheet expert or a math whiz. AI tools can turn a messy broker export into clean numbers — your real win rate, your real expected value. Understanding the math matters far more than doing it by hand.'
+  fact:'Either way, you do not need to be a math expert. AI tools can turn a messy broker file into clean numbers. Things like your real win rate and real gains. Understanding the numbers matters more than doing the math by hand.'
 };
 
 var introOverlay,introCanvas,introFg,introSkipBtn;
@@ -6789,21 +6832,23 @@ function buildReadinessSteps(){
   // the rest of the intro sequence - the gaps/lead strings themselves
   // already come from QUIZ_QUESTIONS' own (now simplified) gap text, so
   // only the eyebrow/title/elaboration lines needed rewriting here.
+  // Round 118: rewritten again for a verified grade 2-3 - see the
+  // round-118 note above INTRO_BEATS for the Flesch-Kincaid method.
   if(total>=6){
     eyebrow='You’re Ready';
-    title='You already did the part most people skip.';
-    lead='This tool can’t predict the market. What it can do is tell you the truth about your own process — the part most traders work hardest to avoid.';
+    title='You already did the hard part.';
+    lead='This tool cannot predict the market. But it can tell you the truth about your own process. That is the part most traders try to avoid.';
     elaboration=gaps.length?gaps[0]:null;
   }else if(total>=3){
     eyebrow='Getting There';
-    title='You have real gaps. Worth keeping in mind for what’s next.';
+    title='You have real gaps. Keep them in mind.';
     lead=gaps.slice(0,2).join(' ');
-    elaboration='None of that locks you out. It just means what comes next is practice, not proof.';
+    elaboration='None of this locks you out. It just means what comes next is practice, not proof.';
   }else{
     eyebrow='Start Here, Not There';
-    title='Day trading is tough on accounts that skip the groundwork.';
+    title='Day trading is hard. Build the basics first.';
     lead=gaps.slice(0,2).join(' ');
-    elaboration='That’s not a reason to stop. It’s exactly what Simulate mode is for: build your history first, and let the app show you the truth instead of guessing.';
+    elaboration='That is not a reason to stop. It is exactly what Simulate mode is for. Build your history first. Let the app show you the truth instead of a guess.';
   }
   var steps=[{eyebrow:eyebrow,title:title,body:lead}];
   // At most one more beat of tier-specific substance - never one beat
