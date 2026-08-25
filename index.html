@@ -6045,9 +6045,16 @@ function hasRealData(){
 // 11.8*syllables/words - 15.59), not just judged by eye, and reworked
 // (mostly: shorter sentences, one idea per sentence) until each piece
 // landed at grade ~0-4, average ~1.4 - see memory for the full note.
+// Round 122: new 3rd beat added - "make it clear that this is the place
+// you go to after you have a strategy and/or know to backtest, have a
+// broker, want to or already journal/log trades, care about your
+// psychology, and most importantly don't want hope." A positioning
+// statement, not another quiz question - it belongs here, before the
+// questions start, not folded into any one of them. FK-scored 3.0.
 var INTRO_BEATS=[
   {title:'Right now, someone is making a trade. They have not done the work first.'},
   {eyebrow:'The Anti-Hope Machine',title:'This app will not make trading feel easy.',body:'It shows you the truth in plain numbers. Does your plan really work? Most tools tell you what you want to hear. This one does not.'},
+  {eyebrow:'Who This Is For',title:'This is not step one.',body:'This app is for people who already have a plan. Or people who know they need to test one first. People with a broker. People who track trades, or want to start. People who take their own psychology seriously. Most of all, people who do not want to be told what they want to hear.'},
   {eyebrow:'Before You Begin',title:'What you get depends on what you give.',body:'First, a few honest questions. We are not here to judge you. We just want to see where you start.',btn:'I’m Ready'}
 ];
 
@@ -6067,6 +6074,15 @@ var QUIZ_QUESTIONS=[
    ],
    gap:'Practice still helps. But nothing trains you like real money does. Until you feel that, treat every number here as practice.'},
   {q:'Have you tested a plan? At least 50 trades?',
+   // Round 122: "Mention there is no app that can help you backtest and
+   // that that requires software, a computer, and hours of chart time at
+   // the very least." Attached here, not as a new insight screen - this
+   // IS the backtesting question, so the disclaimer belongs right where
+   // it's asked, seen by everyone who answers it, not just the ones with
+   // a weak score (unlike `gap` below). `note` is a new field, rendered
+   // by renderQuizStep as an extra .scr-body line under the question,
+   // only when present. FK-scored 3.0.
+   note:'This app can’t backtest for you. That takes real software, a computer, and hours of chart time.',
    opts:[
      {t:'No',s:0,reaction:'So this is not a real plan yet. It is just a guess.'},
      {t:'Some, but fewer than 50',s:1,reaction:'That is a start. But it is not enough yet. Fake patterns often break by 50 trades.'},
@@ -6287,9 +6303,11 @@ var flakeRafId=null,flakeParticles=null,flakeCtx=null,flakeW=0,flakeH=0;
 //    CURRENT screen right now, or null if the screen is a pending
 //    choice (a quiz question, gut-check, insight question) that can't
 //    be skipped without answering it. autoAdvance() (below) sets this
-//    automatically on every screen that paces itself with a timer, so
-//    a right-side tap just calls whatever's already there - it never
-//    needs to know what kind of screen is on-screen.
+//    automatically on every screen with a visible Continue/Next button
+//    (round 124: every such screen, now that nothing advances on a
+//    timer any more), so a right-side tap just calls whatever's
+//    already there - it never needs to know what kind of screen is
+//    on-screen.
 //  - screenHistory is a stack of "replay" closures, one per screen
 //    actually shown, each of which fully re-renders that exact screen
 //    from values it captured in its own closure at the moment it was
@@ -6606,43 +6624,31 @@ function setFg(topHtml,innerHtml,extraCls){
   introFg.innerHTML=(topHtml||'')+'<div class="scr-inner'+(extraCls?' '+extraCls:'')+'">'+innerHtml+'</div>';
 }
 
-// Minimum on-screen time for a piece of text, scaled to its own length
-// - the direct fix for "the text moves too fast for readability": the
-// old flat timeouts (3.4-4.6s per beat, 3.8s per reaction, 950ms per
-// reveal paragraph) were tuned by feel, not by how much there actually
-// was to read, and the longest strings in this sequence ran well past
-// 400 words/minute once actually measured - closer to speed-reading
-// than the deliberate, weighty pace this sequence is going for. ~200
-// words/minute (300ms/word) is a comfortable, unhurried silent-reading
-// pace; the 2200ms floor keeps even a one-word line ("Good.") from
-// flashing past.
-// Round 101: "the text that automatically vanishes should take 15%
-// longer to vanish" - scaling the whole computed value (floor included)
-// by 1.15 rather than tweaking the floor/rate separately keeps the
-// shape of the curve identical, just uniformly slower, so a one-word
-// line and a thirty-word line both get exactly the same proportional
-// extension rather than the floor and the per-word rate drifting out
-// of the ratio the round 99 tuning pass settled on.
-var PACE_SCALE=1.15;
-function readMs(text){
-  var words=(text||'').trim().split(/\s+/).filter(Boolean).length;
-  return Math.round(Math.max(2200,500+words*300)*PACE_SCALE);
-}
+// Round 97-121: this used to compute a minimum on-screen TIME per beat/
+// reaction/reveal, scaled to word count (readMs()/PACE_SCALE), and every
+// screen without a button auto-advanced once that timer ran out. Round
+// 124 removed the whole mechanism: "Turn off the timer for the
+// questions, have a next button for everything that doesn't have an
+// obvious way to continue." Nothing in this sequence moves on its own
+// any more - every screen waits for an explicit tap (an option, or a
+// visible Next/Continue button) before advancing. readMs()/PACE_SCALE
+// are gone with it - nothing left in this file calls them; do not
+// reintroduce a timer here without a direct request to bring one back.
 
-// Advances on tap OR after `ms` of nobody tapping, whichever comes
-// first - the pacing mechanism behind every beat/reaction in this
-// sequence: long enough to actually read a couple of sentences, short
-// enough that a fast reader never feels stuck waiting on it. Pass a
-// falsy btnId for a beat with no visible control (see runBeats) - it
-// still resolves, just on the timer alone.
-function autoAdvance(btnId,ms,onDone){
+// Advances only when the visible button is tapped, or via a right-side
+// screen tap (round 111's onIntroTapNav - see currentNextHandler below);
+// never on a timer. Every caller now always passes a real btnId with a
+// button already in the DOM (see runBeatSeries/renderReaction/
+// renderInsightReveal below) - there is no more "no visible control"
+// case.
+function autoAdvance(btnId,onDone){
   var done=false;
-  var t=setTimeout(go,ms);
-  function go(){if(done)return;done=true;clearTimeout(t);currentNextHandler=null;onDone();}
-  // Round 111: every timer-paced screen registers its own advance as
+  function go(){if(done)return;done=true;currentNextHandler=null;onDone();}
+  // Round 111: every screen that uses this registers its own advance as
   // the live currentNextHandler, which is what lets a right-side tap
-  // (onIntroTapNav above) skip ANY of them for free, with no per-
-  // screen wiring - this is the one line that makes that true.
+  // (onIntroTapNav above) advance it too, with no per-screen wiring -
+  // this is the one line that makes that true. Still works the same way
+  // post-round-124; only the timer fallback is gone.
   currentNextHandler=go;
   var btn=btnId?document.getElementById(btnId):null;
   if(btn)btn.addEventListener('click',go);
@@ -6657,16 +6663,19 @@ function autoAdvance(btnId,ms,onDone){
 // mix of eyebrow/title/body (all three optional now - the original
 // only ever made eyebrow optional, since every INTRO_BEATS entry had a
 // title; readiness's follow-up beats are body-only, so title has to be
-// able to disappear too). Every beat but the last is pure pacing, no
-// visible control - the deliberate design already in place for
-// INTRO_BEATS (see below): can't be rushed past on tap-to-advance
-// alone, only skipped outright via Skip or right-tapped past one at a
-// time (round 111 tap-nav, see currentNextHandler above), which is
-// what keeps it feeling like a held beat instead of a dismissable
-// tooltip. lastBtnId lets a caller keep its own semantic id on the
-// final button (readiness keeps "readiness-go", matching what several
-// existing regression scripts already select on) instead of every
-// series colliding on the same "beat-next" id.
+// able to disappear too). lastBtnId lets a caller keep its own semantic
+// id on the final button (readiness keeps "readiness-go", matching what
+// several existing regression scripts already select on); every earlier
+// beat now shares one generic "beat-step-next" id instead (safe to
+// reuse - setFg() fully replaces .intro-fg's contents each render, so
+// only one such button ever exists in the DOM at a time).
+// Round 111 originally made every beat but the last pure pacing, no
+// visible control, specifically so the sequence "can't be rushed past
+// on tap-to-advance alone... which is what keeps it feeling like a held
+// beat instead of a dismissable tooltip." Round 124 directly reverses
+// that: every beat now gets its own "Continue" button (the final beat
+// keeps its own caller-supplied label, e.g. "I'm Ready"/"Let's Go") -
+// see the round-124 note above autoAdvance for why.
 function runBeatSeries(beats,onDone,lastBtnId){
   lastBtnId=lastBtnId||'beat-next';
   var i=0;
@@ -6676,30 +6685,31 @@ function runBeatSeries(beats,onDone,lastBtnId){
     function render(){
       var b=beats[myI];
       var isLast=myI===beats.length-1;
+      var btnId=isLast?lastBtnId:'beat-step-next';
+      var btnLabel=isLast?b.btn:'Continue';
       setFg('',
         (b.eyebrow?'<div class="scr-eyebrow">'+b.eyebrow+'</div>':'')+
         (b.title?'<div class="scr-title">'+b.title+'</div>':'')+
         (b.body?'<div class="scr-body">'+b.body+'</div>':'')+
-        (isLast?'<div class="scr-nav center"><button type="button" class="scr-next" id="'+lastBtnId+'">'+b.btn+'</button></div>':''));
+        '<div class="scr-nav center"><button type="button" class="scr-next" id="'+btnId+'">'+btnLabel+'</button></div>');
       // autoAdvance always recomputes the NEXT index off myI, never off
       // the shared/live `i` - so replaying this exact beat after going
       // back and forward again still lands on the right next beat even
       // if `i` has since moved on ahead of it (see the longer version
       // of this note on renderQuizStep, which needed the same fix).
-      autoAdvance(isLast?lastBtnId:null,isLast?60000:readMs((b.title||'')+' '+(b.body||'')),function(){i=myI+1;step();});
+      autoAdvance(btnId,function(){i=myI+1;step();});
     }
     pushScreen(render);
     render();
   }
   step();
 }
-// Three sequential atmosphere beats - what round 97 tried to say in
-// one card, now given real room (see the header comment). The first
-// two are pure pacing, no visible control - deliberately: this is the
-// one part of the sequence that can't be rushed past, only abandoned
-// outright via Skip, which is what gives it weight instead of reading
-// as a dismissable tooltip. The third beat carries the "I'm Ready"
-// button that hands off into the questions.
+// Three sequential atmosphere beats plus the round-122 "Who This Is
+// For" beat, four total - what round 97 tried to say in one card, now
+// given real room (see the header comment). Every beat now carries its
+// own Continue button (round 124 - see the note above runBeatSeries);
+// the last one carries the "I'm Ready" button that hands off into the
+// questions.
 function runBeats(onDone){runBeatSeries(INTRO_BEATS,onDone,'beat-next');}
 
 // One diagnostic question - tap an option, then that option's OWN
@@ -6734,6 +6744,12 @@ function renderQuizStep(myI,onDone){
     setFg(
       '<div class="scr-progress">'+dots+'</div>',
       '<div class="scr-title">'+item.q+'</div>'+
+      // Round 122: an optional per-question `note` (currently only Q2,
+      // the backtesting question - see that var's own comment) renders
+      // here as a plain .scr-body line, same class/style every reveal
+      // screen already uses - seen by every user who reaches this
+      // question, regardless of how they answer it.
+      (item.note?'<div class="scr-body">'+item.note+'</div>':'')+
       '<div class="scr-opts">'+item.opts.map(function(o,oi){return '<button type="button" class="scr-opt'+(prev&&prev.oi===oi?' sel':'')+'" data-i="'+oi+'">'+o.t+'</button>';}).join('')+'</div>'+
       '<div class="scr-nav"><button type="button" class="scr-back" id="quiz-back"'+(canGoBack()?'':' disabled')+'>Back</button><span></span></div>');
     // A pending, unanswered choice - no free right-tap skip (see
@@ -6769,7 +6785,7 @@ function renderReaction(myI,text,dots,onDone){
       '<div class="scr-progress">'+dots+'</div>',
       '<div class="scr-body">'+text+'</div>'+
       '<div class="scr-nav center"><button type="button" class="scr-next" id="reaction-next">Continue</button></div>');
-    autoAdvance('reaction-next',readMs(text),function(){
+    autoAdvance('reaction-next',function(){
       var nextI=myI+1;
       if(nextI<QUIZ_QUESTIONS.length)renderQuizStep(nextI,onDone);
       else onDone();
@@ -6832,7 +6848,7 @@ function renderInsightReveal(eyebrow,text,onDone){
       (eyebrow?'<div class="scr-eyebrow">'+eyebrow+'</div>':'')+
       '<div class="scr-body">'+text+'</div>'+
       '<div class="scr-nav center"><button type="button" class="scr-next" id="insight-next">Continue</button></div>');
-    autoAdvance('insight-next',readMs(text),onDone);
+    autoAdvance('insight-next',onDone);
   }
   pushScreen(render);
   render();
@@ -6870,10 +6886,11 @@ function runInsight(insight,onDone){
 // depending on tier and whether there's a gut-check line to echo) run
 // through the exact same runBeatSeries() every other part of this
 // sequence already uses - one idea per screen, shown at once (no more
-// per-sentence stagger, so nothing "loads" slowly), paced by the same
-// readMs() as a beat or reaction. Scoring/tiers themselves are
-// unchanged from round 97: >=6 is "You're Ready", >=3 is "Getting
-// There", below that is "Start Here, Not There".
+// per-sentence stagger, so nothing "loads" slowly). Each beat now waits
+// for its own Continue tap rather than a timer (round 124 - see the
+// note above autoAdvance). Scoring/tiers themselves are unchanged from
+// round 97: >=6 is "You're Ready", >=3 is "Getting There", below that
+// is "Start Here, Not There".
 // Round 120 added a "results" payoff here: a real, sourced Taiwan-study
 // stat (STAT_RESULT) plus a per-tier "what can help" beat built from each
 // weak answer's `tip` field, deliberately in place of a fabricated "%
