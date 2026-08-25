@@ -1500,19 +1500,28 @@ canvas.spark{width:100%;height:34px;display:block;}
 .scr-inner.grow{margin-top:0;margin-bottom:0;}
 .intro-skip{position:fixed;z-index:2002;top:calc(14px + env(safe-area-inset-top,0px));right:16px;font-size:10px;color:#6b7484;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;padding:8px;touch-action:manipulation;}
 @keyframes scrFadeUp{from{opacity:0;transform:translateY(9px);}to{opacity:1;transform:translateY(0);}}
-.scr-progress{position:fixed;z-index:1;top:calc(16px + env(safe-area-inset-top,0px));left:24px;right:60px;display:flex;gap:5px;}
-.scr-progress i{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.12);}
-.scr-progress i.on{background:var(--accent-solid);}
+/* Round 125 removed .scr-progress entirely - the Instagram/Snapchat-
+   Stories-style row of thin segmented bars that used to sit fixed above
+   every questionnaire question/reaction, filling in solid accent-blue
+   as you moved through the 4 questions ("remove the social media blue
+   strips at the top"). renderQuizStep/renderReaction no longer build or
+   render it - do not reintroduce this without a direct request. */
 .scr-eyebrow{font-family:'Inter',sans-serif;font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-solid);margin-bottom:12px;animation:scrFadeUp .55s cubic-bezier(.25,.46,.45,.94) both;animation-delay:.04s;}
 .scr-title{font-family:'Inter',sans-serif;font-size:19px;font-weight:700;color:#f4f6fa;line-height:1.4;max-width:300px;margin-bottom:14px;animation:scrFadeUp .55s cubic-bezier(.25,.46,.45,.94) both;animation-delay:.14s;}
 .scr-body{font-family:'Inter',sans-serif;font-size:12.5px;color:#a7b0bf;line-height:1.7;max-width:300px;animation:scrFadeUp .55s cubic-bezier(.25,.46,.45,.94) both;animation-delay:.28s;}
 .scr-body+.scr-body{margin-top:11px;}
-/* Round 112: for EV_INSIGHT, whose payoff genuinely needs a formula (see
-   the JS comment above EV_INSIGHT) - pulls that formula onto its own
+/* Round 112: for EV_INSIGHT, whose payoff genuinely needed a formula (see
+   the JS comment above EV_INSIGHT) - pulled that formula onto its own
    line, set apart in mono/tabular numerals like every other on-screen
-   number in the app, so a skimmer's eye can separate "the point" (the
+   number in the app, so a skimmer's eye could separate "the point" (the
    plain sentence above it) from "the proof" (this line) at a glance,
-   same intent as the "Math:" paragraphs added to INFO{} this round. */
+   same intent as the "Math:" paragraphs added to INFO{} this round.
+   Round 128's full intro rewrite dropped EV_INSIGHT's equation-styled
+   line in favor of the same conclusion in plain prose (see the JS
+   comment above EV_INSIGHT) - nothing in the intro sequence uses this
+   class any more, but it's left in place, same precedent as round 125's
+   unused topHtml hook, for whatever future screen needs a formula set
+   apart from its own message. */
 .scr-body p.insight-math{margin-top:9px;font-family:'Roboto Mono',monospace;font-size:11px;color:#75859e;font-variant-numeric:tabular-nums;}
 /* Round 119: STAT_INSIGHT cites a real external study (see that var's
    JS comment) - same "pull it onto its own line, set apart from the
@@ -6045,17 +6054,38 @@ function hasRealData(){
 // 11.8*syllables/words - 15.59), not just judged by eye, and reworked
 // (mostly: shorter sentences, one idea per sentence) until each piece
 // landed at grade ~0-4, average ~1.4 - see memory for the full note.
-// Round 122: new 3rd beat added - "make it clear that this is the place
-// you go to after you have a strategy and/or know to backtest, have a
-// broker, want to or already journal/log trades, care about your
-// psychology, and most importantly don't want hope." A positioning
-// statement, not another quiz question - it belongs here, before the
-// questions start, not folded into any one of them. FK-scored 3.0.
+// Round 123 added a 3rd beat ("Who This Is For") requiring the reader
+// already have a plan/broker/journal before this app applies to them
+// (the file's own comment here mislabeled it "Round 122" ever since -
+// fixed as part of this note).
+// Round 128: full content + order-logic rewrite - "Remember this intro
+// is for new or non traders who are interested... [rewrite so it's]
+// coherent, immersive, personal, and not too complicated... intangible
+// and not just tangible." Two separate problems, addressed together:
+// (1) Round 123's beat above required EXPERIENCE (a plan, a broker, a
+// journal) to belong here, which quietly contradicts an intro meant to
+// welcome someone who has never traded at all - rewritten below to ask
+// for a DISPOSITION (wanting the truth over comfort) instead of
+// credentials, which keeps the "no hope, just truth" identity Round 123
+// was actually going for without gatekeeping newcomers. (2) A real
+// order-logic bug, found by re-reading the whole sequence start to
+// finish in the order a user actually experiences it: gutLine (the
+// gut-check answer's own echo) was rendered as the SECOND-to-last
+// readiness beat, buffered behind 1-2 unrelated tier-verdict beats -
+// see the round-128 note above buildReadinessSteps() below for the fix.
+// This round also leans further into feeling over facts where the two
+// compete - see the round-128 notes above LOSS_INSIGHT/EV_INSIGHT below
+// for what that meant for those two screens specifically. FK-scored
+// individually per string (see memory); one short reaction line
+// (renderReaction for QUIZ_QUESTIONS[0]'s 3rd option) scores above the
+// grade-4 ceiling purely from the round-118-documented formula
+// breakdown on short strings with a colon/em-dash clause - judged by
+// eye instead, same precedent as that round.
 var INTRO_BEATS=[
-  {title:'Right now, someone is making a trade. They have not done the work first.'},
-  {eyebrow:'The Anti-Hope Machine',title:'This app will not make trading feel easy.',body:'It shows you the truth in plain numbers. Does your plan really work? Most tools tell you what you want to hear. This one does not.'},
-  {eyebrow:'Who This Is For',title:'This is not step one.',body:'This app is for people who already have a plan. Or people who know they need to test one first. People with a broker. People who track trades, or want to start. People who take their own psychology seriously. Most of all, people who do not want to be told what they want to hear.'},
-  {eyebrow:'Before You Begin',title:'What you get depends on what you give.',body:'First, a few honest questions. We are not here to judge you. We just want to see where you start.',btn:'I’m Ready'}
+  {title:'Right now, someone is opening a trade. They do not know if their plan works. They are just hoping.'},
+  {eyebrow:'The Anti-Hope Machine',title:'Hope is not a strategy.',body:'This app will not cheer you on. It will not tell you that you are a natural. It shows you the truth about your trading, in plain numbers, so you can stop guessing and start knowing.'},
+  {eyebrow:'Who This Is For',title:'You do not need experience. You need honesty.',body:'Maybe you have traded before. Maybe you never have. Either way, this app is for people who would rather know the truth than feel good for a while. If that sounds like you, keep going.'},
+  {eyebrow:'Before We Start',title:'A few honest questions.',body:'Nothing here is graded. We just want to understand where you are starting from.',btn:'I’m Ready'}
 ];
 
 // Round 120 gave each question a `tip` field alongside `gap`, feeding a
@@ -6066,50 +6096,50 @@ var INTRO_BEATS=[
 // a weak answer matters, pulled into the tier lead/elaboration beats in
 // buildReadinessSteps() same as it always was pre-round-120.
 var QUIZ_QUESTIONS=[
-  {q:'Have you traded before? Live money or a demo?',
+  {q:'Have you traded before? With real money, or a demo?',
    opts:[
-     {t:'No, never',s:0,reaction:'This is all brand new to you. That is okay. Think of it as a fresh start.'},
-     {t:'Demo or paper trading only',s:1,reaction:'Paper trading is good practice. But it does not test you like real money does. Real money feels different.'},
-     {t:'Yes, with real money',s:2,reaction:'Then you already know. A plan on paper feels easy. A plan with real money is much harder.'}
+     {t:'No, never',s:0,reaction:'Then this is new ground for you. That is a fine place to start.'},
+     {t:'Demo or paper trading only',s:1,reaction:'Paper trading teaches the mechanics. It does not teach how real money feels.'},
+     {t:'Yes, with real money',s:2,reaction:'Then you already know something a demo cannot teach. Real money feels different.'}
    ],
-   gap:'Practice still helps. But nothing trains you like real money does. Until you feel that, treat every number here as practice.'},
-  {q:'Have you tested a plan? At least 50 trades?',
-   // Round 122: "Mention there is no app that can help you backtest and
+   gap:'Practice on paper is a start. But nothing teaches quite like real money does. Keep that in mind as you read your results.'},
+  {q:'Have you tested your plan? At least 50 trades worth?',
+   // Round 123: "Mention there is no app that can help you backtest and
    // that that requires software, a computer, and hours of chart time at
    // the very least." Attached here, not as a new insight screen - this
    // IS the backtesting question, so the disclaimer belongs right where
    // it's asked, seen by everyone who answers it, not just the ones with
    // a weak score (unlike `gap` below). `note` is a new field, rendered
    // by renderQuizStep as an extra .scr-body line under the question,
-   // only when present. FK-scored 3.0.
-   note:'This app can’t backtest for you. That takes real software, a computer, and hours of chart time.',
+   // only when present.
+   note:'This app cannot backtest for you. That takes real software, a computer, and hours in front of charts.',
    opts:[
-     {t:'No',s:0,reaction:'So this is not a real plan yet. It is just a guess.'},
-     {t:'Some, but fewer than 50',s:1,reaction:'That is a start. But it is not enough yet. Fake patterns often break by 50 trades.'},
-     {t:'Yes, 50 or more',s:2,reaction:'Good. By 50 trades, luck starts to fade away.'}
+     {t:'No',s:0,reaction:'So right now, it is a guess wearing the clothes of a plan.'},
+     {t:'Some, but fewer than 50',s:1,reaction:'A start. But small numbers can still fool you. Luck hides well in a short streak.'},
+     {t:'Yes, 50 or more',s:2,reaction:'Good. That is enough trades for luck to start running out of places to hide.'}
    ],
-   gap:'Under 50 trades, a lucky streak can look like skill. That is just how small numbers work.'},
-  {q:'Do you have real trade records? Like broker data or a journal?',
+   gap:'A short streak can look like skill. Often, it is not. That is simply how small numbers behave.'},
+  {q:'Do you have real trade records? Broker history, or a journal?',
    opts:[
-     {t:'Not yet',s:0,reaction:'That is fine for today. But this stays a demo until you bring real numbers.'},
-     {t:'Some, scattered',s:1,reaction:'Scattered still counts. Putting it all in one place is a big first step.'},
-     {t:'Yes, ready to go',s:2,reaction:'Then this tool can start doing real work for you.'}
+     {t:'Not yet',s:0,reaction:'That is all right for today. Just know this stays a rehearsal until real numbers arrive.'},
+     {t:'Some, scattered',s:1,reaction:'Scattered still counts. Gathering it in one place is a real first step.'},
+     {t:'Yes, ready to go',s:2,reaction:'Then you can put this tool to real use.'}
    ],
-   gap:'This tool is only as good as what you give it. Without real trades, this stays a demo.'},
-  {q:'Why do you want to day trade right now?',
+   gap:'This tool can only reflect what you give it. Without real trades, it stays a rehearsal.'},
+  {q:'Why do you want to day trade, really?',
    opts:[
-     {t:'Steady income to replace or add to my job',s:0,reaction:'Here is the truth. Most people who want this lose money at first. Some never stop losing. This app cannot skip that part. It can only show you the truth fast.'},
-     {t:'To learn the basics and build discipline',s:1,reaction:'A great place to start. Discipline is the one thing you fully control.'},
-     {t:'To test a plan I already trade',s:2,reaction:'Then you are not here to be told trading works. You are here to find out if you do. That is the right question.'}
+     {t:'I need steady income',s:0,reaction:'Hear this gently: most people chasing that lose money first. Some never stop. This app cannot spare you that. It can only show you the truth quickly, before it costs you more.'},
+     {t:'To learn and build discipline',s:1,reaction:'That is a strong place to start. Discipline is the one thing that is entirely up to you.'},
+     {t:'To test a plan I already trade',s:2,reaction:'Then you are not here for reassurance. You are here to find out if you are actually right. That is a braver question than most people ask.'}
    ],
-   gap:'Here is the truth. Most people who day trade for income lose money. Often for a long time. This app will not hide that. It shows you the truth in plain numbers. That is the only real way through.'}
+   gap:'Most people who day trade for income lose money, often for a long time. This app will not soften that. It shows you the truth in plain numbers, because that is the only real way through.'}
 ];
 
 var GUT_CHECK={
-  q:'If this app told you the truth about your trading, would you want to see it? No excuses. Just real numbers.',
+  q:'If this app told you the truth about your trading, would you actually want to see it? No excuses. Just the real numbers.',
   opts:[
-    {t:'Yes — that’s why I’m here',line:'Good. That is the only honest way to start.'},
-    {t:'Honestly, I’m not sure',line:'Fair answer. Most people feel that way, until the numbers make them sure.'}
+    {t:'Yes — that’s why I’m here',line:'Good. That is the only honest way to begin.'},
+    {t:'Honestly, I’m not sure',line:'That is a fair answer. Most people feel that way, right up until the numbers make them certain.'}
   ]
 };
 
@@ -6126,41 +6156,40 @@ var GUT_CHECK={
 // tour-specific closing line instead (see TOUR_STOPS' last entry).
 // Round 118: rewritten for a verified grade 2-3 (Flesch-Kincaid score
 // ~3.1, down from the round-112 version's longer, comma-heavy sentences).
-var CLOSING_ENCOURAGEMENT='Once your numbers prove a plan works, keep doing it. Do not chase something new every time you have a bad week. Here is a secret: the less money you take out, the more it grows. Over time, that one choice can change everything.';
+// Round 128: light polish only, as part of the full-intro content
+// rewrite (see the round-128 note above INTRO_BEATS) - this string was
+// already working, so it kept its shape and just tightened a phrase.
+var CLOSING_ENCOURAGEMENT='Once your numbers prove a plan works, keep doing it. Do not chase something new every time you have a bad week. Here is the secret: the less you take out, the more it grows. Given enough time, that one choice can change everything.';
 
 // Round 100's three "thinking exercise" beats - user asked for ideas beyond
 // the questionnaire itself ("short thinking exercises to prune better
 // thinking about day trading and capital growth"), then picked all three
 // pitched back: a psychology beat, a math beat, and a real-statistic beat.
-// Round 101 added two more (COST_INSIGHT, AI_INSIGHT) from the same kind
-// of specific, directive follow-up request. All share ONE mechanic
-// (runInsight below) rather than custom screens each - same shape as
-// GUT_CHECK (pick any option, nothing is scored, everything leads to the
-// same underlying substance), just with a per-option acknowledgment line
-// so picking still feels answered rather than ignored.
-// EV_INSIGHT's math is verified arithmetic, not a guess: 40%*200 - 60%*100
-// = +20/trade, *100 trades = +2000 - checked with a throwaway Node script
-// before writing it into copy, since getting trading math wrong in an app
-// whose entire premise is "cold, correct numbers" would undercut the one
-// thing it can't afford to get wrong. Its cost point (originally
-// COST_INSIGHT, round 101, folded in below at round 121) reuses that exact
-// same scenario rather than a fresh one, since the user asked for it as "a
-// follow up" to "the winrate example" specifically. Round 108 REPLACED its
-// original $20-flat-commission figure - user feedback, correctly: "What
-// world has a commission of $20 round trip on risking $100?" - a made-up
-// number that also silently contradicted the app's OWN
-// commissionForShares() (see above: $0.0035/share, $0.35 minimum per
-// order/leg). That per-share rate is Interactive Brokers Pro's real,
-// current published tiered rate (confirmed via WebFetch of IBKR's own
-// pricing page that round) - not invented either time, just not carried
-// into this beat's copy the first time around. Its replacement: 1,000
-// shares (a realistic size for a $0.10 stop sized to the same $100 risk)
-// at that real rate is $3.50/leg, $7 round trip, *100 trades = $700 -
-// verified with a throwaway Node script - which is 35% of the $2,000
-// gross edge, not all of it. Deliberately NOT tuned to zero out cleanly:
-// forcing the math to hit a dramatic round number is exactly the kind of
-// choice that produced the original made-up $20 figure, so this starts
-// from the real rate and reports whatever it actually comes out to.
+// Round 101 added two more (COST_INSIGHT, AI_INSIGHT, both later cut or
+// folded in - see the round-121 note below). All three that remain share
+// ONE mechanic (runInsight below) rather than custom screens each - same
+// shape as GUT_CHECK (pick any option, nothing is scored, everything
+// leads to the same underlying substance), just with a per-option
+// acknowledgment line so picking still feels answered rather than ignored.
+// EV_INSIGHT's win-rate math is verified arithmetic, not a guess (checked
+// with a throwaway Node script before writing it into copy), and its cost
+// point went through four full rewrites chasing the right way to mention
+// real trading costs without either inventing a number (round 108, a
+// made-up $20 commission) or overgeneralizing a real one (rounds 121/126/
+// 127, a real IBKR Pro rate that was still either an undisclosed-
+// assumption dollar total or one broker's rate presented as universal).
+// Round 128 resolved this by cutting the cost point from this beat
+// entirely - not because it was wrong, but because "give a scalable
+// number... it shouldn't be a blanket statement, it should be a rule of
+// thumb" turned out to be a symptom of a bigger problem with this whole
+// screen: a persuasive intro beat for a general audience is the wrong
+// place for broker-fee mechanics at all, scalable or not. Anyone who
+// wants the real, current, correctly-tiered rate can find it where it's
+// actually useful - the `comm` INFO{} entry and the Ticker circle's live
+// commission readout, both reached once someone is actually configuring a
+// strategy, not mid-story in the first five minutes. The full back-and-
+// forth (rounds 108/121/126/127) is preserved in this file's edit history
+// for whoever revisits this decision; it is not repeated here.
 // STAT_INSIGHT's figure is sourced, not invented: the ~97% figure is the
 // widely-cited headline result of Chague/De-Losso/Giovannetti's "Day
 // Trading for a Living?" (Brazilian futures day traders who persisted
@@ -6171,94 +6200,52 @@ var CLOSING_ENCOURAGEMENT='Once your numbers prove a plan works, keep doing it. 
 // round-118 note above INTRO_BEATS for the Flesch-Kincaid method used
 // across the insights below.
 // Round 121: "The intro doesn't make sense... revert back before you
-// added the extra stuff I told you to add. It had a better pacing then.
-// In fact, reanalyze the intro and see if you can find a way to make it
-// better. Feel free to change any or all of the intro." Reverted round
-// 120's results-screen additions (STAT_RESULT and its two beats, the
-// per-question `tip` field - see buildReadinessSteps()/QUIZ_QUESTIONS
-// below), then went further, since "feel free to change any or all" is
-// about as clear a mandate as this project gets. Measured the whole
-// sequence's actual minimum dwell time first, the same empirical
-// standard as round 118's FK score, rather than guessing at what "better
-// pacing" meant: a throwaway Node script replayed readMs() (the app's own
-// pacing formula) over every beat/reaction/reveal in order, for both the
-// lightest and heaviest paths through the questionnaire. Before this
-// round (with round 120's additions still in): 28 screens / 238.1s
-// minimum on the heaviest path, 26 screens / 206.5s on the lightest.
-// After the three changes below: 22 screens / 177.8s and 21 screens /
-// 156.9s respectively - a real ~20-25% cut, not just a return to
-// baseline. The three changes:
-//  1. LOSS_INSIGHT used to run BEFORE the 4-question readiness
-//     questionnaire, right after INTRO_BEATS' own "First, a few honest
-//     questions" line (see that beat above) - so the very next screen a
-//     user saw after being told real questions were coming was an
-//     unrelated psychology trivia question in the exact same
-//     pick-an-option format as the real ones, with nothing to tell them
-//     apart. That's a straightforward "doesn't make sense" bug, not just
-//     a pacing one. Moved LOSS_INSIGHT to join the other insights AFTER
-//     the questionnaire (see startIntroSequence below) so "a few honest
-//     questions" is immediately followed by exactly that, undiluted.
-//  2. Every insight below now carries its own `eyebrow` (LOSS_INSIGHT:
-//     "Quick Truth", EV_INSIGHT: "Quick Math", STAT_INSIGHT: "The Real
-//     Numbers"), rendered on both its question and reveal screens by
-//     runInsight/renderInsightReveal (see those functions) - a small,
-//     free (no extra screen) label making it visually obvious these
-//     aren't more of the scored questionnaire, on top of the dots-vs-no-
-//     dots distinction (renderQuizStep's progress dots, see that
-//     function) that already existed but was easy to miss while tapping
-//     through quickly.
-//  3. COST_INSIGHT (round 101) is folded into EV_INSIGHT's own reveal
-//     instead of being a fourth separate question+reveal pair - it was
-//     always "a follow-up to the winrate example" sharing the exact same
-//     $100-risk scenario, so asking it as its own multiple-choice
-//     question added a full extra decision point for one more sentence
-//     of payoff. AI_INSIGHT (round 101) is cut outright: its content
-//     (track your real trades; AI tools can turn broker data into clean
-//     numbers) already overlaps QUIZ_QUESTIONS[2]'s own question and gap
-//     text about real trade records, and its stated purpose - "a
-//     deliberate pivot to something empowering right after the heaviest
-//     stat, so the sequence doesn't end on unrelieved heaviness right
-//     before the gut-check" - turns out to already be GUT_CHECK's own
-//     job ("would you want to see it? Yes - that's why I'm here" is
-//     itself the empowering pivot), making AI_INSIGHT redundant scaffolding
-//     rather than load-bearing. Nothing here was deleted for its own
-//     sake - each cut/merge has a specific reason, logged here in case a
-//     future round wants either piece of content back.
+// added the extra stuff I told you to add... reanalyze the intro and see
+// if you can find a way to make it better. Feel free to change any or
+// all of the intro." Moved LOSS_INSIGHT to run AFTER the questionnaire
+// instead of before it (it used to immediately follow INTRO_BEATS' last
+// beat, which at the time promised questions were coming next and then
+// showed unrelated trivia instead - a real "doesn't make sense" bug, not
+// just pacing; INTRO_BEATS' last beat has since been reworded, round 128
+// - see the note above INTRO_BEATS - but the questionnaire still runs
+// immediately after it either way). Gave every insight its own
+// `eyebrow` label. Folded COST_INSIGHT into EV_INSIGHT's own reveal
+// instead of a fourth question+reveal pair (they always shared one
+// scenario). Cut AI_INSIGHT outright: it overlapped QUIZ_QUESTIONS[2] and
+// its own stated purpose - an empowering pivot before the gut-check -
+// turned out to already be GUT_CHECK's own job.
+// Round 128: full content rewrite (see the round-128 note above
+// INTRO_BEATS) - warmer, more personal voice throughout; LOSS_INSIGHT's
+// fact leans further into how loss aversion actually FEELS rather than
+// only naming it; EV_INSIGHT dropped its cost/commission tangent entirely
+// (see above) and its equation-styled "Math:" callout in favor of the
+// same conclusion in plain prose, since the on-screen question already
+// carries all the numbers a reader needs; STAT_INSIGHT kept its citation
+// verbatim (it is this app's single most valuable sourced fact and was
+// never the problem) with only its lead-in question re-worded.
 var LOSS_INSIGHT={
   eyebrow:'Quick Truth',
-  q:'Quick one. Which hurts more: losing $200 you had, or missing a trade that could have made you $200?',
+  q:'Quick one: which hurts more? Losing $200 you already had, or missing a trade that could have made you $200?',
   opts:[
-    {t:'Losing the $200',line:'Studies show most people feel this way.'},
-    {t:'About the same, honestly',line:'Worth noting. Most people do not feel it that way.'},
-    {t:'Missing the gain hits harder',line:'That is the less common answer.'}
+    {t:'Losing the $200',line:'Most people feel exactly that.'},
+    {t:'About the same, honestly',line:'That is the less common answer.'},
+    {t:'Missing the gain hits harder',line:'That is rare. Most people feel losses far more sharply.'}
   ],
-  fact:'Most people feel a loss twice as strongly as a win. This is called loss aversion. It is why traders hold on to losing trades, hoping they turn around. It is also why traders sell winners too soon, just to feel relief. Your account does not care how a trade feels. Your discipline must make up for that.'
+  fact:'Most people feel a loss almost twice as strongly as an equal win. It is called loss aversion, and it is not a flaw. It is simply how people are built. It is why traders hold a losing trade too long, hoping it turns around. It is why they sell a winner too soon, just to feel safe again. Your account does not know how a trade feels. Only your discipline can close that gap.'
 };
-// Round 112: q stays a live math setup (it IS the question being asked),
-// but fact is now split - a plain message first, the actual arithmetic
-// pulled onto its own "Math:" line after, same pattern as INFO{} above
-// ("for math stuff, separate it from the message you're saying, so if
-// someone's skimming they don't have to go through the math equation
-// just to get the message"). Figures unchanged from round 100/101 -
-// still the same verified 40%*200-60%*100=+20/trade, *100=+2000.
-// Round 121: fact extended with COST_INSIGHT's fee point (see the round-
-// 121 note above LOSS_INSIGHT for why that's now folded in here instead
-// of its own question) - same $700-fees/$2,000-gains≈one-third figure,
-// same IBKR-sourced rate, just delivered as a second paragraph of this
-// reveal instead of a fourth insight screen.
 var EV_INSIGHT={
   eyebrow:'Quick Math',
-  q:'Quick math test. You risk $100 each trade. You win 40% of the time. A win pays back double. A loss costs your full risk. After 100 trades, are you ahead?',
+  q:'Quick question: you risk $100 on every trade. You win 4 out of 10 times. But a win pays back double what a loss costs. After 100 trades, are you ahead?',
   opts:[
-    {t:'You come out ahead',line:'Good instinct.'},
+    {t:'Yes, ahead',line:'Good instinct.'},
     {t:'About even',line:'Close, but not quite.'},
-    {t:'Losing money',line:'The low win rate makes it feel that way. Fair guess.'}
+    {t:'No, behind',line:'A fair guess. A low win rate feels that way.'}
   ],
-  fact:'You come out ahead, even though you lose more than you win. Win rate alone does not tell the whole story. How much you win matters too.<p class="insight-math">Math: (40% × $200) − (60% × $100) = +$20 per trade. Over 100 trades: +$2,000.</p>But real trading has costs. A broker charges about $7 per trade in fees. That cuts about a third of your gains — still a profit, just smaller than it looks on paper.<p class="insight-math">Math: $700 in fees ÷ $2,000 in gains ≈ one third.</p>'
+  fact:'You come out ahead, even though you lose more often than you win. A win rate alone does not tell the whole story. What matters just as much is how much you make when you are right. It also matters how much you lose when you are wrong. Over 100 trades like that, you end up around $2,000 ahead, even though you were wrong six times out of ten.'
 };
 var STAT_INSIGHT={
   eyebrow:'The Real Numbers',
-  q:'Almost there. Think about people who day trade for a long time. How many end up losing money?',
+  q:'One more before we move on: think about people who day trade for years. How many end up losing money?',
   opts:[
     {t:'Less than half',line:'A hopeful guess. Not what the data shows.'},
     {t:'About half to three-quarters',line:'Closer, but still too low.'},
@@ -6609,12 +6596,17 @@ function startAppFlakeField(){
   window.addEventListener('resize',function(){sizeAppFlakeCanvas();initAppFlakes();});
 }
 
-// Every screen's markup goes through here: topHtml (the fixed progress
-// dots, when present) renders outside .scr-inner so it stays pinned to
-// the viewport even while .intro-fg scrolls; everything else goes
-// inside .scr-inner, which centers short content and degrades to a
-// scrollable top-aligned block for anything taller than the viewport
-// (see the .scr-inner CSS comment above for why that split matters).
+// Every screen's markup goes through here: topHtml renders outside
+// .scr-inner so it stays pinned to the viewport even while .intro-fg
+// scrolls; everything else goes inside .scr-inner, which centers short
+// content and degrades to a scrollable top-aligned block for anything
+// taller than the viewport (see the .scr-inner CSS comment above for
+// why that split matters). topHtml's one real use was the
+// questionnaire's fixed progress-dot strip (renderQuizStep/
+// renderReaction); round 125 removed that strip entirely, so every
+// caller as of this round passes '' - the hook itself is left in place
+// (same precedent as extraCls just below) for whatever future screen
+// needs top-anchored content outside .scr-inner.
 // extraCls is optional - unused as of round 111 (renderReadiness used
 // to pass 'grow' here for its one screen that grew its own content
 // after being shown; that screen is gone, see buildReadinessSteps()
@@ -6739,10 +6731,7 @@ function renderQuizStep(myI,onDone){
   var item=QUIZ_QUESTIONS[myI];
   function render(){
     var prev=quizAnswers[myI];
-    var dots='';
-    for(var i=0;i<QUIZ_QUESTIONS.length;i++)dots+='<i class="'+(i<=myI?'on':'')+'"></i>';
-    setFg(
-      '<div class="scr-progress">'+dots+'</div>',
+    setFg('',
       '<div class="scr-title">'+item.q+'</div>'+
       // Round 122: an optional per-question `note` (currently only Q2,
       // the backtesting question - see that var's own comment) renders
@@ -6765,8 +6754,7 @@ function renderQuizStep(myI,onDone){
         var oi=+btn.getAttribute('data-i');
         var opt=item.opts[oi];
         quizAnswers[myI]={qi:myI,oi:oi,s:opt.s};
-        var dotsNow=dots;
-        setTimeout(function(){renderReaction(myI,opt.reaction,dotsNow,onDone);},260);
+        setTimeout(function(){renderReaction(myI,opt.reaction,onDone);},260);
       });
     });
   }
@@ -6779,10 +6767,9 @@ function renderQuizStep(myI,onDone){
 // purpose (matches the original design - it's a response to a choice
 // already made, not a form field), but round 111's left-tap still
 // works on this screen like every other one in the sequence.
-function renderReaction(myI,text,dots,onDone){
+function renderReaction(myI,text,onDone){
   function render(){
-    setFg(
-      '<div class="scr-progress">'+dots+'</div>',
+    setFg('',
       '<div class="scr-body">'+text+'</div>'+
       '<div class="scr-nav center"><button type="button" class="scr-next" id="reaction-next">Continue</button></div>');
     autoAdvance('reaction-next',function(){
@@ -6829,8 +6816,7 @@ function runGutCheck(onDone){
 // The shared mechanic behind LOSS_INSIGHT/EV_INSIGHT/STAT_INSIGHT (see
 // the header comment above those) - structurally the same as
 // runGutCheck just above (pick any option, nothing scored) crossed with
-// renderReaction's auto-advancing reveal, but with no dots (these
-// aren't part of the 4-question progress count) and no Back (matching
+// renderReaction's auto-advancing reveal, but with no Back (matching
 // gut-check/beats: Skip is the only way out of a screen once it's up).
 // Each option's own `line` is a short, tailored acknowledgment; `fact`
 // underneath it is the one substantive payoff, identical regardless of
@@ -6904,6 +6890,19 @@ function runInsight(insight,onDone){
 // sourced stat, just a second, later one that read as repeating itself.
 // See the round-121 note above LOSS_INSIGHT for the fuller pacing
 // analysis and the rest of what changed this round.
+// Round 128: real order-logic bug found while re-reading the whole
+// sequence start to finish in actual playback order - "There's sometimes
+// messages you write that are responding two messages late to an answer
+// given, like it's out of order." gutLine (what GUT_CHECK's own answer
+// echoes back) used to be pushed onto this series SECOND-TO-LAST, behind
+// the tier lead beat and its optional elaboration - so a user who just
+// answered the gut-check question saw 1-2 screens about their QUIZ SCORE
+// first, then finally a line responding to the gut-check answer, with
+// nothing marking it as a callback. Moved to run FIRST instead (see the
+// step order below): now the very next thing after answering "would you
+// want to see it?" is a direct reply to that, and the tier verdict that
+// follows reads as its natural payoff ("good, here it is") instead of an
+// unrelated interruption sitting between question and answer.
 function buildReadinessSteps(){
   var total=quizAnswers.reduce(function(a,x){return a+(x?x.s:0);},0);
   var weak=quizAnswers.filter(function(x){return x&&x.s<=1;});
@@ -6918,20 +6917,28 @@ function buildReadinessSteps(){
   if(total>=6){
     eyebrow='You’re Ready';
     title='You already did the hard part.';
-    lead='This tool cannot predict the market. But it can tell you the truth about your own process. That is the part most traders try to avoid.';
+    lead='This tool cannot predict the market. But it can tell you the truth about your own process. That is the part most traders never look at.';
     elaboration=gaps.length?gaps[0]:null;
   }else if(total>=3){
     eyebrow='Getting There';
     title='You have real gaps. Keep them in mind.';
     lead=gaps.slice(0,2).join(' ');
-    elaboration='None of this locks you out. It just means what comes next is practice, not proof.';
+    elaboration='None of this locks you out. It only means what comes next is practice, not proof.';
   }else{
     eyebrow='Start Here, Not There';
     title='Day trading is hard. Build the basics first.';
     lead=gaps.slice(0,2).join(' ');
-    elaboration='That is not a reason to stop. It is exactly what Simulate mode is for. Build your history first. Let the app show you the truth instead of a guess.';
+    elaboration='That is not a reason to stop. It is exactly what Simulate mode is for. Build your history first, and let the app show you the truth instead of a guess.';
   }
-  var steps=[{eyebrow:eyebrow,title:title,body:lead}];
+  // Round 108's gut-check echo and closing encouragement each get their
+  // own held beat now instead of being two more paragraphs stacked onto
+  // the same screen. Round 128 moved the gut-check echo to run FIRST
+  // (see the round-128 note above) - it is a direct reply to what the
+  // person just chose, so it belongs immediately after that choice, not
+  // buffered behind the tier verdict it has nothing to do with.
+  var steps=[];
+  if(gutLine)steps.push({body:gutLine});
+  steps.push({eyebrow:eyebrow,title:title,body:lead});
   // At most one more beat of tier-specific substance - never one beat
   // per gap, which is exactly the density the user was pushing back
   // on. "Getting There"/"Start Here" already spent their lead beat's
@@ -6939,13 +6946,6 @@ function buildReadinessSteps(){
   // for those two tiers, or the single most relevant caveat (if any)
   // for "You're Ready".
   if(elaboration)steps.push({body:elaboration});
-  // Round 108's gut-check echo and closing encouragement each get
-  // their own held beat now instead of being two more paragraphs
-  // stacked onto the same screen - the gut-check especially benefits,
-  // since it's a callback to something the person just chose for
-  // themselves a moment earlier and deserves a beat of its own rather
-  // than reading like one more bullet point.
-  if(gutLine)steps.push({body:gutLine});
   steps.push({body:CLOSING_ENCOURAGEMENT,btn:'Let’s Go'});
   return steps;
 }
@@ -6964,9 +6964,9 @@ function startIntroSequence(){
   // question, easy to mistake for one of the "honest questions" just
   // promised) running first. All three remaining insights now land
   // together right after the questionnaire, in a deliberate arc: LOSS
-  // (a light psychology hook) -> EV (math literacy, now carrying the
-  // fee/cost point that used to be COST_INSIGHT's own screen - see the
-  // round-121 note above LOSS_INSIGHT) -> STAT (the heaviest "cold
+  // (a light psychology hook) -> EV (win-rate math literacy - see the
+  // round-128 note above LOSS_INSIGHT for why its cost/commission point
+  // was cut rather than kept) -> STAT (the heaviest "cold
   // truth" beat, and now the last insight - AI_INSIGHT, which used to
   // follow it, was cut this round, so GUT_CHECK's own "would you want to
   // see it?" is the pivot out of that heaviness instead).
